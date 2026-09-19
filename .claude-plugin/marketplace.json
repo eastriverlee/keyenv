@@ -8,7 +8,7 @@
     {
       "name": "monkeys",
       "source": "./plugins/monkeys",
-      "description": "Spend an API key, token or password from the OS keyring on one command, without the value entering the conversation.",
+      "description": "A cross-platform .env alternative for the LLM era: secrets in your keyring, their names in your repo, spent one command at a time, never printed.",
       "version": "0.1.0",
       "license": "MIT"
     }

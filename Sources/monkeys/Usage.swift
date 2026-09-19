@@ -53,7 +53,7 @@ private var commandLines: [String] {
 
 var usage: String {
     """
-    \(outputStyle("monkeys", .bold, .brand)) - environment variables kept in your operating system's keyring
+    \(outputStyle("monkeys", .bold, .brand)) - a cross-platform .env alternative for the LLM era
 
     \(commandLines.joined(separator: "\n"))
 

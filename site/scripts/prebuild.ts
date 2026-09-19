@@ -13,7 +13,7 @@ const skill = readFileSync(join(repository, 'plugins', 'monkeys', 'skills', 'mon
 const fullText = [
 	'# monkeys',
 	'',
-	"> Environment variables kept in your operating system's keyring, handed to one command at a time. No command prints a stored value, and `monkeys run` redacts a value the command prints back. macOS and Linux, MIT. Source: https://github.com/eastriverlee/monkeys",
+	"> A cross-platform .env alternative for the LLM era: secrets in your keyring, their names in your repo, spent one command at a time, never printed. `monkeys run` redacts a value the command prints back. macOS and Linux, MIT. Source: https://github.com/eastriverlee/monkeys",
 	'',
 	'What follows is the README and the skill for coding agents, joined at build time.',
 	'',

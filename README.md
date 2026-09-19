@@ -5,8 +5,7 @@
 <h1 align="center">monkeys</h1>
 
 <p align="center">
-  Environment variables kept in your operating system's keyring,<br>
-  handed to one command at a time.<br>
+  A cross-platform <code>.env</code> alternative for the LLM era.<br>
   The name reads as <em>mon keys</em>: my keys.
 </p>
 
@@ -22,7 +21,7 @@
 
 ## LLMs read `.env`, not anymore.
 
-No one has to, but `cat .env` is just too
+For LLMs, `cat .env` is just too
 tempting, and once it's in the transcript, it's there for good. The usual
 ways to live with that:
 
