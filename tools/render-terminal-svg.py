@@ -35,12 +35,12 @@ SEQUENCE = re.compile(r"\x1b\[([0-9;]*)m")
 CONTROL = re.compile(r"[\x00-\x08\x0b-\x1a\x1c-\x1f\x7f]")
 
 COMMANDS = [
-    "monkeys run OPENROUTER_API_KEY,ANTHROPIC_API_KEY ./bench",
-    "monkeys run OPENROUTER_API_KEY ./bench",
+    "monkeys run OPENROUTER_API_KEY,ANTHROPIC_API_KEY ./hello",
+    "monkeys run OPENROUTER_API_KEY ./hello",
     "monkeys preview GITHUB_TOKEN OPENROUTER_API_KEY",
 ]
 BENCH = """#!/bin/sh
-echo "the key reached me: ${#OPENROUTER_API_KEY} characters"
+echo "Authorization: Bearer <${#OPENROUTER_API_KEY} characters>"
 """
 DEMO_VALUES = {
     # Shaped only for the picture: two leading characters, one trailing, a
@@ -181,7 +181,7 @@ if __name__ == "__main__":
     destination = sys.argv[1] if len(sys.argv) > 1 else "terminal.svg"
     borrowed = seeded()
     with tempfile.TemporaryDirectory() as directory:
-        helper = os.path.join(directory, "bench")
+        helper = os.path.join(directory, "hello")
         with open(helper, "w") as handle:
             handle.write(BENCH)
         os.chmod(helper, 0o755)

@@ -5,7 +5,7 @@
 <circle cx="62" cy="24" r="6" fill="#28c840"/>
 <text x="22" y="52" fill="#d6d6d0" xml:space="preserve">
 <tspan x="22.0" fill="#6f7380">$ </tspan>
-<tspan x="38.2">monkeys run OPENROUTER_API_KEY,ANTHROPIC_API_KEY ./bench</tspan>
+<tspan x="38.2">monkeys run OPENROUTER_API_KEY,ANTHROPIC_API_KEY ./hello</tspan>
 </text>
 <text x="22" y="73" fill="#d6d6d0" xml:space="preserve">
 <tspan x="22.0" fill="#f1707b">monkeys:</tspan>
@@ -19,10 +19,10 @@
 </text>
 <text x="22" y="157" fill="#d6d6d0" xml:space="preserve">
 <tspan x="22.0" fill="#6f7380">$ </tspan>
-<tspan x="38.2">monkeys run OPENROUTER_API_KEY ./bench</tspan>
+<tspan x="38.2">monkeys run OPENROUTER_API_KEY ./hello</tspan>
 </text>
 <text x="22" y="178" fill="#d6d6d0" xml:space="preserve">
-<tspan x="22.0">the key reached me: 73 characters</tspan>
+<tspan x="22.0">Authorization: Bearer &lt;73 characters&gt;</tspan>
 </text>
 <text x="22" y="220" fill="#d6d6d0" xml:space="preserve">
 <tspan x="22.0" fill="#6f7380">$ </tspan>

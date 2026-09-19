@@ -24,23 +24,33 @@
 
 ```sh
 brew install eastriverlee/tap/monkeys
-```
-
-Store a key. The prompt hides what you type, and nothing you typed holds it:
-
-```sh
 monkeys set OPENROUTER_API_KEY
 ```
 
-Spend it on the command that needs it:
+Write the thing that needs the key. It reads a variable, the way any program
+reads one:
 
 ```sh
-monkeys run OPENROUTER_API_KEY ./bench
+cat > hello <<'SCRIPT'
+#!/bin/sh
+curl -s https://openrouter.ai/api/v1/chat/completions \
+  -H "Authorization: Bearer $OPENROUTER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"openai/gpt-4o-mini","messages":[{"role":"user","content":"say hello world"}]}'
+SCRIPT
+chmod +x hello
 ```
 
-That is the whole tool. `monkeys run` sets the names you give it in that one
-command's environment and then becomes the command, so its exit status, output
-and signals are its own.
+Then let monkeys hand it over:
+
+```sh
+monkeys run OPENROUTER_API_KEY ./hello
+```
+
+The key is in that one process and nowhere else. It never reached your shell
+history, your startup file, or the line you just typed. `run` becomes the
+command once the values are set, so the exit status, the output and the signals
+are the command's own.
 
 ## Why
 
@@ -164,6 +174,26 @@ A command that needs two gets both, and nothing else:
 ```sh
 monkeys run OPENROUTER_API_KEY,GITHUB_TOKEN ./deploy
 ```
+
+### Where the variable is expanded
+
+`run` sets the variable for the command it starts, so that command is what
+expands it. Written into the `monkeys run` line itself, your own shell gets
+there first, and yours does not have the value:
+
+```sh
+monkeys run OPENROUTER_API_KEY curl -H "Authorization: Bearer $OPENROUTER_API_KEY" ...
+# sends: Authorization: Bearer
+```
+
+Single quotes pass the text through untouched, so a shell that `run` starts is
+the one that expands it:
+
+```sh
+monkeys run OPENROUTER_API_KEY sh -c 'curl -H "Authorization: Bearer $OPENROUTER_API_KEY" ...'
+```
+
+A script file works for the same reason, and reads better.
 
 A name you have not stored stops the run before it starts:
 

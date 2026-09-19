@@ -18,7 +18,7 @@ the secret yourself.
 Name what the command reads, then the command:
 
 ```sh
-monkeys run OPENROUTER_API_KEY ./bench
+monkeys run OPENROUTER_API_KEY ./hello
 monkeys run OPENROUTER_API_KEY,GITHUB_TOKEN ./deploy
 ```
 
@@ -27,6 +27,18 @@ every name stored, `run` replaces itself with the command, so the exit status,
 the output and the signals are the command's own. Reach for
 `monkeys run --all <command>` only when you cannot tell which names the command
 reads.
+
+The command you start is what expands the variable, since that is where it
+exists. `$NAME` written into the `monkeys run` line is expanded by the shell
+you are already in, which does not have the value:
+
+```sh
+monkeys run OPENROUTER_API_KEY curl -H "Authorization: Bearer $OPENROUTER_API_KEY" ...
+# sends an empty Bearer
+
+monkeys run OPENROUTER_API_KEY sh -c 'curl -H "Authorization: Bearer $OPENROUTER_API_KEY" ...'
+# the single quotes reach the child intact
+```
 
 ## When a value is missing
 
