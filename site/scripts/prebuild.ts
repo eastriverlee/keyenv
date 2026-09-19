@@ -11,9 +11,11 @@ for (const picture of ['monkeys.svg', 'terminal.svg']) {
 const readme = readFileSync(join(repository, 'README.md'), 'utf8');
 const skill = readFileSync(join(repository, 'skills', 'monkeys', 'SKILL.md'), 'utf8');
 const fullText = [
-	'# monkeys, the full text',
+	'# monkeys',
 	'',
-	'Generated from README.md and skills/monkeys/SKILL.md at https://github.com/eastriverlee/monkeys. The index is at https://monk3ys.dev/llms.txt.',
+	"> Environment variables kept in your operating system's keyring, handed to one command at a time. No command prints a stored value, and `monkeys run` redacts a value the command prints back. macOS and Linux, MIT. Source: https://github.com/eastriverlee/monkeys",
+	'',
+	'What follows is the README and the skill for coding agents, joined at build time.',
 	'',
 	'---',
 	'',
@@ -23,4 +25,6 @@ const fullText = [
 	'',
 	skill
 ].join('\n');
-writeFileSync(join(statics, 'llms-full.txt'), fullText);
+for (const name of ['llms.txt', 'llms-full.txt']) {
+	writeFileSync(join(statics, name), fullText);
+}
