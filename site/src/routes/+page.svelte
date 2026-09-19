@@ -239,7 +239,8 @@ SENTRY_DSN`;
 		<CodeFile code={runStaging} />
 		<p class="max-w-prose">
 			A value missing in one profile stops that profile alone, and only when it is used.
-			<code>doctor</code> reads the whole file:
+			<code>monkeys copy @test.foo --to @foo</code> fills the second profile with what the first
+			has and it lacks, and <code>doctor</code> reads the whole file:
 		</p>
 		<CodeFile code={doctorLine} output={doctorOutput} />
 	</section>
