@@ -200,8 +200,8 @@ SENTRY_DSN`;
 		<CodeFile code={packLine} />
 		<p class="max-w-prose">
 			On the other machine, <code>unpack</code> asks for the passphrase, stores the values, and
-			writes the <code>.monkeys</code> file where it runs. That is the only way a value leaves the
-			keyring.
+			writes <code>.monkeys</code> at the root of the checkout, wherever inside it you run it.
+			That is the only way a value leaves the keyring.
 		</p>
 		<CodeFile code={unpackLine} />
 	</section>

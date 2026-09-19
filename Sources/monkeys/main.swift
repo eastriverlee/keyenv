@@ -112,27 +112,47 @@ func runPack(_ arguments: [String]) throws {
     printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(path, .bold) + ": @\(profile), \(values.count) value\(values.count == 1 ? "" : "s")")
 }
 
-func reconcileProjectFile(profile: String, names: [String]) throws {
-    let directory = FileManager.default.currentDirectoryPath
+func gitRoot(above directory: String) -> String? {
+    var directory = directory
+    while true {
+        if FileManager.default.fileExists(atPath: directory + "/.git") { return directory }
+        guard directory != "/" else { return nil }
+        directory = URL(fileURLWithPath: directory).deletingLastPathComponent().path
+    }
+}
+
+func unpackDestination(_ given: String?) throws -> String {
+    let current = FileManager.default.currentDirectoryPath
+    guard let given else { return gitRoot(above: current) ?? current }
+    let directory = URL(fileURLWithPath: given).standardizedFileURL.path
+    var isDirectory: ObjCBool = false
+    guard FileManager.default.fileExists(atPath: directory, isDirectory: &isDirectory), isDirectory.boolValue else {
+        throw StoreFailure.bundleFailed("\(given) is not a directory")
+    }
+    return directory
+}
+
+func reconcileProjectFile(profile: String, names: [String], in directory: String) throws {
     let path = directory + "/" + projectFileName
+    let shown = directory == FileManager.default.currentDirectoryPath ? projectFileName : abbreviatingHome(path)
     let counted = "\(names.count) name\(names.count == 1 ? "" : "s")"
     guard FileManager.default.fileExists(atPath: path) else {
         try projectFileContents(profile: profile, names: names).write(toFile: path, atomically: true, encoding: .utf8)
-        printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(projectFileName, .bold) + ": @\(profile), \(counted)")
+        printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(shown, .bold) + ": @\(profile), \(counted)")
         return
     }
     let existing = try parseProject(at: path, directory: directory)
     let listed = existing.names(for: profile)
     let missing = names.filter { !listed.contains($0) }
     guard !missing.isEmpty else {
-        printToStandardError("\(projectFileName) already lists these names under @\(profile)")
+        printToStandardError("\(shown) already lists these names under @\(profile)")
         return
     }
     let current = try String(contentsOfFile: path, encoding: .utf8)
     let separator = current.hasSuffix("\n") ? "" : "\n"
     try (current + separator + projectFileContents(profile: profile, names: missing)).write(toFile: path, atomically: true, encoding: .utf8)
     let added = "\(missing.count) name\(missing.count == 1 ? "" : "s")"
-    printToStandardError(messageStyle("added", .good) + " " + messageStyle("@\(profile)", .bold) + " with \(added) to \(projectFileName)")
+    printToStandardError(messageStyle("added", .good) + " " + messageStyle("@\(profile)", .bold) + " with \(added) to \(shown)")
 }
 
 private func mark(_ isStored: Bool) -> String {
@@ -163,12 +183,13 @@ func runDoctor(_ arguments: [String]) throws {
 }
 
 func runUnpack(_ arguments: [String]) throws {
-    guard let name = arguments.first, arguments.count == 1 else {
-        throw StoreFailure.badInvocation("monkeys unpack <name>")
+    guard let name = arguments.first, arguments.count <= 2 else {
+        throw StoreFailure.badInvocation("monkeys unpack <name> [directory]")
     }
+    let destination = try unpackDestination(arguments.dropFirst().first)
     let bundle = try readBundle(from: bundlePath(name))
     let names = bundle.values.map(\.name)
-    try reconcileProjectFile(profile: bundle.profile, names: names)
+    try reconcileProjectFile(profile: bundle.profile, names: names, in: destination)
     for entry in bundle.values {
         try secretStore.store(entry.value, forName: bundle.profile + "/" + entry.name)
     }

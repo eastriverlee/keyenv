@@ -25,7 +25,7 @@ let commandSummaries = [
                    summary: "keyring lookups for a startup file"),
     CommandSummary(verb: "pack", arguments: "[name]",
                    summary: "write the profile encrypted, to share"),
-    CommandSummary(verb: "unpack", arguments: "<name>",
+    CommandSummary(verb: "unpack", arguments: "<name> [directory]",
                    summary: "store its values, write its .monkeys"),
     CommandSummary(verb: "doctor", arguments: "[--short]",
                    summary: "what each profile has and lacks"),
@@ -102,7 +102,8 @@ var usage: String {
 
     Share a profile as one encrypted file, named after the profile unless you
     say otherwise. pack asks for a passphrase; unpack asks again, stores the
-    values, and writes the names into a .monkeys file here:
+    values, and writes the names into .monkeys at the root of the git checkout
+    you are in, here when there is none, or in the directory you name:
 
       \(outputStyle("monkeys pack", .argument))                  writes foo.monkeys
       \(outputStyle("monkeys unpack monkeys", .argument))

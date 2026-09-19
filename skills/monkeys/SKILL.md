@@ -59,6 +59,7 @@ to the personal one: a name missing in `@foo` is missing there even when a
 bare copy exists.
 
 A shared `<name>.monkeys` bundle fills a profile with `monkeys unpack`, which
+writes `.monkeys` at the git root and
 asks for a passphrase. Tell the person to run it; do not run it yourself.
 
 The command you start is what expands the variable, since that is where it

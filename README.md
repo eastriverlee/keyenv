@@ -141,7 +141,7 @@ names a command `monkeys help` does not list.
 | `monkeys run <command>` | the same, with the names a `.monkeys` file lists |
 | `monkeys export [NAME...]` | keyring lookup lines, to paste into a startup file |
 | `monkeys pack [name]` | write the profile as `name.monkeys`, encrypted |
-| `monkeys unpack <name>` | store its values, write its `.monkeys` |
+| `monkeys unpack <name> [directory]` | store its values, write its `.monkeys` |
 | `monkeys doctor` | what each profile has and lacks |
 
 `monkeys` takes no value as an argument, so storing one never types it: your
@@ -381,7 +381,7 @@ The file is safe to send over whatever you already use; the passphrase goes
 another way. A pack with a value still missing refuses, since a bundle
 that fills half a profile is a bug for whoever receives it.
 
-The other side runs `unpack` where the project should live:
+The other side runs `unpack` anywhere inside the checkout:
 
 ```sh
 $ monkeys unpack monkeys
@@ -391,11 +391,16 @@ stored monkeys/DATABASE_URL, monkeys/STRIPE_SECRET_KEY, monkeys/OPENROUTER_API_K
 ```
 
 The values go into that person's keyring under the bundle's profile, `monkeys/`,
-and the profile and names become a `.monkeys` file in the current directory,
-so `monkeys run ./hello` works from the next command. When a `.monkeys` file
-is already there, `unpack` adds the bundle's profile as a block at the end,
-with the names the file does not yet list for it, and leaves the rest of the
-file alone.
+and the profile and names become a `.monkeys` file at the root of the git
+checkout, the way `.gitignore` sits at the root, so `monkeys run ./hello` works
+from any directory in it. Outside a checkout the file goes in the current
+directory, and a second argument names the directory outright. When a
+`.monkeys` file is already there, `unpack` adds the bundle's profile as a
+block at the end, with the names the file does not yet list for it, and leaves
+the rest of the file alone.
+
+`run` finds the file the way git finds `.git`: from the current directory
+upward, nearest first.
 
 Both commands read the passphrase from standard input when it is not a
 terminal, for the rare script that needs to.
