@@ -39,7 +39,7 @@ SENTRY_DSN`;
   ✗ SENTRY_DSN`;
 	const runStaging = 'monkeys run @foo ./deploy';
 	const packLine = 'monkeys pack';
-	const unpackLine = 'monkeys unpack ~/Downloads/monkeys.monkeys';
+	const unpackLine = 'monkeys unpack ~/Downloads/foo.monkeys';
 
 	const stars = browser
 		? fetch(`https://api.github.com/repos/${repository.owner}/${repository.repo}`)
@@ -192,7 +192,7 @@ SENTRY_DSN`;
 	<section class="flex flex-col gap-4">
 		<h2 class="text-xl font-semibold">Hand the profile to a teammate</h2>
 		<p class="max-w-prose">
-			<code>pack</code> asks for a passphrase and writes <code>monkeys.monkeys</code>: the profile, its
+			<code>pack</code> asks for a passphrase and writes <code>foo.monkeys</code>: the profile, its
 			names and its values, sealed. Send the file however you like, and the passphrase another way.
 		</p>
 		<CodeFile code={packLine} />

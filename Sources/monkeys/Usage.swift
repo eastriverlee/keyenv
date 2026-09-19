@@ -104,7 +104,7 @@ var usage: String {
     say otherwise. pack asks for a passphrase; unpack asks again, stores the
     values, and writes the names into a .monkeys file here:
 
-      \(outputStyle("monkeys pack", .argument))                  writes monkeys.monkeys
+      \(outputStyle("monkeys pack", .argument))                  writes foo.monkeys
       \(outputStyle("monkeys unpack monkeys", .argument))
 
     \(styledAgentGuide)

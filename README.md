@@ -334,7 +334,7 @@ missing @foo: STRIPE_SECRET_KEY,SENTRY_DSN
 
 Profile names take letters, digits, `_`, `-` and `.`. A dotted name in the
 style of a bundle identifier keeps two projects' test apart in one keyring.
-Two parts, `test.foo`, is enough for most; a third, `test.monkeys.lee`,
+Two parts, `test.foo`, is enough for most; a third, `test.foo.lee`,
 is for a keyring that holds many projects and collides at two. A single word
 does for a profile nothing else will collide with.
 
