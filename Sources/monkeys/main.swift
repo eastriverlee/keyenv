@@ -25,7 +25,7 @@ func isSetInThisEnvironment(_ name: String) -> Bool {
 
 func askYesOrNo(_ question: String) -> Bool {
     guard isTerminal(STDIN_FILENO), isTerminal(STDERR_FILENO) else { return false }
-    FileHandle.standardError.write(Data((question + " [y/N] ").utf8))
+    FileHandle.standardError.write(Data((question + " " + messageStyle("[y/N]", .bold) + " ").utf8))
     guard let answer = readLine(strippingNewline: true)?.lowercased() else { return false }
     return answer == "y" || answer == "yes"
 }
@@ -43,24 +43,6 @@ func shellSingleQuoted(_ value: String) -> String {
     "'" + value.replacingOccurrences(of: "'", with: "'\\''") + "'"
 }
 
-let usage = """
-monkeys - environment variables kept in your operating system's keyring
-
-  monkeys set <NAME>         store a value read from the terminal or stdin
-  monkeys get <NAME>         print one stored value
-  monkeys list               print every stored name
-  monkeys preview [NAME...]  print each value masked, with its length
-  monkeys remove <NAME>      delete one stored value
-  monkeys export [NAME...]   print shell export lines, for every name or some
-  monkeys shell-init         add the export line to your shell startup file
-
-In your shell startup file:
-
-  \(shellInitLine)
-
-\(agentGuide)
-"""
-
 func requireName(_ arguments: [String]) throws -> String {
     guard let name = arguments.first else { throw StoreFailure.invalidVariableName("") }
     guard isValidVariableName(name) else { throw StoreFailure.invalidVariableName(name) }
@@ -69,7 +51,7 @@ func requireName(_ arguments: [String]) throws -> String {
 
 func reportShellInit(appendedTo path: String) {
     printToStandardError("appended to \(abbreviatingHome(path)):")
-    printToStandardError("  \(shellInitLine)")
+    printToStandardError("  " + messageStyle(shellInitLine, .argument))
     printToStandardError("open a new shell, or: source \(abbreviatingHome(path))")
 }
 
@@ -78,16 +60,16 @@ func offerShellInit() {
     guard let path = shellProfilePath(), !profileCallsMonkeysExport(path) else { return }
 
     printToStandardError("")
-    printToStandardError("no startup file here seems to call monkeys export.")
+    printToStandardError(messageStyle("no startup file here seems to call monkeys export.", .dim))
     guard askYesOrNo("append it to \(abbreviatingHome(path)) now?") else {
-        printToStandardError("you can do it later with: monkeys shell-init")
+        printToStandardError(messageStyle("you can do it later with:", .dim) + " " + messageStyle("monkeys shell-init", .argument))
         return
     }
     do {
         try appendShellInit(to: path)
         reportShellInit(appendedTo: path)
     } catch {
-        printToStandardError("monkeys: \(error)")
+        printToStandardError(messageStyle("monkeys:", .bad) + " \(error)")
     }
 }
 
@@ -96,9 +78,9 @@ func runSet(_ arguments: [String]) throws {
     let value = readValueFromInput()
     guard !value.isEmpty else { throw StoreFailure.emptyValue }
     try secretStore.store(value, forName: name)
-    printToStandardError("stored \(name)")
-    printHintToTerminal("this shell still has the value it started with; load the stored one with:")
-    printHintToTerminal("  eval \"$(monkeys export \(name))\"")
+    printToStandardError(messageStyle("stored", .good) + " " + messageStyle(name, .bold))
+    printHintToTerminal(messageStyle("this shell still has the value it started with; load the stored one with:", .dim))
+    printHintToTerminal("  " + messageStyle("eval \"$(monkeys export \(name))\"", .argument))
     offerShellInit()
 }
 
@@ -109,10 +91,10 @@ func runGet(_ arguments: [String]) throws {
 func runRemove(_ arguments: [String]) throws {
     let name = try requireName(arguments)
     try secretStore.remove(forName: name)
-    printToStandardError("removed \(name)")
+    printToStandardError(messageStyle("removed", .good) + " " + messageStyle(name, .bold))
     guard isSetInThisEnvironment(name) else { return }
-    printHintToTerminal("this shell still carries it; clear it with:")
-    printHintToTerminal("  unset \(name)")
+    printHintToTerminal(messageStyle("this shell still carries it; clear it with:", .dim))
+    printHintToTerminal("  " + messageStyle("unset \(name)", .argument))
 }
 
 func runList() throws {
@@ -141,7 +123,7 @@ func runExport(_ arguments: [String]) throws {
 
 func runShellInit() throws {
     guard let path = shellProfilePath() else {
-        printToStandardError("monkeys: \(loginShellName()) has no startup file monkeys knows about.")
+        printToStandardError(messageStyle("monkeys:", .bad) + " \(loginShellName()) has no startup file monkeys knows about.")
         printToStandardError("monkeys export prints POSIX shell syntax; add it yourself with:")
         printToStandardError("  \(shellInitLine)")
         exit(1)
@@ -172,14 +154,14 @@ do {
     case "shell-init": try runShellInit()
     case "help", "-h", "--help": print(usage)
     default:
-        printToStandardError("unknown command: \(command)")
+        printToStandardError(messageStyle("unknown command:", .bad) + " \(command)")
         printToStandardError(usage)
         exit(2)
     }
 } catch let failure as StoreFailure {
-    printToStandardError("monkeys: \(failure)")
+    printToStandardError(messageStyle("monkeys:", .bad) + " \(failure)")
     exit(1)
 } catch {
-    printToStandardError("monkeys: \(error)")
+    printToStandardError(messageStyle("monkeys:", .bad) + " \(error)")
     exit(1)
 }

@@ -22,7 +22,16 @@ Preview shows at most the first \(previewLeadingCharacters) and the last
 shows its length alone.
 """)
 
-let agentGuide = """
+var styledAgentGuide: String {
+    let lines = agentGuide.split(separator: "\n", omittingEmptySubsequences: false)
+    return lines.enumerated().map { position, line in
+        if position == 0 { return outputStyle(String(line), .bold, .brand) }
+        guard line.hasPrefix("  ") else { return String(line) }
+        return "  " + outputStyle(String(line.dropFirst(2)), .argument)
+    }.joined(separator: "\n")
+}
+
+private let agentGuide = """
 monkeys for an automated caller
 
 A value stored here must never enter your context or your transcript. Anything

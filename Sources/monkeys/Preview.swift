@@ -10,9 +10,13 @@ private func printable(_ character: Character) -> Character {
 
 func maskedValue(_ value: String) -> String {
     let count = value.count
+    let length = outputStyle("\(count)", .dim)
     let revealed = previewLeadingCharacters + previewTrailingCharacters
-    guard count >= revealed + previewMinimumHiddenCharacters else { return "... \(count)" }
+    guard count >= revealed + previewMinimumHiddenCharacters else {
+        return outputStyle("...", .dim) + " " + length
+    }
     let leading = String(value.prefix(previewLeadingCharacters).map(printable))
     let trailing = String(value.suffix(previewTrailingCharacters).map(printable))
-    return "\(leading)...\(trailing) \(count)"
+    return outputStyle(leading, .brand) + outputStyle("...", .dim)
+        + outputStyle(trailing, .brand) + " " + length
 }

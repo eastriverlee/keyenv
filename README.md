@@ -10,6 +10,12 @@
   The name reads as <em>mon keys</em>: my keys.
 </p>
 
+<p align="center">
+  <img alt="license" src="https://img.shields.io/github/license/eastriverlee/monkeys?color=E94100">
+  <img alt="swift 6.0" src="https://img.shields.io/badge/swift-6.0-E94100">
+  <img alt="macOS and Linux" src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-E94100">
+</p>
+
 A secret written into `~/.zshrc` is readable by anything that can read your home
 directory, and it follows you into dotfile backups and git history. `monkeys`
 stores it in the keyring and prints an `export` line when a shell asks for one.
@@ -114,13 +120,23 @@ shell-init` and leaves the file alone.
 | `monkeys export [NAME...]` | print shell export lines; all names when none are given |
 | `monkeys shell-init` | add the export line to your shell startup file |
 
-There is no way to pass a value as a command line argument, which keeps it out
-of your shell history and out of the process table. When standard input is not
-a terminal, `set` reads the value from there:
+`monkeys` takes no value as an argument, so storing or reading one never types
+it: your shell history and the process table both see `monkeys set
+GITHUB_TOKEN` and nothing more. When standard input is not a terminal, `set`
+reads the value from there:
 
 ```sh
 pbpaste | monkeys set GITHUB_TOKEN        # macOS
 wl-paste | monkeys set GITHUB_TOKEN       # Linux, Wayland
+```
+
+Where the value goes afterwards is yours to decide, and an argument is the one
+place to avoid: `ps` shows you another user's command line, and does not show
+their environment.
+
+```sh
+some-command "$(monkeys get GITHUB_TOKEN)"        # readable in ps
+GITHUB_TOKEN="$(monkeys get GITHUB_TOKEN)" some-command
 ```
 
 ## Looking without reading
