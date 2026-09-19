@@ -38,7 +38,7 @@ time. Nothing prints a stored value, so there is nothing to read.
 ## Quickstart
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/eastriverlee/monkeys/main/tools/install.sh | sh
+curl -fsSL https://monk3ys.dev/install | sh
 monkeys set OPENROUTER_API_KEY
 ```
 
@@ -74,7 +74,7 @@ are the command's own.
 On macOS or Linux, from the latest release:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/eastriverlee/monkeys/main/tools/install.sh | sh
+curl -fsSL https://monk3ys.dev/install | sh
 ```
 
 The script picks the build for your operating system and processor, checks the
