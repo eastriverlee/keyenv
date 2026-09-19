@@ -44,15 +44,15 @@ func shellSingleQuoted(_ value: String) -> String {
 }
 
 let usage = """
-keyenv - environment variables kept in your operating system's keyring
+monkeys - environment variables kept in your operating system's keyring
 
-  keyenv set <NAME>         store a value read from the terminal or stdin
-  keyenv get <NAME>         print one stored value
-  keyenv list               print every stored name
-  keyenv preview [NAME...]  print each value masked, with its length
-  keyenv remove <NAME>      delete one stored value
-  keyenv export [NAME...]   print shell export lines, for every name or some
-  keyenv shell-init         add the export line to your shell startup file
+  monkeys set <NAME>         store a value read from the terminal or stdin
+  monkeys get <NAME>         print one stored value
+  monkeys list               print every stored name
+  monkeys preview [NAME...]  print each value masked, with its length
+  monkeys remove <NAME>      delete one stored value
+  monkeys export [NAME...]   print shell export lines, for every name or some
+  monkeys shell-init         add the export line to your shell startup file
 
 In your shell startup file:
 
@@ -75,19 +75,19 @@ func reportShellInit(appendedTo path: String) {
 
 func offerShellInit() {
     guard isTerminal(STDERR_FILENO) else { return }
-    guard let path = shellProfilePath(), !profileCallsKeyenvExport(path) else { return }
+    guard let path = shellProfilePath(), !profileCallsMonkeysExport(path) else { return }
 
     printToStandardError("")
-    printToStandardError("no startup file here seems to call keyenv export.")
+    printToStandardError("no startup file here seems to call monkeys export.")
     guard askYesOrNo("append it to \(abbreviatingHome(path)) now?") else {
-        printToStandardError("you can do it later with: keyenv shell-init")
+        printToStandardError("you can do it later with: monkeys shell-init")
         return
     }
     do {
         try appendShellInit(to: path)
         reportShellInit(appendedTo: path)
     } catch {
-        printToStandardError("keyenv: \(error)")
+        printToStandardError("monkeys: \(error)")
     }
 }
 
@@ -98,7 +98,7 @@ func runSet(_ arguments: [String]) throws {
     try secretStore.store(value, forName: name)
     printToStandardError("stored \(name)")
     printHintToTerminal("this shell still has the value it started with; load the stored one with:")
-    printHintToTerminal("  eval \"$(keyenv export \(name))\"")
+    printHintToTerminal("  eval \"$(monkeys export \(name))\"")
     offerShellInit()
 }
 
@@ -141,13 +141,13 @@ func runExport(_ arguments: [String]) throws {
 
 func runShellInit() throws {
     guard let path = shellProfilePath() else {
-        printToStandardError("keyenv: \(loginShellName()) has no startup file keyenv knows about.")
-        printToStandardError("keyenv export prints POSIX shell syntax; add it yourself with:")
+        printToStandardError("monkeys: \(loginShellName()) has no startup file monkeys knows about.")
+        printToStandardError("monkeys export prints POSIX shell syntax; add it yourself with:")
         printToStandardError("  \(shellInitLine)")
         exit(1)
     }
-    guard !profileCallsKeyenvExport(path) else {
-        printToStandardError("\(abbreviatingHome(path)) already calls keyenv export")
+    guard !profileCallsMonkeysExport(path) else {
+        printToStandardError("\(abbreviatingHome(path)) already calls monkeys export")
         return
     }
     try appendShellInit(to: path)
@@ -177,9 +177,9 @@ do {
         exit(2)
     }
 } catch let failure as StoreFailure {
-    printToStandardError("keyenv: \(failure)")
+    printToStandardError("monkeys: \(failure)")
     exit(1)
 } catch {
-    printToStandardError("keyenv: \(error)")
+    printToStandardError("monkeys: \(error)")
     exit(1)
 }

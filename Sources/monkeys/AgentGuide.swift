@@ -23,16 +23,16 @@ shows its length alone.
 """)
 
 let agentGuide = """
-keyenv for an automated caller
+monkeys for an automated caller
 
 A value stored here must never enter your context or your transcript. Anything
 you read stays in both, and a keyring cannot take it back.
 
 Reach a secret as an environment variable, and only as one.
 
-Never run keyenv get as a command of its own:
+Never run monkeys get as a command of its own:
 
-  keyenv get OPENROUTER_API_KEY
+  monkeys get OPENROUTER_API_KEY
 
 Its entire output is the secret, and whatever a command prints, you have read.
 
@@ -40,9 +40,9 @@ Inside another command the same call is right, because the shell performs the
 substitution and hands the value to that process. What returns to you is only
 what the process itself prints:
 
-  OPENROUTER_API_KEY="$(keyenv get OPENROUTER_API_KEY)" ./run-eval
+  OPENROUTER_API_KEY="$(monkeys get OPENROUTER_API_KEY)" ./run-eval
 
-When a startup file already runs eval "$(keyenv export)", every shell you open
+When a startup file already runs eval "$(monkeys export)", every shell you open
 carries the variable, so name nothing and call nothing:
 
   ./run-eval
@@ -58,18 +58,18 @@ So does writing it into a file, a log, a commit, or a bug report. Where a
 config file wants the secret, write whatever reference its format offers, such
 as ${OPENROUTER_API_KEY}, and let the program expand it.
 
-To see what exists, read the names with keyenv list, and their shape with
-keyenv preview:
+To see what exists, read the names with monkeys list, and their shape with
+monkeys preview:
 
-  $ keyenv preview
+  $ monkeys preview
   GITHUB_TOKEN        gh...f 40
   OPENROUTER_API_KEY  sk...2 73
 
 \(maskingRule)
 
-To store a secret, ask the person to run keyenv set <NAME> themselves. Typing
+To store a secret, ask the person to run monkeys set <NAME> themselves. Typing
 it for them puts it in your context first.
 
-To check that it arrived, run keyenv preview <NAME> and compare the length
+To check that it arrived, run monkeys preview <NAME> and compare the length
 against what issued the secret. That confirms the value without reading it.
 """

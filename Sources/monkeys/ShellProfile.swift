@@ -1,10 +1,10 @@
 import Foundation
 
-let shellInitLine = "eval \"$(keyenv export)\""
+let shellInitLine = "eval \"$(monkeys export)\""
 
 private let shellInitBlock = """
 
-# secrets from the keyring, via https://github.com/eastriverlee/keyenv
+# secrets from the keyring, via https://github.com/eastriverlee/monkeys
 \(shellInitLine)
 
 """
@@ -26,7 +26,7 @@ func loginShellName() -> String {
 }
 
 func shellProfilePath() -> String? {
-    if let chosen = ProcessInfo.processInfo.environment["KEYENV_SHELL_PROFILE"], !chosen.isEmpty {
+    if let chosen = ProcessInfo.processInfo.environment["MONKEYS_SHELL_PROFILE"], !chosen.isEmpty {
         return chosen
     }
     switch loginShellName() {
@@ -43,9 +43,9 @@ func shellProfilePath() -> String? {
     }
 }
 
-func profileCallsKeyenvExport(_ path: String) -> Bool {
+func profileCallsMonkeysExport(_ path: String) -> Bool {
     guard let contents = try? String(contentsOfFile: path, encoding: .utf8) else { return false }
-    return contents.contains("keyenv export")
+    return contents.contains("monkeys export")
 }
 
 func appendShellInit(to path: String) throws {

@@ -1,6 +1,6 @@
 import Foundation
 
-let serviceName = "keyenv"
+let serviceName = "monkeys"
 
 enum StoreFailure: Error {
     case nameNotStored(String)
@@ -39,7 +39,7 @@ let secretStore: SecretStore = KeychainStore()
 #elseif os(Linux)
 let secretStore: SecretStore = SecretServiceStore()
 #else
-#error("keyenv has no secret store for this platform")
+#error("monkeys has no secret store for this platform")
 #endif
 
 func isValidVariableName(_ name: String) -> Bool {

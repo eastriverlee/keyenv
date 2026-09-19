@@ -5,7 +5,7 @@ build:
 
 install: build
 	mkdir -p $(INSTALL_DIRECTORY)
-	install -m 755 .build/release/keyenv $(INSTALL_DIRECTORY)/keyenv
+	install -m 755 .build/release/monkeys $(INSTALL_DIRECTORY)/monkeys
 
 clean:
 	swift package clean

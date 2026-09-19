@@ -9,7 +9,7 @@ struct SecretServiceStore: SecretStore {
     }
 
     private static let missingToolAdvice = """
-    keyenv needs the secret-tool command, which talks to the Secret Service \
+    monkeys needs the secret-tool command, which talks to the Secret Service \
     your desktop keyring provides. Install it with your package manager \
     (libsecret-tools on Debian and Ubuntu, libsecret on Fedora and Arch).
     """

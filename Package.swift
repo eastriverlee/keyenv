@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "keyenv",
+    name: "monkeys",
     platforms: [.macOS(.v13)],
-    targets: [.executableTarget(name: "keyenv")]
+    targets: [.executableTarget(name: "monkeys")]
 )
