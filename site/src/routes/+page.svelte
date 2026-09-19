@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import CodeFile from '$lib/components/code-file.svelte';
+	import CommandTabs from '$lib/components/command-tabs.svelte';
 	import * as Marker from '$lib/components/ui/marker';
 	import SearchIcon from '@lucide/svelte/icons/search';
 	import FileTextIcon from '@lucide/svelte/icons/file-text';
@@ -11,8 +12,33 @@
 	const repository = { owner: 'eastriverlee', repo: 'monkeys' };
 
 	const structuredData = `<script type="application/ld+json">${JSON.stringify({"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "monkeys", "url": "https://monk3ys.dev", "description": "LLMs read .env, not anymore. monkeys keeps each secret in your keyring and hands it to one command at a time.", "applicationCategory": "DeveloperApplication", "operatingSystem": "macOS, Linux", "license": "https://github.com/eastriverlee/monkeys/blob/main/LICENSE", "downloadUrl": "https://github.com/eastriverlee/monkeys/releases", "sameAs": ["https://github.com/eastriverlee/monkeys"], "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "eastriverlee", "url": "https://github.com/eastriverlee"}})}<\/script>`;
-	const installLine = 'curl -fsSL https://monk3ys.dev/install | sh';
+	const installTabs = [
+		{ label: 'curl', code: 'curl -fsSL https://monk3ys.dev/install | sh' },
+		{ label: 'Homebrew', code: 'brew install eastriverlee/tap/monkeys' },
+		{
+			label: 'From source',
+			code: 'git clone https://github.com/eastriverlee/monkeys\ncd monkeys\nmake install'
+		}
+	];
 	const storeLine = 'monkeys set OPENROUTER_API_KEY';
+	const storeOutput = `Value:
+stored OPENROUTER_API_KEY
+give it to a command with:
+  monkeys run OPENROUTER_API_KEY <command>`;
+	const agentTabs = [
+		{
+			label: 'Claude Code',
+			code: 'claude plugin marketplace add eastriverlee/monkeys\nclaude plugin install monkeys@eastriverlee'
+		},
+		{
+			label: 'Codex',
+			code: 'codex plugin marketplace add eastriverlee/monkeys\ncodex plugin add monkeys@eastriverlee'
+		},
+		{
+			label: 'Anywhere else',
+			code: 'mkdir -p skills/monkeys\ncurl -fsSL https://monk3ys.dev/skill -o skills/monkeys/SKILL.md'
+		}
+	];
 	const spendLine = `monkeys run OPENROUTER_API_KEY sh -c '
   curl -s -o /dev/null -w "%{http_code}\\n" \\
     -H "Authorization: Bearer ${'$'}OPENROUTER_API_KEY" \\
@@ -133,7 +159,15 @@ SENTRY_DSN`;
 		</p>
 	</section>
 
-	<CodeFile code={installLine} />
+	<section class="flex flex-col gap-4">
+		<h2 class="text-xl font-semibold">Install</h2>
+		<p class="max-w-prose">
+			One binary, no runtime. The script picks the build for your machine, checks the published
+			checksum, and puts it in <code>~/.local/bin</code>; Homebrew upgrades it along with
+			everything else.
+		</p>
+		<CommandTabs tabs={installTabs} />
+	</section>
 
 	<img
 		src="/terminal.svg"
@@ -147,7 +181,7 @@ SENTRY_DSN`;
 			Paste it at the prompt. It goes into the keychain on macOS and the Secret Service on Linux, and
 			nothing you type lands in your shell history.
 		</p>
-		<CodeFile code={storeLine} />
+		<CodeFile code={storeLine} output={storeOutput} />
 	</section>
 
 	<section class="flex flex-col gap-4">
@@ -212,6 +246,21 @@ SENTRY_DSN`;
 			That is the only way a value leaves the keyring.
 		</p>
 		<CodeFile code={unpackLine} />
+	</section>
+
+	<section class="flex flex-col gap-4">
+		<h2 class="text-xl font-semibold">Give it to your agent</h2>
+		<p class="max-w-prose">
+			The skill is what makes an agent reach for <code>monkeys</code> on its own instead of asking
+			you to paste a key. Nothing it can run prints a stored value, and a key it needs but you have
+			not stored comes back as a message that says what to ask you for.
+		</p>
+		<CommandTabs tabs={agentTabs} />
+		<p class="text-muted-foreground max-w-prose text-sm">
+			The plugin follows the <a href="https://agent-plugins.org" class="underline underline-offset-4">Agent Plugins</a>
+			layout, and the third tab is the one file any other agent needs, in whatever directory it
+			reads skills from.
+		</p>
 	</section>
 
 	<footer class="text-muted-foreground flex flex-wrap items-center gap-x-2 text-sm">

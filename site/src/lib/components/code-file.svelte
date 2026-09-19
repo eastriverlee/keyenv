@@ -14,10 +14,24 @@
 	let { name, lang = 'bash', code, output }: Props = $props();
 
 	const isTranscript = $derived(name === undefined);
-	const shown = $derived(
-		!isTranscript ? code : output === undefined ? `$ ${code}` : `$ ${code}\n${output}`
+	const commandLines = $derived(code.split('\n'));
+	const commandLineCount = $derived(commandLines.length);
+	const startsCommand = $derived.by(() => {
+		let openQuote = false;
+		let continued = false;
+		return commandLines.map((line) => {
+			const starts = !continued && !openQuote;
+			openQuote = openQuote !== ((line.match(/'/g)?.length ?? 0) % 2 === 1);
+			continued = line.endsWith('\\');
+			return starts;
+		});
+	});
+	const promptedCommand = $derived(
+		commandLines.map((line, index) => (startsCommand[index] ? `$ ${line}` : line)).join('\n')
 	);
-	const commandLineCount = $derived(code.split('\n').length);
+	const shown = $derived(
+		!isTranscript ? code : output === undefined ? promptedCommand : `${promptedCommand}\n${output}`
+	);
 
 	const promptColor = { color: '#e94100', '--shiki-dark': '#e94100' };
 	const outputColor = { color: '#6e7781', '--shiki-dark': '#8b949e' };
@@ -64,11 +78,8 @@
 	const transcript: ShikiTransformer = {
 		tokens: (lines) =>
 			lines.map((line, index) => {
-				if (index === 0) return withPrompt(line);
-				if (index >= commandLineCount) {
-					return line[0]?.content.startsWith('@') ? asProfileLine(line) : line.flatMap(asOutput);
-				}
-				return line;
+				if (index < commandLineCount) return startsCommand[index] ? withPrompt(line) : line;
+				return line[0]?.content.startsWith('@') ? asProfileLine(line) : line.flatMap(asOutput);
 			})
 	};
 	const transformers = $derived(isTranscript ? [transcript] : []);
