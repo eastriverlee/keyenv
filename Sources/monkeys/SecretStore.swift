@@ -10,6 +10,7 @@ enum StoreFailure: Error {
     case invalidProfileName(String)
     case badProjectFile(String, String)
     case namesNotStored([String], String)
+    case bundleFailed(String)
     case backendUnavailable(String)
     case backendFailed(String)
 }
@@ -38,6 +39,8 @@ extension StoreFailure: CustomStringConvertible {
             nothing ran. ask the person to store \(subject), then try again:
             \(asks)
             """
+        case .bundleFailed(let reason):
+            return reason
         case .backendUnavailable(let reason):
             return reason
         case .backendFailed(let reason):

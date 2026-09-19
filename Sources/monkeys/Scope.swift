@@ -55,7 +55,7 @@ func locateProject() throws -> Project? {
     }
 }
 
-private func parseProject(at path: String, directory: String) throws -> Project {
+func parseProject(at path: String, directory: String) throws -> Project {
     let contents = try String(contentsOfFile: path, encoding: .utf8)
     let shown = abbreviatingHome(path)
     var profile: String?

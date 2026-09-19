@@ -45,7 +45,12 @@ monkeys run ./hello
 monkeys run @staging ./deploy    # same names, another profile's values
 ```
 
-Read the file before adding a name; it is the list.
+Read the file before adding a name; it is the list. A profile never falls back
+to the personal one: a name missing in `@test` is missing there even when a
+bare copy exists.
+
+A shared `<name>.monkeys` bundle fills a profile with `monkeys import`, which
+asks for a passphrase. Tell the person to run it; do not run it yourself.
 
 The command you start is what expands the variable, since that is where it
 exists. `$NAME` written into the `monkeys run` line is expanded by the shell

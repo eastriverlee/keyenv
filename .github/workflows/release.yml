@@ -30,7 +30,7 @@ jobs:
           - runner: ubuntu-24.04-arm
             architecture: arm64
     runs-on: ${{ matrix.runner }}
-    container: swift:6.0-noble
+    container: swift:6.1-noble
     steps:
       - uses: actions/checkout@v4
       - name: Build without the Swift runtime as a dependency

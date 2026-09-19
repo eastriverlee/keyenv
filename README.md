@@ -242,6 +242,11 @@ The profile's name is the project's and its values are yours. Everyone who
 clones the repository sees `@test`, and each of them fills `test/` in their own
 keyring, so a `.monkeys` file can be committed and a keyring never has to be.
 
+A profile never reads from the personal one. Names stored without a profile
+are yours alone, and a name missing in `@test` is missing there even when a
+bare copy exists, so a project cannot quietly pick up a value meant for
+another.
+
 A leading `@profile` picks another set of values for the same names, anywhere:
 
 ```sh
@@ -262,6 +267,49 @@ nothing ran. ask the person to store it, then try again:
 Inside a project, everything after `run` is the command. The older form,
 `monkeys run NAME ./hello`, tries to run a program called `NAME` there, and the
 error says which file is supplying the names instead.
+
+### Sharing a profile
+
+A profile leaves the keyring as one encrypted file, and only that way:
+
+```sh
+$ monkeys export test.monkeys
+Passphrase:
+Again:
+wrote test.monkeys: @test, 3 values
+```
+
+It carries the profile's name, the names the project lists, and their values,
+sealed with ChaCha20-Poly1305 under a key scrypt derives from the passphrase.
+The file is safe to send over whatever you already use; the passphrase goes
+another way. An export with a value still missing refuses, since a bundle
+that fills half a profile is a bug for whoever receives it.
+
+The other side runs `import` where the project should live:
+
+```sh
+$ monkeys import test.monkeys
+Passphrase:
+wrote .monkeys: @test, 3 names
+stored test/DATABASE_URL, test/STRIPE_SECRET_KEY, test/OPENROUTER_API_KEY
+```
+
+The values go into that person's keyring under `test/`, and the names become
+a `.monkeys` file in the current directory, so `monkeys run ./hello` works
+from the next command. When a `.monkeys` file is already there, `import`
+stores nothing unless it lists the same profile and names, and says what
+differs; that file is committed, and a bundle does not get to rewrite it.
+
+Both commands read the passphrase from standard input when it is not a
+terminal, for the rare script that needs to.
+
+A bundle has no place in a repository, and the ignore rule needs two lines,
+because `*.monkeys` alone also matches the `.monkeys` file you do commit:
+
+```
+*.monkeys
+!.monkeys
+```
 
 ## Every shell, if you want it
 

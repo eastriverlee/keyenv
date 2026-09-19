@@ -21,6 +21,10 @@ let commandSummaries = [
                    summary: "the same, with every stored value"),
     CommandSummary(verb: "run", arguments: "<command>",
                    summary: "the same, names read from .monkeys"),
+    CommandSummary(verb: "export", arguments: "<name>.monkeys",
+                   summary: "write the profile encrypted, to share"),
+    CommandSummary(verb: "import", arguments: "<name>.monkeys",
+                   summary: "store its values, write its .monkeys"),
     CommandSummary(verb: "shell-init", arguments: "",
                    summary: "add that eval to your startup file"),
 ]
@@ -71,6 +75,13 @@ var usage: String {
 
       \(outputStyle("monkeys run @staging ./deploy", .argument))
       \(outputStyle("monkeys set @staging DATABASE_URL", .argument))
+
+    Share a profile as one encrypted file. export writes it after asking for a
+    passphrase; import asks again, stores the values, and writes the names into
+    a .monkeys file here:
+
+      \(outputStyle("monkeys export test.monkeys", .argument))
+      \(outputStyle("monkeys import test.monkeys", .argument))
 
     Or put every value into every shell you open. monkeys shell-init writes this
     into your startup file:

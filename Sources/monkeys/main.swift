@@ -85,15 +85,15 @@ func runList() throws {
     for name in try secretStore.storedNames() { print(name) }
 }
 
-func scopedNames(_ arguments: [String]) throws -> (scope: Scope, names: [String]) {
-    let (scope, rest) = try resolveScope(arguments)
+func validatedNames(_ scope: Scope, _ rest: [String]) throws -> [String] {
     let names = rest.isEmpty ? try namesInScope(scope) : rest
     for name in names where !isValidVariableName(name) { throw StoreFailure.invalidVariableName(name) }
-    return (scope, names)
+    return names
 }
 
 func runPreview(_ arguments: [String]) throws {
-    let (scope, names) = try scopedNames(arguments)
+    let (scope, rest) = try resolveScope(arguments)
+    let names = try validatedNames(scope, rest)
     guard let width = names.map(\.count).max() else { return }
     for name in names {
         let masked = maskedValue(try secretStore.read(forName: scope.storedName(name)))
@@ -102,11 +102,65 @@ func runPreview(_ arguments: [String]) throws {
 }
 
 func runExport(_ arguments: [String]) throws {
-    let (scope, names) = try scopedNames(arguments)
+    let (scope, rest) = try resolveScope(arguments)
+    if rest.count == 1, isBundlePath(rest[0]) {
+        try exportBundle(scope, to: rest[0])
+        return
+    }
+    let names = try validatedNames(scope, rest)
     let lines = try names.map { name in
         "export \(name)=\(shellSingleQuoted(try secretStore.read(forName: scope.storedName(name))))"
     }
     for line in lines { print(line) }
+}
+
+func exportBundle(_ scope: Scope, to path: String) throws {
+    guard let profile = scope.profile else {
+        throw StoreFailure.bundleFailed("a bundle carries a profile: run this in a project with a \(projectFileName) file, or name one with @profile")
+    }
+    var values: [(name: String, value: String)] = []
+    var missing: [String] = []
+    for name in try namesInScope(scope) {
+        do {
+            values.append((name, try secretStore.read(forName: scope.storedName(name))))
+        } catch StoreFailure.nameNotStored {
+            missing.append(name)
+        }
+    }
+    guard missing.isEmpty else { throw StoreFailure.namesNotStored(missing, scope.profileArgument) }
+    try writeBundle(ProfileBundle(profile: profile, values: values), to: path)
+    printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(path, .bold) + ": @\(profile), \(values.count) value\(values.count == 1 ? "" : "s")")
+}
+
+func reconcileProjectFile(profile: String, names: [String]) throws {
+    let directory = FileManager.default.currentDirectoryPath
+    let path = directory + "/" + projectFileName
+    guard FileManager.default.fileExists(atPath: path) else {
+        try projectFileContents(profile: profile, names: names).write(toFile: path, atomically: true, encoding: .utf8)
+        printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(projectFileName, .bold) + ": @\(profile), \(names.count) name\(names.count == 1 ? "" : "s")")
+        return
+    }
+    let existing = try parseProject(at: path, directory: directory)
+    guard existing.profile == profile, Set(existing.names) == Set(names) else {
+        let here = "@\(existing.profile ?? "") with \(existing.names.joined(separator: ", "))"
+        let brought = "@\(profile) with \(names.joined(separator: ", "))"
+        throw StoreFailure.bundleFailed("\(projectFileName) here is \(here); the bundle is \(brought). nothing was stored. move the bundle to its project, or edit the file first")
+    }
+    printToStandardError("\(projectFileName) already lists these names")
+}
+
+func runImport(_ arguments: [String]) throws {
+    guard let path = arguments.first, arguments.count == 1, isBundlePath(path) else {
+        throw StoreFailure.badInvocation("monkeys import <name>\(bundleSuffix)")
+    }
+    let bundle = try readBundle(from: path)
+    let names = bundle.values.map(\.name)
+    try reconcileProjectFile(profile: bundle.profile, names: names)
+    for entry in bundle.values {
+        try secretStore.store(entry.value, forName: bundle.profile + "/" + entry.name)
+    }
+    let stored = names.map { messageStyle(bundle.profile + "/" + $0, .bold) }.joined(separator: ", ")
+    printToStandardError(messageStyle("stored", .good) + " " + stored)
 }
 
 func runShellInit() throws {
@@ -139,6 +193,7 @@ do {
     case "remove": try runRemove(rest)
     case "export": try runExport(rest)
     case "run": try runCommandWithSecrets(rest)
+    case "import": try runImport(rest)
     case "shell-init": try runShellInit()
     case "help", "-h", "--help": print(usage)
     default:
