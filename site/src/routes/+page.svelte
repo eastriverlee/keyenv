@@ -24,20 +24,20 @@ OPENROUTER_API_KEY`;
     -H "Authorization: Bearer ${'$'}OPENROUTER_API_KEY" \\
     https://openrouter.ai/api/v1/key
 '`;
-	const profilesFile = `@monkeys,test.monkeys
+	const profilesFile = `@test.monkeys,monkeys
 OPENROUTER_API_KEY
 STRIPE_SECRET_KEY
 @monkeys
 SENTRY_DSN`;
 	const doctorLine = 'monkeys doctor';
-	const doctorOutput = `@monkeys  default
+	const doctorOutput = `@test.monkeys  default
   ✓ OPENROUTER_API_KEY
   ✓ STRIPE_SECRET_KEY
-  ✓ SENTRY_DSN
-@test.monkeys
+@monkeys
   ✓ OPENROUTER_API_KEY
-  ✗ STRIPE_SECRET_KEY`;
-	const runStaging = 'monkeys run @test ./hello';
+  ✗ STRIPE_SECRET_KEY
+  ✗ SENTRY_DSN`;
+	const runStaging = 'monkeys run @monkeys ./deploy';
 	const packLine = 'monkeys pack';
 	const unpackLine = 'monkeys unpack ~/Downloads/monkeys.monkeys';
 

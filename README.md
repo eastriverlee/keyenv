@@ -253,7 +253,7 @@ another.
 A profile line can name several profiles, and a file can hold several blocks:
 
 ```
-@monkeys,test.monkeys
+@test.monkeys,monkeys
 DATABASE_URL
 STRIPE_SECRET_KEY
 @monkeys
@@ -269,24 +269,24 @@ does not declare is refused with the declared ones listed, and a prefix that
 fits several is refused with those:
 
 ```sh
-monkeys run @test ./hello
-monkeys set @test STRIPE_SECRET_KEY
+monkeys run @monkeys ./deploy
+monkeys set @monkeys SENTRY_DSN
 ```
 
 A value missing in one profile stops only that profile, and only when it is
-used: test can be half filled while monkeys runs. `doctor` reads the whole
+used: monkeys can be half filled while test runs. `doctor` reads the whole
 file and shows every profile with what it has and lacks, in colour on a
 terminal, and exits non-zero while anything is missing:
 
 ```
 $ monkeys doctor
-@monkeys  default
+@test.monkeys  default
   ✓ DATABASE_URL
   ✓ STRIPE_SECRET_KEY
-  ✓ SENTRY_DSN
-@test.monkeys
+@monkeys
   ✓ DATABASE_URL
   ✗ STRIPE_SECRET_KEY
+  ✗ SENTRY_DSN
 ```
 
 Profile names take letters, digits, `_`, `-` and `.`. A dotted name in the

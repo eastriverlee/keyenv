@@ -75,12 +75,12 @@ var usage: String {
     blocks. Each profile gets the names of every block that lists it; the first
     profile in the file is the one run uses when none is given:
 
-      \(outputStyle("@monkeys,test.monkeys", .argument))
+      \(outputStyle("@test.monkeys,monkeys", .argument))
       \(outputStyle("DATABASE_URL", .argument))
       \(outputStyle("@monkeys", .argument))
       \(outputStyle("SENTRY_DSN", .argument))
 
-      \(outputStyle("monkeys run @test ./hello", .argument))          test.monkeys, by its prefix
+      \(outputStyle("monkeys run @monkeys ./deploy", .argument))
       \(outputStyle("monkeys doctor", .argument))                     which profile lacks what
 
     A leading @profile picks another declared profile, and a prefix that fits
@@ -88,7 +88,7 @@ var usage: String {
     without a prefix live; it sets the project file aside, so names are given
     again:
 
-      \(outputStyle("monkeys set @test DATABASE_URL", .argument))      stored as test.monkeys/DATABASE_URL
+      \(outputStyle("monkeys set @monkeys SENTRY_DSN", .argument))      stored as monkeys/SENTRY_DSN
       \(outputStyle("monkeys run @ TYPESAFE_API_KEY claude", .argument))
 
     For a shell that should carry values from startup, export writes the lines
