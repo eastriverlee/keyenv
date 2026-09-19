@@ -27,6 +27,8 @@ let commandSummaries = [
                    summary: "write the profile encrypted, to share"),
     CommandSummary(verb: "unpack", arguments: "<name> [directory]",
                    summary: "store its values, write its .monkeys"),
+    CommandSummary(verb: "copy", arguments: "@a --to @b",
+                   summary: "give @b the names it lacks, from @a"),
     CommandSummary(verb: "doctor", arguments: "[--short]",
                    summary: "what each profile has and lacks"),
 ]
@@ -84,6 +86,12 @@ var usage: String {
 
       \(outputStyle("monkeys run @foo ./deploy", .argument))
       \(outputStyle("monkeys doctor", .argument))                     which profile lacks what
+
+    A profile that shares most of its values with another is filled from it.
+    copy moves only the names the target lacks, never a value it already
+    holds, and says which names moved:
+
+      \(outputStyle("monkeys copy @test.foo --to @foo", .argument))
 
     A leading @profile picks another declared profile, and a prefix that fits
     only one of them is enough:
