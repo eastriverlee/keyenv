@@ -8,7 +8,7 @@
       "name": "monkeys",
       "source": {
         "source": "local",
-        "path": "./"
+        "path": "./plugins/monkeys"
       },
       "policy": {
         "installation": "AVAILABLE",

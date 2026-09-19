@@ -114,11 +114,10 @@ On Linux, `monkeys` reaches the keyring through `secret-tool`: install
 ### For a coding agent
 
 The binary is the whole tool, and an agent that can run a shell can already
-use it. The skill at `skills/monkeys/SKILL.md` is what makes it reach for
-`monkeys` on its own instead of asking you to paste a key. This repository is
-an [Agent Plugins](https://agent-plugins.org) package, so a client that speaks
-the standard installs it from the repository URL. Two clients have paths of
-their own.
+use it. The skill at `plugins/monkeys/skills/monkeys/SKILL.md` is what makes
+it reach for `monkeys` on its own instead of asking you to paste a key.
+`plugins/monkeys` is an [Agent Plugins](https://agent-plugins.org) package,
+and the repository is a marketplace for it in the two clients that have one.
 
 **Claude Code**
 
@@ -141,7 +140,7 @@ The binary is installed separately, from the section above.
 
 **Anything else**
 
-Copy `skills/monkeys/SKILL.md` into whatever directory your agent reads
+Copy `plugins/monkeys/skills/monkeys/SKILL.md` into whatever directory your agent reads
 skills from; <https://monk3ys.dev/skill> serves that one file.
 
 The skill restates a few invocations so an agent knows them before it runs

@@ -13,7 +13,7 @@ import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-COPIES = [ROOT / "skills" / "monkeys" / "SKILL.md", ROOT / "site" / "src" / "routes" / "+page.svelte"]
+COPIES = [ROOT / "plugins" / "monkeys" / "skills" / "monkeys" / "SKILL.md", ROOT / "site" / "src" / "routes" / "+page.svelte"]
 MENTION = re.compile(r"\bmonkeys ([a-z][a-z-]*)")
 CODE_IN_MARKUP = re.compile(r"<code[^>]*>.*?</code>", re.S)
 SCRIPT_BLOCK = re.compile(r"<script[^>]*>(.*?)</script>", re.S)

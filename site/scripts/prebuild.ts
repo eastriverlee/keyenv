@@ -9,7 +9,7 @@ for (const picture of ['monkeys.svg', 'terminal.svg']) {
 }
 
 const readme = readFileSync(join(repository, 'README.md'), 'utf8');
-const skill = readFileSync(join(repository, 'skills', 'monkeys', 'SKILL.md'), 'utf8');
+const skill = readFileSync(join(repository, 'plugins', 'monkeys', 'skills', 'monkeys', 'SKILL.md'), 'utf8');
 const fullText = [
 	'# monkeys',
 	'',

@@ -7,7 +7,7 @@ Install the `monkeys` binary on this machine.
 1. Run the installer that ships with this plugin:
 
    ```sh
-   sh "${CLAUDE_PLUGIN_ROOT}/tools/install.sh"
+   sh "${CLAUDE_PLUGIN_ROOT}/skills/monkeys/scripts/install.sh"
    ```
 
    It picks the build for this operating system and processor, checks the
