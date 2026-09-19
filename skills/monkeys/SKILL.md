@@ -31,11 +31,11 @@ reads.
 A project with a `.monkeys` file has already named what it needs:
 
 ```
-@test
 DATABASE_URL
 STRIPE_SECRET_KEY
 ```
 
+Its profile is the directory's name unless an `@profile` line says otherwise.
 In that directory or below it, `run` takes only the command, and every name is
 scoped to that profile, so `monkeys set STRIPE_SECRET_KEY` there stores into
 the same profile the command reads from:
@@ -46,7 +46,7 @@ monkeys run @staging ./deploy    # same names, another profile's values
 ```
 
 Read the file before adding a name; it is the list. A profile never falls back
-to the personal one: a name missing in `@test` is missing there even when a
+to the personal one: a name missing in `@shop` is missing there even when a
 bare copy exists.
 
 A shared `<name>.monkeys` bundle fills a profile with `monkeys unpack`, which
@@ -69,9 +69,9 @@ monkeys run OPENROUTER_API_KEY sh -c 'curl -H "Authorization: Bearer $OPENROUTER
 `run` stops before anything happens and names what to ask for:
 
 ```
-monkeys: ANTHROPIC_API_KEY is not stored yet in @test
+monkeys: ANTHROPIC_API_KEY is not stored yet in @shop
 nothing ran. ask the person to store it, then try again:
-  monkeys set @test ANTHROPIC_API_KEY
+  monkeys set @shop ANTHROPIC_API_KEY
 ```
 
 Pass that on. Storing is the person's move: typing a secret for them puts it in

@@ -23,7 +23,7 @@
 ## Quickstart
 
 ```sh
-brew install eastriverlee/tap/monkeys
+curl -fsSL https://raw.githubusercontent.com/eastriverlee/monkeys/main/tools/install.sh | sh
 monkeys set OPENROUTER_API_KEY
 ```
 
@@ -72,7 +72,17 @@ gnome-keyring on most desktops and KWallet on KDE, reached through
 
 ## Install
 
-On macOS or Linux, through Homebrew:
+On macOS or Linux, from the latest release:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/eastriverlee/monkeys/main/tools/install.sh | sh
+```
+
+The script picks the build for your operating system and processor, checks the
+published checksum, and installs into `~/.local/bin`. Set `INSTALL_DIRECTORY`
+to put it elsewhere. It is short, and reading it first is a fine habit.
+
+With Homebrew, which then upgrades it along with everything else:
 
 ```sh
 brew install eastriverlee/tap/monkeys
@@ -84,16 +94,6 @@ Tap it once and the bare name works from then on:
 brew tap eastriverlee/tap
 brew install monkeys
 ```
-
-On macOS or Linux, from the latest release:
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/eastriverlee/monkeys/main/tools/install.sh | sh
-```
-
-The script picks the build for your operating system and processor, checks the
-published checksum, and installs into `~/.local/bin`. Set `INSTALL_DIRECTORY`
-to put it elsewhere.
 
 From source, with a Swift toolchain and macOS 13 or later:
 
@@ -217,15 +217,24 @@ values are missing, that nothing happened, and what to ask its person for.
 A project names what it needs once, in a `.monkeys` file next to the code:
 
 ```
-@test
 DATABASE_URL
 STRIPE_SECRET_KEY
 OPENROUTER_API_KEY
 ```
 
-The `@` line is the profile and every project has one; the rest are names,
-and `#` starts a comment. Commit it. It is the secret half of `.env.example`, and a project keeps one or the
-other, since two lists of the same names drift.
+One name per line, `#` starts a comment. Commit it. It is the secret half of
+`.env.example`, and a project keeps one or the other, since two lists of the
+same names drift.
+
+The file's profile is the name of the directory it sits in, so a checkout at
+`~/work/shop` keeps its values under `shop/`. An `@profile` line at the top
+picks another name, for a directory called something else or two checkouts
+that should share one set:
+
+```
+@shop
+DATABASE_URL
+```
 
 In that directory or any below it, `run` takes only the command:
 
@@ -235,16 +244,16 @@ monkeys run npm run dev
 ```
 
 The profile scopes every name. `monkeys set STRIPE_SECRET_KEY` there stores
-`test/STRIPE_SECRET_KEY`, which is what `run` reads, and `preview` with no
+`shop/STRIPE_SECRET_KEY`, which is what `run` reads, and `preview` with no
 names gives the file's names from that profile. `list` stays global and
 shows the prefixes, so you can see which project each value belongs to.
 
 The profile's name is the project's and its values are yours. Everyone who
-clones the repository sees `@test`, and each of them fills `test/` in their own
+clones the repository gets the same names, and each of them fills their own
 keyring, so a `.monkeys` file can be committed and a keyring never has to be.
 
 A profile never reads from the personal one. Names stored without a profile
-are yours alone, and a name missing in `@test` is missing there even when a
+are yours alone, and a name missing in `@shop` is missing there even when a
 bare copy exists, so a project cannot quietly pick up a value meant for
 another.
 
@@ -264,9 +273,9 @@ from any directory:
 
 ```
 $ monkeys run ./hello
-monkeys: STRIPE_SECRET_KEY is not stored yet in @test
+monkeys: STRIPE_SECRET_KEY is not stored yet in @shop
 nothing ran. ask the person to store it, then try again:
-  monkeys set @test STRIPE_SECRET_KEY
+  monkeys set @shop STRIPE_SECRET_KEY
 ```
 
 Inside a project, everything after `run` is the command. The older form,
@@ -281,7 +290,7 @@ A profile leaves the keyring as one encrypted file, and only that way:
 $ monkeys pack
 Passphrase:
 Again:
-wrote test.monkeys: @test, 3 values
+wrote shop.monkeys: @shop, 3 values
 ```
 
 The file takes the profile's name. A word after `pack` names it otherwise,
@@ -296,17 +305,19 @@ that fills half a profile is a bug for whoever receives it.
 The other side runs `unpack` where the project should live:
 
 ```sh
-$ monkeys unpack test
+$ monkeys unpack shop
 Passphrase:
-wrote .monkeys: @test, 3 names
-stored test/DATABASE_URL, test/STRIPE_SECRET_KEY, test/OPENROUTER_API_KEY
+wrote .monkeys: @shop, 3 names
+stored shop/DATABASE_URL, shop/STRIPE_SECRET_KEY, shop/OPENROUTER_API_KEY
 ```
 
-The values go into that person's keyring under `test/`, and the names become
-a `.monkeys` file in the current directory, so `monkeys run ./hello` works
-from the next command. When a `.monkeys` file is already there, `unpack`
-stores nothing unless it lists the same profile and names, and says what
-differs; that file is committed, and a bundle does not get to rewrite it.
+The values go into that person's keyring under the bundle's profile, `shop/`,
+and the names become a `.monkeys` file in the current directory, with an
+`@shop` line when the directory is called something else, so `monkeys run
+./hello` works from the next command. When a `.monkeys` file is already
+there, `unpack` keeps it. It stores nothing if that file lists other names or
+resolves to another profile, and says which; the file is committed, and a
+bundle does not get to rewrite it.
 
 Both commands read the passphrase from standard input when it is not a
 terminal, for the rare script that needs to.
@@ -321,7 +332,7 @@ because `*.monkeys` alone also matches the `.monkeys` file you do commit:
 
 ## Every shell, if you want it
 
-`run` hands a value to one process, and `monkeys run @test zsh` hands a whole
+`run` hands a value to one process, and `monkeys run @shop zsh` hands a whole
 profile to one shell, which forgets it on exit. For a value that every shell
 should carry from startup, `export` writes the lines and you paste them:
 

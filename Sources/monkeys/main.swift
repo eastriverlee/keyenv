@@ -116,15 +116,18 @@ func reconcileProjectFile(profile: String, names: [String]) throws {
     let directory = FileManager.default.currentDirectoryPath
     let path = directory + "/" + projectFileName
     guard FileManager.default.fileExists(atPath: path) else {
-        try projectFileContents(profile: profile, names: names).write(toFile: path, atomically: true, encoding: .utf8)
+        try projectFileContents(profile: profile, names: names, in: directory).write(toFile: path, atomically: true, encoding: .utf8)
         printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(projectFileName, .bold) + ": @\(profile), \(names.count) name\(names.count == 1 ? "" : "s")")
         return
     }
     let existing = try parseProject(at: path, directory: directory)
-    guard existing.profile == profile, Set(existing.names) == Set(names) else {
-        let here = "@\(existing.profile ?? "") with \(existing.names.joined(separator: ", "))"
-        let brought = "@\(profile) with \(names.joined(separator: ", "))"
-        throw StoreFailure.bundleFailed("\(projectFileName) here is \(here); the bundle is \(brought). nothing was stored. move the bundle to its project, or edit the file first")
+    guard Set(existing.names) == Set(names) else {
+        let here = existing.names.joined(separator: ", ")
+        let brought = names.joined(separator: ", ")
+        throw StoreFailure.bundleFailed("\(projectFileName) here lists \(here); the bundle has \(brought). nothing was stored. move the bundle to its project, or edit the file first")
+    }
+    guard existing.profile == profile else {
+        throw StoreFailure.bundleFailed("this directory resolves to @\(existing.profile) and the bundle is @\(profile). nothing was stored. add a line saying @\(profile) to \(projectFileName), then unpack again")
     }
     printToStandardError("\(projectFileName) already lists these names")
 }

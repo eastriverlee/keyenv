@@ -108,10 +108,11 @@ func parseProject(at path: String, directory: String) throws -> Project {
         }
         names.append(line)
     }
-    guard let profile else {
-        throw StoreFailure.badProjectFile(shown, "no @profile line; a project's names live in a named profile")
+    let chosen = profile ?? URL(fileURLWithPath: directory).lastPathComponent
+    guard isValidProfileName(chosen) else {
+        throw StoreFailure.badProjectFile(shown, "the directory name \(chosen) cannot be a profile; add an @profile line")
     }
-    return Project(directory: directory, profile: profile, names: names)
+    return Project(directory: directory, profile: chosen, names: names)
 }
 
 func storedNamesInScope(_ scope: Scope) throws -> [String] {

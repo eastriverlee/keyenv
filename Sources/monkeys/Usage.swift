@@ -57,9 +57,9 @@ var usage: String {
 
       \(outputStyle("monkeys run OPENROUTER_API_KEY ./bench", .argument))
 
-    A project keeps its names in a \(projectFileName) file, with the profile they live in:
+    A project keeps its names in a \(projectFileName) file. Its profile is the directory's
+    name, or what an @profile line says:
 
-      \(outputStyle("@test", .argument))
       \(outputStyle("DATABASE_URL", .argument))
       \(outputStyle("STRIPE_SECRET_KEY", .argument))
 
@@ -67,7 +67,7 @@ var usage: String {
     and remove read and write that profile:
 
       \(outputStyle("monkeys run ./bench", .argument))
-      \(outputStyle("monkeys set STRIPE_SECRET_KEY", .argument))        stored as test/STRIPE_SECRET_KEY
+      \(outputStyle("monkeys set STRIPE_SECRET_KEY", .argument))        stored as shop/STRIPE_SECRET_KEY
 
     A leading @profile picks another set of values anywhere. A bare @ is the
     personal profile, where names without a prefix live; it sets the project
@@ -88,8 +88,8 @@ var usage: String {
     say otherwise. pack asks for a passphrase; unpack asks again, stores the
     values, and writes the names into a .monkeys file here:
 
-      \(outputStyle("monkeys pack", .argument))                  writes test.monkeys
-      \(outputStyle("monkeys unpack test", .argument))
+      \(outputStyle("monkeys pack", .argument))                  writes shop.monkeys
+      \(outputStyle("monkeys unpack shop", .argument))
 
     \(styledAgentGuide)
     """
