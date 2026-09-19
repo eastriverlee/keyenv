@@ -137,6 +137,7 @@ names a command `monkeys help` does not list.
 | `monkeys remove <NAME>` | delete one value |
 | `monkeys run <NAME>[,<NAME>] <command>` | run a command with those values in its environment |
 | `monkeys run --all <command>` | the same, with every stored value |
+| `monkeys run <command>` | the same, with the names a `.monkeys` file lists |
 | `monkeys export [NAME...]` | print shell export lines, for a shell to eval |
 | `monkeys shell-init` | add that eval to your shell startup file |
 
@@ -152,7 +153,8 @@ wl-paste | monkeys set GITHUB_TOKEN       # Linux, Wayland
 
 Naming no name means every name, for `preview` and `export`. `run` asks to be
 told, since the names are how it knows what to check for and what to leave out;
-`--all` is there for when you would rather not say.
+`--all` is there for when you would rather not say. Any command takes a leading
+`@profile`, which is covered below.
 
 Output is coloured only when it is going to a terminal, and never for `export`
 or `list`, whose output a shell or a script reads. `NO_COLOR` turns colour off,
@@ -208,6 +210,58 @@ nothing ran. ask the person to store it, then try again:
 
 That message is written to be passed on. An agent that meets it knows which
 values are missing, that nothing happened, and what to ask its person for.
+
+## Projects and profiles
+
+A project names what it needs once, in a `.monkeys` file next to the code:
+
+```
+@test
+DATABASE_URL
+STRIPE_SECRET_KEY
+OPENROUTER_API_KEY
+```
+
+The `@` line is the profile, the rest are names, `#` starts a comment. Commit
+it. It is the secret half of `.env.example`, and a project keeps one or the
+other, since two lists of the same names drift.
+
+In that directory or any below it, `run` takes only the command:
+
+```sh
+monkeys run ./hello
+monkeys run npm run dev
+```
+
+The profile scopes every name. `monkeys set STRIPE_SECRET_KEY` there stores
+`test/STRIPE_SECRET_KEY`, which is what `run` reads, and `preview` and `export`
+with no names give the file's names from that profile. `list` stays global and
+shows the prefixes, so you can see which project each value belongs to.
+
+The profile's name is the project's and its values are yours. Everyone who
+clones the repository sees `@test`, and each of them fills `test/` in their own
+keyring, so a `.monkeys` file can be committed and a keyring never has to be.
+
+A leading `@profile` picks another set of values for the same names, anywhere:
+
+```sh
+monkeys run @staging ./deploy
+monkeys set @staging DATABASE_URL
+```
+
+A missing value says where it is missing from, and the `set` it asks for works
+from any directory:
+
+```
+$ monkeys run ./hello
+monkeys: STRIPE_SECRET_KEY is not stored yet in @test
+nothing ran. ask the person to store it, then try again:
+  monkeys set @test STRIPE_SECRET_KEY
+```
+
+Inside a project, everything after `run` is the command. The older form,
+`monkeys run NAME ./hello`, tries to run a program called `NAME` there, and the
+error says which file is supplying the names instead.
 
 ## Every shell, if you want it
 

@@ -10,17 +10,19 @@ let commandSummaries = [
     CommandSummary(verb: "list", arguments: "",
                    summary: "print every stored name"),
     CommandSummary(verb: "preview", arguments: "[NAME...]",
-                   summary: "print each value masked, with its length"),
+                   summary: "show each value masked, with length"),
     CommandSummary(verb: "remove", arguments: "<NAME>",
                    summary: "delete one stored value"),
     CommandSummary(verb: "export", arguments: "[NAME...]",
-                   summary: "print export lines, for a shell to eval"),
+                   summary: "export lines for a shell to eval"),
     CommandSummary(verb: "run", arguments: "<NAME>[,<NAME>] <command>",
                    summary: "run a command with those values set"),
     CommandSummary(verb: "run", arguments: "--all <command>",
                    summary: "the same, with every stored value"),
+    CommandSummary(verb: "run", arguments: "<command>",
+                   summary: "the same, names read from .monkeys"),
     CommandSummary(verb: "shell-init", arguments: "",
-                   summary: "add that eval to your shell startup file"),
+                   summary: "add that eval to your startup file"),
 ]
 
 private func plainInvocation(_ command: CommandSummary) -> String {
@@ -52,6 +54,23 @@ var usage: String {
     Spend a value on one command:
 
       \(outputStyle("monkeys run OPENROUTER_API_KEY ./bench", .argument))
+
+    A project keeps its names in a \(projectFileName) file, with the profile they live in:
+
+      \(outputStyle("@test", .argument))
+      \(outputStyle("DATABASE_URL", .argument))
+      \(outputStyle("STRIPE_SECRET_KEY", .argument))
+
+    In that directory or below it, run takes only the command, and set, preview,
+    remove and export read and write that profile:
+
+      \(outputStyle("monkeys run ./bench", .argument))
+      \(outputStyle("monkeys set STRIPE_SECRET_KEY", .argument))        stored as test/STRIPE_SECRET_KEY
+
+    A leading @profile picks another set of values anywhere:
+
+      \(outputStyle("monkeys run @staging ./deploy", .argument))
+      \(outputStyle("monkeys set @staging DATABASE_URL", .argument))
 
     Or put every value into every shell you open. monkeys shell-init writes this
     into your startup file:

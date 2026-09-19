@@ -35,11 +35,11 @@ private let agentGuide = """
 monkeys for an automated caller
 
 A value stored here must never enter your context or your transcript. Anything
-you read stays in both, and a keyring cannot take it back. There is no command
-that prints a stored value, so the only thing to get right is how you spend it.
+you read stays in both, and a keyring cannot take it back. No command prints a
+stored value, so the only thing to get right is how you spend one.
 
-monkeys run puts the values you name into one command's environment and nowhere
-else:
+monkeys run puts the values you name into one command's environment, and
+nowhere else:
 
   monkeys run OPENROUTER_API_KEY ./bench
   monkeys run OPENROUTER_API_KEY,GITHUB_TOKEN ./deploy
@@ -47,6 +47,15 @@ else:
 Nothing you write there holds the secret, so nothing you write can spill it.
 With every name stored, run replaces itself with the command, so the exit
 status, the output and the signals are the command's own.
+
+A project that has a .monkeys file has already named what it needs, and run
+there takes only the command:
+
+  monkeys run ./bench
+
+The file's @profile line scopes every name, so set in that directory stores
+into the same profile the command reads from. Read the file before adding a
+name; it is the list.
 
 Name what the command actually reads. Naming is how you learn that a value is
 missing, and it keeps the rest of them out of a process that has no business

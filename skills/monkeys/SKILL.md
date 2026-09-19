@@ -28,6 +28,25 @@ the output and the signals are the command's own. Reach for
 `monkeys run --all <command>` only when you cannot tell which names the command
 reads.
 
+A project with a `.monkeys` file has already named what it needs:
+
+```
+@test
+DATABASE_URL
+STRIPE_SECRET_KEY
+```
+
+In that directory or below it, `run` takes only the command, and every name is
+scoped to that profile, so `monkeys set STRIPE_SECRET_KEY` there stores into
+the same profile the command reads from:
+
+```sh
+monkeys run ./hello
+monkeys run @staging ./deploy    # same names, another profile's values
+```
+
+Read the file before adding a name; it is the list.
+
 The command you start is what expands the variable, since that is where it
 exists. `$NAME` written into the `monkeys run` line is expanded by the shell
 you are already in, which does not have the value:
@@ -45,9 +64,9 @@ monkeys run OPENROUTER_API_KEY sh -c 'curl -H "Authorization: Bearer $OPENROUTER
 `run` stops before anything happens and names what to ask for:
 
 ```
-monkeys: ANTHROPIC_API_KEY is not stored yet
+monkeys: ANTHROPIC_API_KEY is not stored yet in @test
 nothing ran. ask the person to store it, then try again:
-  monkeys set ANTHROPIC_API_KEY
+  monkeys set @test ANTHROPIC_API_KEY
 ```
 
 Pass that on. Storing is the person's move: typing a secret for them puts it in

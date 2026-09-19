@@ -55,20 +55,27 @@ func reportShellInit(appendedTo path: String) {
     printToStandardError("open a new shell, or: source \(abbreviatingHome(path))")
 }
 
+func spendHint(_ scope: Scope, _ name: String) -> String {
+    if let project = scope.project, project.names.contains(name) { return "monkeys run <command>" }
+    return "monkeys run \(scope.profileArgument)\(name) <command>"
+}
+
 func runSet(_ arguments: [String]) throws {
-    let name = try requireName(arguments)
+    let (scope, rest) = try resolveScope(arguments)
+    let name = try requireName(rest)
     let value = readValueFromInput()
     guard !value.isEmpty else { throw StoreFailure.emptyValue }
-    try secretStore.store(value, forName: name)
-    printToStandardError(messageStyle("stored", .good) + " " + messageStyle(name, .bold))
+    try secretStore.store(value, forName: scope.storedName(name))
+    printToStandardError(messageStyle("stored", .good) + " " + messageStyle(scope.storedName(name), .bold))
     printHintToTerminal(messageStyle("give it to a command with:", .dim))
-    printHintToTerminal("  " + messageStyle("monkeys run \(name) <command>", .argument))
+    printHintToTerminal("  " + messageStyle(spendHint(scope, name), .argument))
 }
 
 func runRemove(_ arguments: [String]) throws {
-    let name = try requireName(arguments)
-    try secretStore.remove(forName: name)
-    printToStandardError(messageStyle("removed", .good) + " " + messageStyle(name, .bold))
+    let (scope, rest) = try resolveScope(arguments)
+    let name = try requireName(rest)
+    try secretStore.remove(forName: scope.storedName(name))
+    printToStandardError(messageStyle("removed", .good) + " " + messageStyle(scope.storedName(name), .bold))
     guard isSetInThisEnvironment(name) else { return }
     printHintToTerminal(messageStyle("this shell still carries it; clear it with:", .dim))
     printHintToTerminal("  " + messageStyle("unset \(name)", .argument))
@@ -78,22 +85,26 @@ func runList() throws {
     for name in try secretStore.storedNames() { print(name) }
 }
 
+func scopedNames(_ arguments: [String]) throws -> (scope: Scope, names: [String]) {
+    let (scope, rest) = try resolveScope(arguments)
+    let names = rest.isEmpty ? try namesInScope(scope) : rest
+    for name in names where !isValidVariableName(name) { throw StoreFailure.invalidVariableName(name) }
+    return (scope, names)
+}
+
 func runPreview(_ arguments: [String]) throws {
-    let names = arguments.isEmpty ? try secretStore.storedNames() : arguments
+    let (scope, names) = try scopedNames(arguments)
     guard let width = names.map(\.count).max() else { return }
     for name in names {
-        guard isValidVariableName(name) else { throw StoreFailure.invalidVariableName(name) }
-        let masked = maskedValue(try secretStore.read(forName: name))
+        let masked = maskedValue(try secretStore.read(forName: scope.storedName(name)))
         print(name.padding(toLength: width, withPad: " ", startingAt: 0) + "  " + masked)
     }
 }
 
-
 func runExport(_ arguments: [String]) throws {
-    let names = arguments.isEmpty ? try secretStore.storedNames() : arguments
-    let lines = try names.map { name -> String in
-        guard isValidVariableName(name) else { throw StoreFailure.invalidVariableName(name) }
-        return "export \(name)=\(shellSingleQuoted(try secretStore.read(forName: name)))"
+    let (scope, names) = try scopedNames(arguments)
+    let lines = try names.map { name in
+        "export \(name)=\(shellSingleQuoted(try secretStore.read(forName: scope.storedName(name))))"
     }
     for line in lines { print(line) }
 }

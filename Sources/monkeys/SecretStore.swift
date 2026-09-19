@@ -7,7 +7,9 @@ enum StoreFailure: Error {
     case invalidVariableName(String)
     case emptyValue
     case badInvocation(String)
-    case namesNotStored([String])
+    case invalidProfileName(String)
+    case badProjectFile(String, String)
+    case namesNotStored([String], String)
     case backendUnavailable(String)
     case backendFailed(String)
 }
@@ -23,11 +25,16 @@ extension StoreFailure: CustomStringConvertible {
             return "no value was given"
         case .badInvocation(let form):
             return "expected \(form)"
-        case .namesNotStored(let names):
+        case .invalidProfileName(let argument):
+            return "\(argument) is not a profile: letters, digits, _ - . after the @"
+        case .badProjectFile(let path, let problem):
+            return "\(path): \(problem)"
+        case .namesNotStored(let names, let profileArgument):
             let subject = names.count == 1 ? "it" : "them"
-            let asks = names.map { "  monkeys set \($0)" }.joined(separator: "\n")
+            let asks = names.map { "  monkeys set \(profileArgument)\($0)" }.joined(separator: "\n")
+            let place = profileArgument.isEmpty ? "" : " in \(profileArgument.trimmingCharacters(in: .whitespaces))"
             return """
-            \(names.joined(separator: ", ")) \(names.count == 1 ? "is" : "are") not stored yet
+            \(names.joined(separator: ", ")) \(names.count == 1 ? "is" : "are") not stored yet\(place)
             nothing ran. ask the person to store \(subject), then try again:
             \(asks)
             """
