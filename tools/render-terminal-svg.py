@@ -35,8 +35,8 @@ SEQUENCE = re.compile(r"\x1b\[([0-9;]*)m")
 CONTROL = re.compile(r"[\x00-\x08\x0b-\x1a\x1c-\x1f\x7f]")
 
 COMMANDS = [
-    "monkeys run OPENROUTER_API_KEY ANTHROPIC_API_KEY -- ./bench",
-    "monkeys run OPENROUTER_API_KEY -- ./bench",
+    "monkeys run OPENROUTER_API_KEY,ANTHROPIC_API_KEY ./bench",
+    "monkeys run OPENROUTER_API_KEY ./bench",
     "monkeys preview GITHUB_TOKEN OPENROUTER_API_KEY",
 ]
 BENCH = """#!/bin/sh

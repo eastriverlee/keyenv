@@ -62,7 +62,7 @@ func runSet(_ arguments: [String]) throws {
     try secretStore.store(value, forName: name)
     printToStandardError(messageStyle("stored", .good) + " " + messageStyle(name, .bold))
     printHintToTerminal(messageStyle("give it to a command with:", .dim))
-    printHintToTerminal("  " + messageStyle("monkeys run \(name) -- <command>", .argument))
+    printHintToTerminal("  " + messageStyle("monkeys run \(name) <command>", .argument))
 }
 
 func runRemove(_ arguments: [String]) throws {

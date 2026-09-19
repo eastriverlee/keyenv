@@ -41,11 +41,18 @@ that prints a stored value, so the only thing to get right is how you spend it.
 monkeys run puts the values you name into one command's environment and nowhere
 else:
 
-  monkeys run OPENROUTER_API_KEY -- ./bench
+  monkeys run OPENROUTER_API_KEY ./bench
+  monkeys run OPENROUTER_API_KEY,GITHUB_TOKEN ./deploy
 
 Nothing you write there holds the secret, so nothing you write can spill it.
 With every name stored, run replaces itself with the command, so the exit
 status, the output and the signals are the command's own.
+
+Name what the command actually reads. Naming is how you learn that a value is
+missing, and it keeps the rest of them out of a process that has no business
+with them. When you would rather not think about it, --all spends everything:
+
+  monkeys run --all ./bench
 
 A name that is not stored stops the run before it starts, and says what to ask
 for:

@@ -58,13 +58,14 @@ $ monkeys set OPENROUTER_API_KEY
 Value:
 stored OPENROUTER_API_KEY
 give it to a command with:
-  monkeys run OPENROUTER_API_KEY -- <command>
+  monkeys run OPENROUTER_API_KEY <command>
 ```
 
 Then spend it on the one command that needs it:
 
 ```sh
-monkeys run OPENROUTER_API_KEY -- ./bench
+monkeys run OPENROUTER_API_KEY ./bench
+monkeys run OPENROUTER_API_KEY,GITHUB_TOKEN ./deploy
 ```
 
 `run` puts the values you name into that command's environment and nowhere
@@ -75,7 +76,7 @@ line behaves as though you had typed `./bench`.
 A name you have not stored stops the run before it starts:
 
 ```
-$ monkeys run OPENROUTER_API_KEY ANTHROPIC_API_KEY -- ./bench
+$ monkeys run OPENROUTER_API_KEY,ANTHROPIC_API_KEY ./bench
 monkeys: ANTHROPIC_API_KEY is not stored yet
 nothing ran. ask the person to store it, then try again:
   monkeys set ANTHROPIC_API_KEY
@@ -112,7 +113,8 @@ startup file sources.
 | `monkeys list` | print every stored name |
 | `monkeys preview [NAME...]` | print each value masked, with its length |
 | `monkeys remove <NAME>` | delete one value |
-| `monkeys run [NAME...] -- <command>` | run a command with those values in its environment |
+| `monkeys run <NAME>[,<NAME>] <command>` | run a command with those values in its environment |
+| `monkeys run --all <command>` | the same, with every stored value |
 | `monkeys export [NAME...]` | print shell export lines, for a shell to eval |
 | `monkeys shell-init` | add that eval to your shell startup file |
 
@@ -126,7 +128,9 @@ pbpaste | monkeys set GITHUB_TOKEN        # macOS
 wl-paste | monkeys set GITHUB_TOKEN       # Linux, Wayland
 ```
 
-Naming no name means every name, for `preview`, `export` and `run` alike.
+Naming no name means every name, for `preview` and `export`. `run` asks to be
+told, since the names are how it knows what to check for and what to leave out;
+`--all` is there for when you would rather not say.
 
 ## Looking without reading
 

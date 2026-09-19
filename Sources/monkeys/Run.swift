@@ -6,21 +6,22 @@ import Darwin
 import Glibc
 #endif
 
-func runCommandWithSecrets(_ arguments: [String]) throws -> Never {
-    guard let separator = arguments.firstIndex(of: "--") else {
-        throw StoreFailure.badInvocation("monkeys run [NAME...] -- <command> [argument...]")
-    }
-    let command = Array(arguments[arguments.index(after: separator)...])
-    guard let executable = command.first else {
-        throw StoreFailure.badInvocation("monkeys run [NAME...] -- <command> [argument...]")
-    }
+let runInvocation = "monkeys run <NAME>[,<NAME>...] <command>, or monkeys run --all <command>"
 
-    let requested = Array(arguments[..<separator])
-    let names = requested.isEmpty ? try secretStore.storedNames() : requested
+private func namesToSpend(_ list: String) throws -> [String] {
+    guard list != "--all" else { return try secretStore.storedNames() }
+    return list.split(separator: ",", omittingEmptySubsequences: false).map(String.init)
+}
+
+func runCommandWithSecrets(_ arguments: [String]) throws -> Never {
+    guard let list = arguments.first, arguments.count > 1 else {
+        throw StoreFailure.badInvocation(runInvocation)
+    }
+    let command = Array(arguments.dropFirst())
 
     var values: [(name: String, value: String)] = []
     var missing: [String] = []
-    for name in names {
+    for name in try namesToSpend(list) {
         guard isValidVariableName(name) else { throw StoreFailure.invalidVariableName(name) }
         do {
             values.append((name, try secretStore.read(forName: name)))
@@ -32,6 +33,6 @@ func runCommandWithSecrets(_ arguments: [String]) throws -> Never {
     for entry in values { setenv(entry.name, entry.value, 1) }
 
     var argumentVector = command.map { strdup($0) } + [nil]
-    execvp(executable, &argumentVector)
-    throw StoreFailure.backendFailed("cannot run \(executable): \(String(cString: strerror(errno)))")
+    execvp(command[0], &argumentVector)
+    throw StoreFailure.backendFailed("cannot run \(command[0]): \(String(cString: strerror(errno)))")
 }

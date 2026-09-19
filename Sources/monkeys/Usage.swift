@@ -15,8 +15,10 @@ let commandSummaries = [
                    summary: "delete one stored value"),
     CommandSummary(verb: "export", arguments: "[NAME...]",
                    summary: "print export lines, for a shell to eval"),
-    CommandSummary(verb: "run", arguments: "[NAME...] -- <command>",
+    CommandSummary(verb: "run", arguments: "<NAME>[,<NAME>] <command>",
                    summary: "run a command with those values set"),
+    CommandSummary(verb: "run", arguments: "--all <command>",
+                   summary: "the same, with every stored value"),
     CommandSummary(verb: "shell-init", arguments: "",
                    summary: "add that eval to your shell startup file"),
 ]
@@ -49,7 +51,7 @@ var usage: String {
 
     Spend a value on one command:
 
-      \(outputStyle("monkeys run OPENROUTER_API_KEY -- ./bench", .argument))
+      \(outputStyle("monkeys run OPENROUTER_API_KEY ./bench", .argument))
 
     Or put every value into every shell you open. monkeys shell-init writes this
     into your startup file:

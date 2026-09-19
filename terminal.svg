@@ -1,11 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 554 301" width="554" height="301" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13.5">
-<rect width="554" height="301" rx="10" fill="#17181c" stroke="#2b2d34"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 530 301" width="530" height="301" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13.5">
+<rect width="530" height="301" rx="10" fill="#17181c" stroke="#2b2d34"/>
 <circle cx="24" cy="24" r="6" fill="#ff5f57"/>
 <circle cx="43" cy="24" r="6" fill="#febc2e"/>
 <circle cx="62" cy="24" r="6" fill="#28c840"/>
 <text x="22" y="52" fill="#d6d6d0" xml:space="preserve">
 <tspan x="22.0" fill="#6f7380">$ </tspan>
-<tspan x="38.2">monkeys run OPENROUTER_API_KEY ANTHROPIC_API_KEY -- ./bench</tspan>
+<tspan x="38.2">monkeys run OPENROUTER_API_KEY,ANTHROPIC_API_KEY ./bench</tspan>
 </text>
 <text x="22" y="73" fill="#d6d6d0" xml:space="preserve">
 <tspan x="22.0" fill="#f1707b">monkeys:</tspan>
@@ -19,7 +19,7 @@
 </text>
 <text x="22" y="157" fill="#d6d6d0" xml:space="preserve">
 <tspan x="22.0" fill="#6f7380">$ </tspan>
-<tspan x="38.2">monkeys run OPENROUTER_API_KEY -- ./bench</tspan>
+<tspan x="38.2">monkeys run OPENROUTER_API_KEY ./bench</tspan>
 </text>
 <text x="22" y="178" fill="#d6d6d0" xml:space="preserve">
 <tspan x="22.0">the key reached me: 73 characters</tspan>
