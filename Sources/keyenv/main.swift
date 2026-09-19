@@ -1,102 +1,37 @@
 import Foundation
-import Security
 
-let serviceName = "keyenv"
+#if canImport(Darwin)
+import Darwin
+#else
+import Glibc
+#endif
 
-enum KeychainFailure: Error {
-    case unexpectedStatus(OSStatus)
-    case nameNotStored(String)
-    case invalidVariableName(String)
-    case emptyValue
+func printToStandardError(_ message: String) {
+    FileHandle.standardError.write(Data((message + "\n").utf8))
 }
 
-extension KeychainFailure: CustomStringConvertible {
-    var description: String {
-        switch self {
-        case .unexpectedStatus(let status):
-            let message = SecCopyErrorMessageString(status, nil) as String? ?? "unknown error"
-            return "keychain returned \(status): \(message)"
-        case .nameNotStored(let name):
-            return "\(name) is not stored"
-        case .invalidVariableName(let name):
-            return "\(name) is not a valid environment variable name"
-        case .emptyValue:
-            return "no value was given"
-        }
-    }
+func isTerminal(_ descriptor: Int32) -> Bool {
+    isatty(descriptor) != 0
 }
 
-func isValidVariableName(_ name: String) -> Bool {
-    guard let first = name.first else { return false }
-    guard first.isLetter || first == "_" else { return false }
-    return name.allSatisfy { $0.isLetter || $0.isNumber || $0 == "_" } && first.isASCII
+func printHintToTerminal(_ message: String) {
+    guard isTerminal(STDERR_FILENO) else { return }
+    printToStandardError(message)
 }
 
-func keychainQuery(forName name: String) -> [String: Any] {
-    [
-        kSecClass as String: kSecClassGenericPassword,
-        kSecAttrService as String: serviceName,
-        kSecAttrAccount as String: name,
-    ]
+func isSetInThisEnvironment(_ name: String) -> Bool {
+    ProcessInfo.processInfo.environment[name] != nil
 }
 
-func storeValue(_ value: String, forName name: String) throws {
-    let data = Data(value.utf8)
-    let existing = keychainQuery(forName: name)
-    let updateStatus = SecItemUpdate(
-        existing as CFDictionary,
-        [kSecValueData as String: data] as CFDictionary
-    )
-    if updateStatus == errSecSuccess { return }
-    guard updateStatus == errSecItemNotFound else { throw KeychainFailure.unexpectedStatus(updateStatus) }
-
-    var creation = existing
-    creation[kSecValueData as String] = data
-    creation[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
-    creation[kSecAttrLabel as String] = "\(serviceName): \(name)"
-    let addStatus = SecItemAdd(creation as CFDictionary, nil)
-    guard addStatus == errSecSuccess else { throw KeychainFailure.unexpectedStatus(addStatus) }
-}
-
-func readValue(forName name: String) throws -> String {
-    var query = keychainQuery(forName: name)
-    query[kSecReturnData as String] = true
-    query[kSecMatchLimit as String] = kSecMatchLimitOne
-
-    var item: CFTypeRef?
-    let status = SecItemCopyMatching(query as CFDictionary, &item)
-    if status == errSecItemNotFound { throw KeychainFailure.nameNotStored(name) }
-    guard status == errSecSuccess else { throw KeychainFailure.unexpectedStatus(status) }
-    guard let data = item as? Data, let value = String(data: data, encoding: .utf8) else {
-        throw KeychainFailure.unexpectedStatus(errSecDecode)
-    }
-    return value
-}
-
-func removeValue(forName name: String) throws {
-    let status = SecItemDelete(keychainQuery(forName: name) as CFDictionary)
-    if status == errSecItemNotFound { throw KeychainFailure.nameNotStored(name) }
-    guard status == errSecSuccess else { throw KeychainFailure.unexpectedStatus(status) }
-}
-
-func storedNames() throws -> [String] {
-    let query: [String: Any] = [
-        kSecClass as String: kSecClassGenericPassword,
-        kSecAttrService as String: serviceName,
-        kSecMatchLimit as String: kSecMatchLimitAll,
-        kSecReturnAttributes as String: true,
-    ]
-
-    var items: CFTypeRef?
-    let status = SecItemCopyMatching(query as CFDictionary, &items)
-    if status == errSecItemNotFound { return [] }
-    guard status == errSecSuccess else { throw KeychainFailure.unexpectedStatus(status) }
-    guard let attributes = items as? [[String: Any]] else { return [] }
-    return attributes.compactMap { $0[kSecAttrAccount as String] as? String }.sorted()
+func askYesOrNo(_ question: String) -> Bool {
+    guard isTerminal(STDIN_FILENO), isTerminal(STDERR_FILENO) else { return false }
+    FileHandle.standardError.write(Data((question + " [y/N] ").utf8))
+    guard let answer = readLine(strippingNewline: true)?.lowercased() else { return false }
+    return answer == "y" || answer == "yes"
 }
 
 func readValueFromInput() -> String {
-    if isatty(STDIN_FILENO) == 0 {
+    if !isTerminal(STDIN_FILENO) {
         let piped = FileHandle.standardInput.readDataToEndOfFile()
         return String(decoding: piped, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
     }
@@ -108,56 +43,69 @@ func shellSingleQuoted(_ value: String) -> String {
     "'" + value.replacingOccurrences(of: "'", with: "'\\''") + "'"
 }
 
-func printToStandardError(_ message: String) {
-    FileHandle.standardError.write(Data((message + "\n").utf8))
-}
-
-func printHintToTerminal(_ message: String) {
-    guard isatty(STDERR_FILENO) != 0 else { return }
-    printToStandardError(message)
-}
-
-func isSetInThisEnvironment(_ name: String) -> Bool {
-    ProcessInfo.processInfo.environment[name] != nil
-}
-
 let usage = """
-keyenv — environment variables kept in the macOS keychain
+keyenv - environment variables kept in your operating system's keyring
 
   keyenv set <NAME>        read a value from the terminal (hidden) or stdin and store it
   keyenv get <NAME>        print one stored value
   keyenv list              print every stored name
   keyenv remove <NAME>     delete one stored value
   keyenv export [NAME...]  print shell export lines; all names when none are given
+  keyenv shell-init        add the export line to your shell startup file
 
-In ~/.zshrc:
+In your shell startup file:
 
-  eval "$(keyenv export)"
+  \(shellInitLine)
 """
 
 func requireName(_ arguments: [String]) throws -> String {
-    guard let name = arguments.first else { throw KeychainFailure.invalidVariableName("") }
-    guard isValidVariableName(name) else { throw KeychainFailure.invalidVariableName(name) }
+    guard let name = arguments.first else { throw StoreFailure.invalidVariableName("") }
+    guard isValidVariableName(name) else { throw StoreFailure.invalidVariableName(name) }
     return name
+}
+
+func reportShellInit(appendedTo path: String) {
+    printToStandardError("appended to \(abbreviatingHome(path)):")
+    printToStandardError("  \(shellInitLine)")
+    printToStandardError("open a new shell, or: source \(abbreviatingHome(path))")
+}
+
+func offerShellInit() {
+    guard isTerminal(STDERR_FILENO) else { return }
+    guard let path = shellProfilePath(), !profileCallsKeyenvExport(path) else { return }
+
+    printToStandardError("")
+    printToStandardError("no startup file here seems to call keyenv export.")
+    guard askYesOrNo("append it to \(abbreviatingHome(path)) now?") else {
+        printToStandardError("you can do it later with: keyenv shell-init")
+        return
+    }
+    do {
+        try appendShellInit(to: path)
+        reportShellInit(appendedTo: path)
+    } catch {
+        printToStandardError("keyenv: \(error)")
+    }
 }
 
 func runSet(_ arguments: [String]) throws {
     let name = try requireName(arguments)
     let value = readValueFromInput()
-    guard !value.isEmpty else { throw KeychainFailure.emptyValue }
-    try storeValue(value, forName: name)
+    guard !value.isEmpty else { throw StoreFailure.emptyValue }
+    try secretStore.store(value, forName: name)
     printToStandardError("stored \(name)")
     printHintToTerminal("this shell still has the value it started with; load the stored one with:")
     printHintToTerminal("  eval \"$(keyenv export \(name))\"")
+    offerShellInit()
 }
 
 func runGet(_ arguments: [String]) throws {
-    print(try readValue(forName: try requireName(arguments)))
+    print(try secretStore.read(forName: try requireName(arguments)))
 }
 
 func runRemove(_ arguments: [String]) throws {
     let name = try requireName(arguments)
-    try removeValue(forName: name)
+    try secretStore.remove(forName: name)
     printToStandardError("removed \(name)")
     guard isSetInThisEnvironment(name) else { return }
     printHintToTerminal("this shell still carries it; clear it with:")
@@ -165,16 +113,31 @@ func runRemove(_ arguments: [String]) throws {
 }
 
 func runList() throws {
-    for name in try storedNames() { print(name) }
+    for name in try secretStore.storedNames() { print(name) }
 }
 
 func runExport(_ arguments: [String]) throws {
-    let names = arguments.isEmpty ? try storedNames() : arguments
+    let names = arguments.isEmpty ? try secretStore.storedNames() : arguments
     let lines = try names.map { name -> String in
-        guard isValidVariableName(name) else { throw KeychainFailure.invalidVariableName(name) }
-        return "export \(name)=\(shellSingleQuoted(try readValue(forName: name)))"
+        guard isValidVariableName(name) else { throw StoreFailure.invalidVariableName(name) }
+        return "export \(name)=\(shellSingleQuoted(try secretStore.read(forName: name)))"
     }
     for line in lines { print(line) }
+}
+
+func runShellInit() throws {
+    guard let path = shellProfilePath() else {
+        printToStandardError("keyenv: \(loginShellName()) has no startup file keyenv knows about.")
+        printToStandardError("keyenv export prints POSIX shell syntax; add it yourself with:")
+        printToStandardError("  \(shellInitLine)")
+        exit(1)
+    }
+    guard !profileCallsKeyenvExport(path) else {
+        printToStandardError("\(abbreviatingHome(path)) already calls keyenv export")
+        return
+    }
+    try appendShellInit(to: path)
+    reportShellInit(appendedTo: path)
 }
 
 let arguments = Array(CommandLine.arguments.dropFirst())
@@ -191,13 +154,14 @@ do {
     case "list": try runList()
     case "remove": try runRemove(rest)
     case "export": try runExport(rest)
+    case "shell-init": try runShellInit()
     case "help", "-h", "--help": print(usage)
     default:
         printToStandardError("unknown command: \(command)")
         printToStandardError(usage)
         exit(2)
     }
-} catch let failure as KeychainFailure {
+} catch let failure as StoreFailure {
     printToStandardError("keyenv: \(failure)")
     exit(1)
 } catch {

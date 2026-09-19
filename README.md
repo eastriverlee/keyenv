@@ -1,16 +1,22 @@
 # keyenv
 
-Environment variables kept in the macOS keychain, put into your shell at startup.
+Environment variables kept in your operating system's keyring, put into your
+shell at startup.
 
 A secret written into `~/.zshrc` is readable by anything that can read your home
 directory, and it follows you into dotfile backups and git history. `keyenv`
-stores it as a keychain item and prints an `export` line when a shell asks for
-one.
+stores it in the keyring and prints an `export` line when a shell asks for one.
+
+On macOS the keyring is the login keychain, reached through Security.framework.
+On Linux it is whatever answers the Secret Service D-Bus API, which is
+gnome-keyring on most desktops and KWallet on KDE, reached through
+`secret-tool`.
 
 ## Install
 
-Needs macOS 13 or later and a Swift toolchain (Xcode, or the Command Line
-Tools).
+Needs a Swift toolchain, and macOS 13 or later, or a Linux distribution Swift
+supports. On Linux, install `secret-tool` as well: `libsecret-tools` on Debian
+and Ubuntu, `libsecret` on Fedora and Arch.
 
 ```sh
 git clone https://github.com/eastriverlee/keyenv
@@ -27,7 +33,8 @@ make install INSTALL_DIRECTORY=/usr/local/bin
 
 ## Use
 
-Store a value. The prompt hides what you type:
+Store a value. The prompt hides what you type, and the first time around it
+offers to wire up your shell:
 
 ```
 $ keyenv set OPENROUTER_API_KEY
@@ -35,39 +42,58 @@ Value:
 stored OPENROUTER_API_KEY
 this shell still has the value it started with; load the stored one with:
   eval "$(keyenv export OPENROUTER_API_KEY)"
+
+no startup file here seems to call keyenv export.
+append it to ~/.zshrc now? [y/N] y
+appended to ~/.zshrc:
+  eval "$(keyenv export)"
+open a new shell, or: source ~/.zshrc
 ```
 
-Storing a value cannot reach the shell that ran `keyenv`, because a process
-only ever changes its own environment. The line it suggests is how you get the
-value into the shell you are standing in; a shell you open later picks it up on
-its own. Those two lines go to standard error, and only when standard error is
-a terminal, so a script that pipes `set` sees nothing extra.
+Two separate things are going on there.
 
-Do that for each secret your `~/.zshrc` currently holds as a plain line:
+Storing a value cannot reach the shell that ran `keyenv`, because a process only
+ever changes its own environment. The `eval` on the third line is how you get
+the value into the shell you are standing in.
 
-```sh
-export OPENROUTER_API_KEY=sk-or-v1-0000000000000000
-export GITHUB_TOKEN=ghp_0000000000000000
-```
-
-Then delete those lines and leave one behind. It has to sit below whatever puts
-the install directory on `PATH`, since the shell has to find `keyenv` to run
-it:
+The offer is about every shell after this one. It comes up when nothing in your
+startup file mentions `keyenv export`, and what it appends is:
 
 ```sh
-export PATH="$HOME/.local/bin:$PATH"
-
+# secrets from the keyring, via https://github.com/eastriverlee/keyenv
 eval "$(keyenv export)"
 ```
 
-Open a new shell, or run `source ~/.zshrc` in this one. What `eval` runs is the
-same thing you deleted, read back from the keychain:
+That goes in once and never changes again. Every `keyenv set` after it reaches
+the next shell you open, since `keyenv export` reads whatever is stored at the
+time it runs:
 
 ```
 $ keyenv export
 export GITHUB_TOKEN='ghp_0000000000000000'
 export OPENROUTER_API_KEY='sk-or-v1-0000000000000000'
 ```
+
+So the last step is deleting the plain secrets your startup file still carries:
+
+```sh
+export OPENROUTER_API_KEY=sk-or-v1-0000000000000000
+export GITHUB_TOKEN=ghp_0000000000000000
+```
+
+`keyenv shell-init` makes the same append on its own, and says so when the line
+is already there. It writes `~/.zshrc` for zsh and `~/.bashrc` for bash
+(`~/.bash_profile` on macOS). Set `KEYENV_SHELL_PROFILE` to send it somewhere
+else, such as a file your startup file sources.
+
+The append lands at the end of the file, which in almost every startup file is
+below the line that puts the install directory on `PATH`. The shell has to find
+`keyenv` to run it, so check that order first if a new shell comes up without
+your values.
+
+Nothing is written without an answer. When `set` reads its value from a pipe
+there is no terminal to ask, so it prints `you can do it later with: keyenv
+shell-init` and leaves the file alone.
 
 ## Commands
 
@@ -78,19 +104,21 @@ export OPENROUTER_API_KEY='sk-or-v1-0000000000000000'
 | `keyenv list` | print every stored name |
 | `keyenv remove <NAME>` | delete one value |
 | `keyenv export [NAME...]` | print shell export lines; all names when none are given |
+| `keyenv shell-init` | add the export line to your shell startup file |
 
 There is no way to pass a value as a command line argument, which keeps it out
 of your shell history and out of the process table. When standard input is not
 a terminal, `set` reads the value from there:
 
 ```sh
-pbpaste | keyenv set GITHUB_TOKEN
+pbpaste | keyenv set GITHUB_TOKEN        # macOS
+wl-paste | keyenv set GITHUB_TOKEN       # Linux, Wayland
 ```
 
 ## What gets replaced
 
 `set` on a name you already stored replaces its value and says nothing about
-it. The previous value is gone, and the keychain keeps no history to recover it
+it. The previous value is gone, and the keyring keeps no history to recover it
 from.
 
 `eval "$(keyenv export)"` assigns every stored name, so a value already in the
@@ -103,10 +131,13 @@ half of them set.
 
 ## How it stores things
 
-Each variable is a generic password item in your login keychain under the
-service name `keyenv`, with the variable name as the account. Search Keychain
-Access for `keyenv` and you will see them; delete one there and it is gone.
-The same item answers to:
+Each variable is one keyring item carrying two attributes, `service` set to
+`keyenv` and `account` set to the variable name, labelled `keyenv: <NAME>`.
+Your desktop's own keyring tools see the same items, and deleting one there
+deletes it for `keyenv`.
+
+On macOS that is a generic password in the login keychain. Search Keychain
+Access for `keyenv`, or ask for one by name:
 
 ```sh
 security find-generic-password -s keyenv -a OPENROUTER_API_KEY
@@ -114,6 +145,13 @@ security find-generic-password -s keyenv -a OPENROUTER_API_KEY
 
 Items are created with `kSecAttrAccessibleAfterFirstUnlock`, so a shell that
 starts while the screen is locked can still read them.
+
+On Linux the same attributes go to the Secret Service through `secret-tool`,
+which puts them in your desktop keyring:
+
+```sh
+secret-tool lookup service keyenv account OPENROUTER_API_KEY
+```
 
 `export` single-quotes each value and escapes any quote inside it, so a value
 carrying quotes, spaces or newlines survives `eval` unchanged.
@@ -128,9 +166,13 @@ out of the export and read it at the call site:
 OPENROUTER_API_KEY="$(keyenv get OPENROUTER_API_KEY)" ./run-eval
 ```
 
-The binary carries an ad-hoc signature, whose identity is a hash of the binary
-itself. A rebuild changes that identity, so the keychain may ask you to allow
-access once when the new build first reads an item the old one stored.
+On macOS the binary carries an ad-hoc signature, whose identity is a hash of the
+binary itself. A rebuild changes that identity, so the keychain may ask you to
+allow access once when the new build first reads an item the old one stored.
+
+On Linux the Secret Service is a desktop session service. Over SSH or in a
+container there is usually no session bus and no keyring daemon, and `keyenv`
+fails saying so. Machines like that want a different mechanism, not this one.
 
 ## License
 
