@@ -59,7 +59,7 @@ var usage: String {
 
     Spend a value on one command:
 
-      \(outputStyle("monkeys run OPENROUTER_API_KEY ./bench", .argument))
+      \(outputStyle("monkeys run OPENROUTER_API_KEY ./hello.sh", .argument))
 
     A project keeps its names in \(projectFileName), under the profile they live in:
 
@@ -70,7 +70,7 @@ var usage: String {
     In that directory or below it, run takes only the command, and set, preview
     and remove read and write that profile:
 
-      \(outputStyle("monkeys run ./bench", .argument))
+      \(outputStyle("monkeys run ./hello.sh", .argument))
       \(outputStyle("monkeys set STRIPE_SECRET_KEY", .argument))        stored as monkeys/STRIPE_SECRET_KEY
 
     A profile line can name several profiles, and a file can have several

@@ -263,7 +263,7 @@ keep `PORT=3000` in the repository.
 A name you have not stored stops the run before it starts:
 
 ```sh
-monkeys run OPENROUTER_API_KEY,ANTHROPIC_API_KEY ./bench
+monkeys run OPENROUTER_API_KEY,ANTHROPIC_API_KEY ./hello.sh
 ```
 
 > ```

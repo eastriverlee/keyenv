@@ -34,38 +34,38 @@ var styledAgentGuide: String {
 private let agentGuide = """
 monkeys for an automated caller
 
-A value stored here must never enter your context or your transcript. Anything
-you read stays in both, and a keyring cannot take it back. No command prints a
-stored value, so the only thing to get right is how you spend one.
+A stored value must never enter an agent's context or transcript. Anything
+an agent reads stays in both, and a keyring cannot take it back. No command
+prints a stored value, so the only thing to get right is how one is spent.
 
-monkeys run puts the values you name into one command's environment, and
-nowhere else:
+monkeys run puts the named values into one command's environment, and nowhere
+else:
 
-  monkeys run OPENROUTER_API_KEY ./bench
+  monkeys run OPENROUTER_API_KEY ./hello.sh
   monkeys run OPENROUTER_API_KEY,GITHUB_TOKEN ./deploy
 
-Nothing you write there holds the secret, so nothing you write can spill it.
-The exit status and the signals are the command's own. Its output comes back
-through monkeys, and a stored value in it comes back as [redacted NAME], so
-echo $NAME tells you which value was there and never the value. Do not add
---no-redact; that flag is for a human writing a value into a file on purpose.
+Nothing on that line holds the secret, so nothing an agent writes can spill
+it. The exit status and the signals are the command's own. Its output comes
+back through monkeys, and a stored value in it comes back as [redacted NAME],
+so echo $NAME says which value was there and never the value. --no-redact is
+for a human writing a value into a file on purpose; an agent does not add it.
 
 A project that has a .monkeys file has already named what it needs, and run
 there takes only the command:
 
-  monkeys run ./bench
+  monkeys run ./hello.sh
 
 The file's @ lines scope every name, and the first profile in the file is the
 one run uses unless @profile says otherwise, so set in that directory stores
-into the same profile the command reads from. Read the file before adding a
-name; it is the list. Filling a profile from a shared .monkeys bundle is
+into the same profile the command reads from. The file is the list; read it
+before adding a name. Filling a profile from a shared .monkeys bundle is
 monkeys unpack, which asks for a passphrase, so that too is a human's job.
 
-Name what the command actually reads. Naming is how you learn that a value is
-missing, and it keeps the rest of them out of a process that has no business
-with them. When you would rather not think about it, --all spends everything:
+Name what the command actually reads. Naming is how a missing value shows up,
+and it keeps the rest of them out of a process that has no business with them.
+--all spends everything, for when the names are not worth working out:
 
-  monkeys run --all ./bench
+  monkeys run --all ./hello.sh
 
 A name that is not stored stops the run before it starts, and says what to ask
 for:
@@ -74,8 +74,8 @@ for:
   nothing ran. a human has to store it, then try again:
     monkeys set ANTHROPIC_API_KEY
 
-Pass that on. Storing a secret is a human's job, not yours: typing one
-yourself puts it in your context before it reaches the keyring.
+An agent passes that on. Storing a secret is a human's job: an agent that
+types one puts it in its own context before it reaches the keyring.
 
 To see what exists, read the names with monkeys list, and their shape with
 monkeys preview:
@@ -90,8 +90,8 @@ A length and a two-character prefix confirm that the right value arrived
 without reading it.
 
 monkeys export writes keyring lookups for a startup file and holds no value,
-which is why it may print. Never print a variable that already holds a secret.
-Each of these puts a value in front of you:
+which is why it may print. A variable that already holds a secret is never
+printed. Each of these puts a value in front of whoever ran it:
 
   echo "$OPENROUTER_API_KEY"
   env
