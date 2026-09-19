@@ -3,7 +3,7 @@
 
 Both restate a few invocations: the skill because an agent reads it before
 running anything, the site because a visitor does. This keeps those copies
-honest: every `monkeys <verb>` written in them must be a verb `monkeys help`
+honest: every `monkeys <verb>` written as an invocation must be a verb `monkeys help`
 lists.
 """
 
@@ -18,6 +18,7 @@ MENTION = re.compile(r"\bmonkeys ([a-z][a-z-]*)")
 CODE_IN_MARKUP = re.compile(r"<code[^>]*>.*?</code>", re.S)
 SCRIPT_BLOCK = re.compile(r"<script[^>]*>(.*?)</script>", re.S)
 STRING_LITERAL = re.compile(r"'[^']*'|`[^`]*`|\"[^\"]*\"", re.S)
+INVOCATION_LINE = re.compile(r"^\s*(?:\$ )?monkeys ")
 CODE_IN_MARKDOWN = re.compile(r"```.*?```|`[^`]*`", re.S)
 
 
@@ -28,7 +29,8 @@ def code_spans(path):
         return "\n".join(match.group(0) for match in CODE_IN_MARKDOWN.finditer(text))
     spans = [match.group(0) for match in CODE_IN_MARKUP.finditer(text)]
     for script in SCRIPT_BLOCK.finditer(text):
-        spans.extend(match.group(0) for match in STRING_LITERAL.finditer(script.group(1)))
+        for literal in STRING_LITERAL.finditer(script.group(1)):
+            spans.extend(line for line in literal.group(0).strip("'`\"").splitlines() if INVOCATION_LINE.match(line))
     return "\n".join(spans)
 
 
