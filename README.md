@@ -102,9 +102,11 @@ shell-init` and leaves the file alone.
 | `keyenv set <NAME>` | read a value and store it |
 | `keyenv get <NAME>` | print one value |
 | `keyenv list` | print every stored name |
+| `keyenv preview [NAME...]` | print each value masked, with its length |
 | `keyenv remove <NAME>` | delete one value |
 | `keyenv export [NAME...]` | print shell export lines; all names when none are given |
 | `keyenv shell-init` | add the export line to your shell startup file |
+| `keyenv help agent` | how an LLM or a script should use this |
 
 There is no way to pass a value as a command line argument, which keeps it out
 of your shell history and out of the process table. When standard input is not
@@ -114,6 +116,35 @@ a terminal, `set` reads the value from there:
 pbpaste | keyenv set GITHUB_TOKEN        # macOS
 wl-paste | keyenv set GITHUB_TOKEN       # Linux, Wayland
 ```
+
+## Looking without reading
+
+`get` prints a secret in full, which makes it the wrong command for anything
+that keeps a record of what it reads, a coding agent and a CI log among them.
+`preview` answers the question such a caller actually has, which is whether the
+right value is in there:
+
+```
+$ keyenv preview
+GITHUB_TOKEN        gh...f 40
+OPENROUTER_API_KEY  sk...2 73
+```
+
+It shows the first two characters, the last one, and the length. A value is
+masked whole whenever fewer than five characters would stay hidden, so nothing
+under eight characters long gives any of itself away:
+
+```
+$ keyenv preview SHORT_ONE
+SHORT_ONE  ... 6
+```
+
+A length and a two-character prefix are enough to tell a key pasted whole from
+one that lost a character on the way, or one provider's key from another's.
+
+`keyenv help agent` prints the same rules for the agent itself to read, along
+with how to hand a secret to a command without the value passing through the
+agent.
 
 ## What gets replaced
 

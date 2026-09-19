@@ -46,12 +46,14 @@ func shellSingleQuoted(_ value: String) -> String {
 let usage = """
 keyenv - environment variables kept in your operating system's keyring
 
-  keyenv set <NAME>        read a value from the terminal (hidden) or stdin and store it
-  keyenv get <NAME>        print one stored value
-  keyenv list              print every stored name
-  keyenv remove <NAME>     delete one stored value
-  keyenv export [NAME...]  print shell export lines; all names when none are given
-  keyenv shell-init        add the export line to your shell startup file
+  keyenv set <NAME>         read a value from the terminal (hidden) or stdin and store it
+  keyenv get <NAME>         print one stored value
+  keyenv list               print every stored name
+  keyenv preview [NAME...]  print each value masked, with its length
+  keyenv remove <NAME>      delete one stored value
+  keyenv export [NAME...]   print shell export lines; all names when none are given
+  keyenv shell-init         add the export line to your shell startup file
+  keyenv help agent         how an LLM or a script should use this
 
 In your shell startup file:
 
@@ -116,6 +118,23 @@ func runList() throws {
     for name in try secretStore.storedNames() { print(name) }
 }
 
+func runPreview(_ arguments: [String]) throws {
+    let names = arguments.isEmpty ? try secretStore.storedNames() : arguments
+    guard let width = names.map(\.count).max() else { return }
+    for name in names {
+        guard isValidVariableName(name) else { throw StoreFailure.invalidVariableName(name) }
+        let masked = maskedValue(try secretStore.read(forName: name))
+        print(name.padding(toLength: width, withPad: " ", startingAt: 0) + "  " + masked)
+    }
+}
+
+func runHelp(_ arguments: [String]) {
+    switch arguments.first {
+    case "agent", "llm": print(agentGuide)
+    default: print(usage)
+    }
+}
+
 func runExport(_ arguments: [String]) throws {
     let names = arguments.isEmpty ? try secretStore.storedNames() : arguments
     let lines = try names.map { name -> String in
@@ -152,10 +171,11 @@ do {
     case "set": try runSet(rest)
     case "get": try runGet(rest)
     case "list": try runList()
+    case "preview": try runPreview(rest)
     case "remove": try runRemove(rest)
     case "export": try runExport(rest)
     case "shell-init": try runShellInit()
-    case "help", "-h", "--help": print(usage)
+    case "help", "-h", "--help": runHelp(rest)
     default:
         printToStandardError("unknown command: \(command)")
         printToStandardError(usage)
