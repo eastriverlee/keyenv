@@ -24,6 +24,20 @@ OPENROUTER_API_KEY`;
     -H "Authorization: Bearer ${'$'}OPENROUTER_API_KEY" \\
     https://openrouter.ai/api/v1/key
 '`;
+	const profilesFile = `@test.shop.eastriver,staging.shop.eastriver
+OPENROUTER_API_KEY
+STRIPE_SECRET_KEY
+@staging.shop.eastriver
+SENTRY_DSN`;
+	const doctorLine = 'monkeys doctor';
+	const doctorOutput = `@test.shop.eastriver  default
+  ✓ OPENROUTER_API_KEY
+  ✓ STRIPE_SECRET_KEY
+@staging.shop.eastriver
+  ✓ OPENROUTER_API_KEY
+  ✗ STRIPE_SECRET_KEY
+  ✗ SENTRY_DSN`;
+	const runStaging = 'monkeys run @staging.shop.eastriver ./deploy';
 	const packLine = 'monkeys pack';
 	const unpackLine = 'monkeys unpack ~/Downloads/shop.monkeys';
 
@@ -159,6 +173,18 @@ OPENROUTER_API_KEY`;
 			<CodeFile name=".monkeys" lang="monkeys" code={projectFile} />
 		</div>
 		<CodeFile code={runInProject} output="200" />
+		<p class="max-w-prose">
+			A profile line can name several profiles, and a file can hold several blocks. A profile's
+			names are those of every block that lists it; the first profile in the file is the one
+			<code>run</code> uses when none is given, and one the file does not declare is refused.
+		</p>
+		<CodeFile name=".monkeys" lang="monkeys" code={profilesFile} />
+		<CodeFile code={runStaging} />
+		<p class="max-w-prose">
+			A value missing in one profile stops that profile alone, and only when it is used.
+			<code>doctor</code> reads the whole file:
+		</p>
+		<CodeFile code={doctorLine} output={doctorOutput} />
 	</section>
 
 	<section class="flex flex-col gap-4">

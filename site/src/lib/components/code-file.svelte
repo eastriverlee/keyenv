@@ -21,9 +21,24 @@
 
 	const promptColor = { color: '#e94100', '--shiki-dark': '#e94100' };
 	const outputColor = { color: '#6e7781', '--shiki-dark': '#8b949e' };
+	const markColors: Record<string, Record<string, string>> = {
+		'\u2713': { color: '#1a7f37', '--shiki-dark': '#3fb950' },
+		'\u2717': { color: '#cf222e', '--shiki-dark': '#f85149' }
+	};
 
 	function painted(token: ThemedToken, style: Record<string, string>): ThemedToken {
 		return { ...token, color: style.color, htmlStyle: style };
+	}
+
+	function asOutput(token: ThemedToken): ThemedToken[] {
+		const mark = Object.keys(markColors).find((candidate) => token.content.includes(candidate));
+		if (!mark) return [painted(token, outputColor)];
+		const [before, after] = token.content.split(mark, 2);
+		return [
+			painted({ ...token, content: before }, outputColor),
+			painted({ ...token, content: mark }, markColors[mark]),
+			painted({ ...token, content: after }, outputColor)
+		].filter((part) => part.content.length > 0);
 	}
 
 	function withPrompt(line: ThemedToken[]): ThemedToken[] {
@@ -38,7 +53,7 @@
 		tokens: (lines) =>
 			lines.map((line, index) => {
 				if (index === 0) return withPrompt(line);
-				if (index >= commandLineCount) return line.map((token) => painted(token, outputColor));
+				if (index >= commandLineCount) return line.flatMap(asOutput);
 				return line;
 			})
 	};
