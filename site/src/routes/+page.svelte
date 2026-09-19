@@ -265,5 +265,7 @@ SENTRY_DSN`;
 		<span>MIT</span>
 		<span>·</span>
 		<span>macOS and Linux</span>
+		<span>·</span>
+		<span>© 2026 13e7 corp.</span>
 	</footer>
 </main>

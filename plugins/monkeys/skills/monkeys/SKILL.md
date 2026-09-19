@@ -18,7 +18,7 @@ the secret yourself.
 Name what the command reads, then the command:
 
 ```sh
-monkeys run OPENROUTER_API_KEY ./hello
+monkeys run OPENROUTER_API_KEY ./hello.sh
 monkeys run OPENROUTER_API_KEY,GITHUB_TOKEN ./deploy
 ```
 
@@ -43,7 +43,7 @@ scoped to that profile, so `monkeys set STRIPE_SECRET_KEY` there stores into
 the same profile the command reads from:
 
 ```sh
-monkeys run ./hello
+monkeys run ./hello.sh
 monkeys run @foo ./deploy    # another profile the file declares
 ```
 

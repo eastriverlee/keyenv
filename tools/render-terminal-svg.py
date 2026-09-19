@@ -20,6 +20,12 @@ import tempfile
 
 BACKGROUND = "#17181c"
 PROMPT = "\x1b[38;5;202m$\x1b[0m "
+# The site's code blocks are Shiki's github-dark: words of a command in one
+# blue, flags in another, output in grey. The same three colours here.
+WORD = "\x1b[38;2;165;214;255m"
+FLAG = "\x1b[38;2;121;192;255m"
+OUTPUT = "\x1b[38;2;139;148;158m"
+RESET = "\x1b[0m"
 FONT_FILE = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "..", "site", "static", "fonts", "CascadiaCode.woff2"
 )
@@ -27,8 +33,8 @@ FONT_FILE = os.path.join(
 CONTROL = re.compile(r"[\x00-\x08\x0b-\x1a\x1c-\x1f\x7f]")
 
 COMMANDS = [
-    "monkeys run OPENROUTER_API_KEY,ANTHROPIC_API_KEY ./hello",
-    "monkeys run OPENROUTER_API_KEY ./hello",
+    "monkeys run OPENROUTER_API_KEY,ANTHROPIC_API_KEY ./hello.sh",
+    "monkeys run OPENROUTER_API_KEY ./hello.sh",
     "monkeys preview GITHUB_TOKEN STRIPE_SECRET_KEY",
 ]
 HELLO = """#!/bin/sh
@@ -94,8 +100,21 @@ def captured(command, directory):
     return CONTROL.sub("", finished.stdout).rstrip("\n")
 
 
+def coloured_command(command):
+    words = [(FLAG if word.startswith("-") else WORD) + word + RESET for word in command.split(" ")]
+    return " ".join(words)
+
+
+def greyed_output(text):
+    """Grey as the default, with every colour monkeys chose left in place."""
+    return OUTPUT + text.replace(RESET, RESET + OUTPUT).replace("\n", "\n" + OUTPUT)
+
+
 def transcript(directory):
-    blocks = [PROMPT + command + "\n" + captured(command, directory) for command in COMMANDS]
+    blocks = [
+        PROMPT + coloured_command(command) + "\n" + greyed_output(captured(command, directory))
+        for command in COMMANDS
+    ]
     return "\n\n".join(blocks) + "\n"
 
 
@@ -120,6 +139,7 @@ def frozen(text, destination):
             ],
             check=True,
             capture_output=True,
+            stdin=subprocess.DEVNULL,
         )
     finally:
         os.unlink(source)
@@ -131,7 +151,7 @@ if __name__ == "__main__":
     destination = sys.argv[1] if len(sys.argv) > 1 else "terminal.svg"
     borrowed = seeded()
     with tempfile.TemporaryDirectory() as directory:
-        helper = os.path.join(directory, "hello")
+        helper = os.path.join(directory, "hello.sh")
         with open(helper, "w") as handle:
             handle.write(HELLO)
         os.chmod(helper, 0o755)

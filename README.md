@@ -49,7 +49,7 @@ Write the thing that needs the key. It reads a variable, the way any program
 reads one:
 
 ```sh
-cat > hello <<'SCRIPT'
+cat > hello.sh <<'SCRIPT'
 #!/bin/sh
 curl -s https://openrouter.ai/api/v1/chat/completions \
   -H "Authorization: Bearer $OPENROUTER_API_KEY" \
@@ -57,13 +57,13 @@ curl -s https://openrouter.ai/api/v1/chat/completions \
   -d '{"model":"google/gemma-4-26b-a4b-it:free","messages":[{"role":"user","content":"say hello world"}]}' |
   python3 -c 'import json,sys; print(json.load(sys.stdin)["choices"][0]["message"]["content"].strip())'
 SCRIPT
-chmod +x hello
+chmod +x hello.sh
 ```
 
 Then let monkeys hand it over:
 
 ```sh
-monkeys run OPENROUTER_API_KEY ./hello
+monkeys run OPENROUTER_API_KEY ./hello.sh
 ```
 
 > ```
@@ -293,7 +293,7 @@ and a project keeps one or the other, since two lists of the same names drift.
 In that directory or any below it, `run` takes only the command:
 
 ```sh
-monkeys run ./hello
+monkeys run ./hello.sh
 monkeys run npm run dev
 ```
 
@@ -385,7 +385,7 @@ A missing value says where it is missing from, and the `set` it asks for works
 from any directory:
 
 ```sh
-monkeys run ./hello
+monkeys run ./hello.sh
 ```
 
 > ```
@@ -395,7 +395,7 @@ monkeys run ./hello
 > ```
 
 Inside a project, everything after `run` is the command. The older form,
-`monkeys run NAME ./hello`, tries to run a program called `NAME` there, and the
+`monkeys run NAME ./hello.sh`, tries to run a program called `NAME` there, and the
 error says which file is supplying the names instead.
 
 ### Sharing a profile
@@ -436,7 +436,7 @@ monkeys unpack foo
 
 The values go into that person's keyring under the bundle's profile, `foo/`,
 and the profile and names become a `.monkeys` file at the root of the git
-checkout, the way `.gitignore` sits at the root, so `monkeys run ./hello` works
+checkout, the way `.gitignore` sits at the root, so `monkeys run ./hello.sh` works
 from any directory in it. Outside a checkout the file goes in the current
 directory, and a second argument names the directory outright. When a
 `.monkeys` file is already there, `unpack` adds the bundle's profile as a
