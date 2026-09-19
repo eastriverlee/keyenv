@@ -6,7 +6,7 @@
 
 <p align="center">
   Environment variables kept in your operating system's keyring,<br>
-  put into your shell at startup.<br>
+  handed to one command at a time.<br>
   The name reads as <em>mon keys</em>: my keys.
 </p>
 
@@ -22,8 +22,8 @@
 
 A secret written into a shell startup file is readable by anything that can read
 your home directory, and it follows you into dotfile backups and git history.
-`monkeys` stores it in the keyring and prints an `export` line when a shell asks
-for one.
+`monkeys` keeps it in the keyring and puts it into the environment of the one
+command you are running, by name.
 
 On macOS the keyring is the login keychain, reached through Security.framework.
 On Linux it is whatever answers the Secret Service D-Bus API, which is
@@ -131,6 +131,11 @@ wl-paste | monkeys set GITHUB_TOKEN       # Linux, Wayland
 Naming no name means every name, for `preview` and `export`. `run` asks to be
 told, since the names are how it knows what to check for and what to leave out;
 `--all` is there for when you would rather not say.
+
+Output is coloured only when it is going to a terminal, and never for `export`
+or `list`, whose output a shell or a script reads. `NO_COLOR` turns colour off,
+`CLICOLOR_FORCE` turns it on for a pipe, and an empty value for either counts
+as unset.
 
 ## Looking without reading
 
