@@ -29,6 +29,7 @@ private func colorIsAllowed(on descriptor: Int32) -> Bool {
     let environment = ProcessInfo.processInfo.environment
     if environment["NO_COLOR"] != nil { return false }
     if environment["TERM"] == "dumb" { return false }
+    if environment["CLICOLOR_FORCE"] != nil { return true }
     return isatty(descriptor) != 0
 }
 

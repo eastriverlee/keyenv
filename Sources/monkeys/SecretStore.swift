@@ -6,6 +6,8 @@ enum StoreFailure: Error {
     case nameNotStored(String)
     case invalidVariableName(String)
     case emptyValue
+    case badInvocation(String)
+    case namesNotStored([String])
     case backendUnavailable(String)
     case backendFailed(String)
 }
@@ -19,6 +21,16 @@ extension StoreFailure: CustomStringConvertible {
             return "\(name) is not a valid environment variable name"
         case .emptyValue:
             return "no value was given"
+        case .badInvocation(let form):
+            return "expected \(form)"
+        case .namesNotStored(let names):
+            let subject = names.count == 1 ? "it" : "them"
+            let asks = names.map { "  monkeys set \($0)" }.joined(separator: "\n")
+            return """
+            \(names.joined(separator: ", ")) \(names.count == 1 ? "is" : "are") not stored yet
+            nothing ran. ask the person to store \(subject), then try again:
+            \(asks)
+            """
         case .backendUnavailable(let reason):
             return reason
         case .backendFailed(let reason):

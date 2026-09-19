@@ -55,37 +55,14 @@ func reportShellInit(appendedTo path: String) {
     printToStandardError("open a new shell, or: source \(abbreviatingHome(path))")
 }
 
-func offerShellInit() {
-    guard isTerminal(STDERR_FILENO) else { return }
-    guard let path = shellProfilePath(), !profileCallsMonkeysExport(path) else { return }
-
-    printToStandardError("")
-    printToStandardError(messageStyle("no startup file here seems to call monkeys export.", .dim))
-    guard askYesOrNo("append it to \(abbreviatingHome(path)) now?") else {
-        printToStandardError(messageStyle("you can do it later with:", .dim) + " " + messageStyle("monkeys shell-init", .argument))
-        return
-    }
-    do {
-        try appendShellInit(to: path)
-        reportShellInit(appendedTo: path)
-    } catch {
-        printToStandardError(messageStyle("monkeys:", .bad) + " \(error)")
-    }
-}
-
 func runSet(_ arguments: [String]) throws {
     let name = try requireName(arguments)
     let value = readValueFromInput()
     guard !value.isEmpty else { throw StoreFailure.emptyValue }
     try secretStore.store(value, forName: name)
     printToStandardError(messageStyle("stored", .good) + " " + messageStyle(name, .bold))
-    printHintToTerminal(messageStyle("this shell still has the value it started with; load the stored one with:", .dim))
-    printHintToTerminal("  " + messageStyle("eval \"$(monkeys export \(name))\"", .argument))
-    offerShellInit()
-}
-
-func runGet(_ arguments: [String]) throws {
-    print(try secretStore.read(forName: try requireName(arguments)))
+    printHintToTerminal(messageStyle("give it to a command with:", .dim))
+    printHintToTerminal("  " + messageStyle("monkeys run \(name) -- <command>", .argument))
 }
 
 func runRemove(_ arguments: [String]) throws {
@@ -146,16 +123,16 @@ let rest = Array(arguments.dropFirst())
 do {
     switch command {
     case "set": try runSet(rest)
-    case "get": try runGet(rest)
     case "list": try runList()
     case "preview": try runPreview(rest)
     case "remove": try runRemove(rest)
     case "export": try runExport(rest)
+    case "run": try runCommandWithSecrets(rest)
     case "shell-init": try runShellInit()
     case "help", "-h", "--help": print(usage)
     default:
         printToStandardError(messageStyle("unknown command:", .bad) + " \(command)")
-        printToStandardError(usage)
+        printToStandardError("run " + messageStyle("monkeys help", .argument) + " for the commands")
         exit(2)
     }
 } catch let failure as StoreFailure {

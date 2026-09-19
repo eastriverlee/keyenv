@@ -16,9 +16,14 @@
   <img alt="macOS and Linux" src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-E94100">
 </p>
 
-A secret written into `~/.zshrc` is readable by anything that can read your home
-directory, and it follows you into dotfile backups and git history. `monkeys`
-stores it in the keyring and prints an `export` line when a shell asks for one.
+<p align="center">
+  <img src="terminal.svg" alt="monkeys run refusing a missing value, then running the command, then preview" width="640">
+</p>
+
+A secret written into a shell startup file is readable by anything that can read
+your home directory, and it follows you into dotfile backups and git history.
+`monkeys` stores it in the keyring and prints an `export` line when a shell asks
+for one.
 
 On macOS the keyring is the login keychain, reached through Security.framework.
 On Linux it is whatever answers the Secret Service D-Bus API, which is
@@ -46,105 +51,87 @@ make install INSTALL_DIRECTORY=/usr/local/bin
 
 ## Use
 
-Store a value. The prompt hides what you type, and the first time around it
-offers to wire up your shell:
+Store a value. The prompt hides what you type:
 
 ```
 $ monkeys set OPENROUTER_API_KEY
 Value:
 stored OPENROUTER_API_KEY
-this shell still has the value it started with; load the stored one with:
-  eval "$(monkeys export OPENROUTER_API_KEY)"
-
-no startup file here seems to call monkeys export.
-append it to ~/.zshrc now? [y/N] y
-appended to ~/.zshrc:
-  eval "$(monkeys export)"
-open a new shell, or: source ~/.zshrc
+give it to a command with:
+  monkeys run OPENROUTER_API_KEY -- <command>
 ```
 
-Two separate things are going on there.
-
-Storing a value cannot reach the shell that ran `monkeys`, because a process only
-ever changes its own environment. The `eval` on the third line is how you get
-the value into the shell you are standing in.
-
-The offer is about every shell after this one. It comes up when nothing in your
-startup file mentions `monkeys export`, and what it appends is:
+Then spend it on the one command that needs it:
 
 ```sh
-# secrets from the keyring, via https://github.com/eastriverlee/monkeys
+monkeys run OPENROUTER_API_KEY -- ./bench
+```
+
+`run` puts the values you name into that command's environment and nowhere
+else, then replaces itself with the command, so the exit status, the output and
+the signals are the command's own. With every name stored it is invisible: the
+line behaves as though you had typed `./bench`.
+
+A name you have not stored stops the run before it starts:
+
+```
+$ monkeys run OPENROUTER_API_KEY ANTHROPIC_API_KEY -- ./bench
+monkeys: ANTHROPIC_API_KEY is not stored yet
+nothing ran. ask the person to store it, then try again:
+  monkeys set ANTHROPIC_API_KEY
+```
+
+That message is written to be passed on. An agent that meets it knows which
+values are missing, that nothing happened, and what to ask its person for.
+
+## Every shell, if you want it
+
+`run` hands a value to one process. The older habit is to put every value into
+every shell, which `export` and `shell-init` still do:
+
+```sh
+monkeys shell-init      # appends the line below to your startup file
 eval "$(monkeys export)"
 ```
 
-That goes in once and never changes again. Every `monkeys set` after it reaches
-the next shell you open, since `monkeys export` reads whatever is stored at the
-time it runs:
+It costs what it sounds like it costs. Every program you start from that shell
+inherits every secret you own, including the ones it has no business seeing.
+`run` exists because most commands need one value and none of the rest.
 
-```
-$ monkeys export
-export GITHUB_TOKEN='ghp_0000000000000000'
-export OPENROUTER_API_KEY='sk-or-v1-0000000000000000'
-```
-
-So the last step is deleting the plain secrets your startup file still carries:
-
-```sh
-export OPENROUTER_API_KEY=sk-or-v1-0000000000000000
-export GITHUB_TOKEN=ghp_0000000000000000
-```
-
-`monkeys shell-init` makes the same append on its own, and says so when the line
-is already there. It writes `~/.zshrc` for zsh and `~/.bashrc` for bash
-(`~/.bash_profile` on macOS). Set `MONKEYS_SHELL_PROFILE` to send it somewhere
-else, such as a file your startup file sources.
-
-The append lands at the end of the file, which in almost every startup file is
-below the line that puts the install directory on `PATH`. The shell has to find
-`monkeys` to run it, so check that order first if a new shell comes up without
-your values.
-
-Nothing is written without an answer. When `set` reads its value from a pipe
-there is no terminal to ask, so it prints `you can do it later with: monkeys
-shell-init` and leaves the file alone.
+`shell-init` writes `~/.zshrc` for zsh and `~/.bashrc` for bash
+(`~/.bash_profile` on macOS), says so when the line is already there, and puts
+it at the end of the file, below whatever adds the install directory to `PATH`.
+Set `MONKEYS_SHELL_PROFILE` to send it somewhere else, such as a file your
+startup file sources.
 
 ## Commands
 
 | command | what it does |
 | --- | --- |
 | `monkeys set <NAME>` | read a value and store it |
-| `monkeys get <NAME>` | print one value |
 | `monkeys list` | print every stored name |
 | `monkeys preview [NAME...]` | print each value masked, with its length |
 | `monkeys remove <NAME>` | delete one value |
-| `monkeys export [NAME...]` | print shell export lines; all names when none are given |
-| `monkeys shell-init` | add the export line to your shell startup file |
+| `monkeys run [NAME...] -- <command>` | run a command with those values in its environment |
+| `monkeys export [NAME...]` | print shell export lines, for a shell to eval |
+| `monkeys shell-init` | add that eval to your shell startup file |
 
-`monkeys` takes no value as an argument, so storing or reading one never types
-it: your shell history and the process table both see `monkeys set
-GITHUB_TOKEN` and nothing more. When standard input is not a terminal, `set`
-reads the value from there:
+`monkeys` takes no value as an argument, so storing one never types it: your
+shell history and the process table both see `monkeys set GITHUB_TOKEN` and
+nothing more. When standard input is not a terminal, `set` reads the value from
+there:
 
 ```sh
 pbpaste | monkeys set GITHUB_TOKEN        # macOS
 wl-paste | monkeys set GITHUB_TOKEN       # Linux, Wayland
 ```
 
-Where the value goes afterwards is yours to decide, and an argument is the one
-place to avoid: `ps` shows you another user's command line, and does not show
-their environment.
-
-```sh
-some-command "$(monkeys get GITHUB_TOKEN)"        # readable in ps
-GITHUB_TOKEN="$(monkeys get GITHUB_TOKEN)" some-command
-```
+Naming no name means every name, for `preview`, `export` and `run` alike.
 
 ## Looking without reading
 
-`get` prints a secret in full, which makes it the wrong command for anything
-that keeps a record of what it reads, a coding agent and a CI log among them.
-`preview` answers the question such a caller actually has, which is whether the
-right value is in there:
+Nothing here prints a stored value. The closest is `preview`, which answers the
+question you usually have, which is whether the right value is in there:
 
 ```
 $ monkeys preview
@@ -162,11 +149,13 @@ SHORT_ONE  ... 6
 ```
 
 A length and a two-character prefix are enough to tell a key pasted whole from
-one that lost a character on the way, or one provider's key from another's.
+one that lost a character on the way, or one provider's key from another's. To
+read a value in full, open Keychain Access or your keyring's own browser, where
+the decision to look at a secret is yours and deliberate.
 
-`monkeys help` ends with the same rules written for the agent to read: never run
-`get` on its own, reach a secret only as an environment variable, and hand it to
-a command through the shell so the value skips the agent entirely.
+`monkeys help` ends with the same ground written for an agent to read: spend a
+value through `run`, pass on the message when one is missing, and leave storing
+to the person.
 
 ## What gets replaced
 
@@ -174,13 +163,13 @@ a command through the shell so the value skips the agent entirely.
 it. The previous value is gone, and the keyring keeps no history to recover it
 from.
 
-`eval "$(monkeys export)"` assigns every stored name, so a value already in the
-environment gives way to the stored one. Position in `~/.zshrc` settles which
-wins: an `export` line below the `eval` survives, one above it is overwritten.
+`run` sets the names you give it in the command's environment, so a variable
+the shell already exported is overridden for that command. Names you leave out
+are passed through untouched.
 
-`export` reads every value before it prints the first line, so a run that fails
-on a name you never stored prints nothing at all. A shell cannot end up with
-half of them set.
+`run` and `export` both read every value before either sets a variable or
+prints a line, so a name you never stored stops them with nothing done. A
+command cannot start with half of its secrets.
 
 ## How it stores things
 
@@ -211,13 +200,10 @@ carrying quotes, spaces or newlines survives `eval` unchanged.
 
 ## Caveats
 
-`eval "$(monkeys export)"` puts every stored value into the environment of every
-process started from that shell. To give a secret to one command only, leave it
-out of the export and read it at the call site:
-
-```sh
-OPENROUTER_API_KEY="$(monkeys get OPENROUTER_API_KEY)" ./run-eval
-```
+`run` scopes a secret to one process, and it cannot follow the value any
+further. A command free to print what it reads will print this too, and no
+filter here would be honest about catching that. What `run` settles is that
+the value never appears in the line you typed.
 
 On macOS the binary carries an ad-hoc signature, whose identity is a hash of the
 binary itself. A rebuild changes that identity, so the keychain may ask you to

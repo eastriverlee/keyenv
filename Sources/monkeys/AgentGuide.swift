@@ -35,37 +35,27 @@ private let agentGuide = """
 monkeys for an automated caller
 
 A value stored here must never enter your context or your transcript. Anything
-you read stays in both, and a keyring cannot take it back.
+you read stays in both, and a keyring cannot take it back. There is no command
+that prints a stored value, so the only thing to get right is how you spend it.
 
-Reach a secret as an environment variable, and only as one.
+monkeys run puts the values you name into one command's environment and nowhere
+else:
 
-Never run monkeys get as a command of its own:
+  monkeys run OPENROUTER_API_KEY -- ./bench
 
-  monkeys get OPENROUTER_API_KEY
+Nothing you write there holds the secret, so nothing you write can spill it.
+With every name stored, run replaces itself with the command, so the exit
+status, the output and the signals are the command's own.
 
-Its entire output is the secret, and whatever a command prints, you have read.
+A name that is not stored stops the run before it starts, and says what to ask
+for:
 
-Inside another command the same call is right, because the shell performs the
-substitution and hands the value to that process. What returns to you is only
-what the process itself prints:
+  monkeys: ANTHROPIC_API_KEY is not stored yet
+  nothing ran. ask the person to store it, then try again:
+    monkeys set ANTHROPIC_API_KEY
 
-  OPENROUTER_API_KEY="$(monkeys get OPENROUTER_API_KEY)" ./run-eval
-
-When a startup file already runs eval "$(monkeys export)", every shell you open
-carries the variable, so name nothing and call nothing:
-
-  ./run-eval
-
-Never print a variable that holds a secret. Each of these puts the value in
-front of you as surely as get does:
-
-  echo "$OPENROUTER_API_KEY"
-  env
-  printenv
-
-So does writing it into a file, a log, a commit, or a bug report. Where a
-config file wants the secret, write whatever reference its format offers, such
-as ${OPENROUTER_API_KEY}, and let the program expand it.
+Pass that on. Storing a secret is the person's move, not yours: typing one for
+them puts it in your context before it reaches the keyring.
 
 To see what exists, read the names with monkeys list, and their shape with
 monkeys preview:
@@ -76,9 +66,19 @@ monkeys preview:
 
 \(maskingRule)
 
-To store a secret, ask the person to run monkeys set <NAME> themselves. Typing
-it for them puts it in your context first.
+A length and a two-character prefix confirm that the right value arrived
+without reading it.
 
-To check that it arrived, run monkeys preview <NAME> and compare the length
-against what issued the secret. That confirms the value without reading it.
+monkeys export prints every value as shell assignments, for a startup file to
+eval. Never run it yourself, and never print a variable that already holds a
+secret. Each of these puts a value in front of you:
+
+  monkeys export
+  echo "$OPENROUTER_API_KEY"
+  env
+  printenv
+
+So does writing one into a file, a log, a commit, or a bug report. Where a
+config file wants the secret, write whatever reference its format offers, such
+as ${OPENROUTER_API_KEY}, and let the program expand it.
 """

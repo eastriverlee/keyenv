@@ -6,9 +6,7 @@ struct CommandSummary {
 
 let commandSummaries = [
     CommandSummary(verb: "set", arguments: "<NAME>",
-                   summary: "store a value read from the terminal or stdin"),
-    CommandSummary(verb: "get", arguments: "<NAME>",
-                   summary: "print one stored value"),
+                   summary: "store a value typed or piped in"),
     CommandSummary(verb: "list", arguments: "",
                    summary: "print every stored name"),
     CommandSummary(verb: "preview", arguments: "[NAME...]",
@@ -16,9 +14,11 @@ let commandSummaries = [
     CommandSummary(verb: "remove", arguments: "<NAME>",
                    summary: "delete one stored value"),
     CommandSummary(verb: "export", arguments: "[NAME...]",
-                   summary: "print shell export lines, for every name or some"),
+                   summary: "print export lines, for a shell to eval"),
+    CommandSummary(verb: "run", arguments: "[NAME...] -- <command>",
+                   summary: "run a command with those values set"),
     CommandSummary(verb: "shell-init", arguments: "",
-                   summary: "add the export line to your shell startup file"),
+                   summary: "add that eval to your shell startup file"),
 ]
 
 private func plainInvocation(_ command: CommandSummary) -> String {
@@ -47,7 +47,12 @@ var usage: String {
 
     \(commandLines.joined(separator: "\n"))
 
-    In your shell startup file:
+    Spend a value on one command:
+
+      \(outputStyle("monkeys run OPENROUTER_API_KEY -- ./bench", .argument))
+
+    Or put every value into every shell you open. monkeys shell-init writes this
+    into your startup file:
 
       \(outputStyle(shellInitLine, .argument))
 

@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 554 301" width="554" height="301" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13.5">
+<rect width="554" height="301" rx="10" fill="#17181c" stroke="#2b2d34"/>
+<circle cx="24" cy="24" r="6" fill="#ff5f57"/>
+<circle cx="43" cy="24" r="6" fill="#febc2e"/>
+<circle cx="62" cy="24" r="6" fill="#28c840"/>
+<text x="22" y="52" fill="#d6d6d0" xml:space="preserve">
+<tspan x="22.0" fill="#6f7380">$ </tspan>
+<tspan x="38.2">monkeys run OPENROUTER_API_KEY ANTHROPIC_API_KEY -- ./bench</tspan>
+</text>
+<text x="22" y="73" fill="#d6d6d0" xml:space="preserve">
+<tspan x="22.0" fill="#f1707b">monkeys:</tspan>
+<tspan x="86.8"> ANTHROPIC_API_KEY is not stored yet</tspan>
+</text>
+<text x="22" y="94" fill="#d6d6d0" xml:space="preserve">
+<tspan x="22.0">nothing ran. ask the person to store it, then try again:</tspan>
+</text>
+<text x="22" y="115" fill="#d6d6d0" xml:space="preserve">
+<tspan x="22.0">  monkeys set ANTHROPIC_API_KEY</tspan>
+</text>
+<text x="22" y="157" fill="#d6d6d0" xml:space="preserve">
+<tspan x="22.0" fill="#6f7380">$ </tspan>
+<tspan x="38.2">monkeys run OPENROUTER_API_KEY -- ./bench</tspan>
+</text>
+<text x="22" y="178" fill="#d6d6d0" xml:space="preserve">
+<tspan x="22.0">the key reached me: 73 characters</tspan>
+</text>
+<text x="22" y="220" fill="#d6d6d0" xml:space="preserve">
+<tspan x="22.0" fill="#6f7380">$ </tspan>
+<tspan x="38.2">monkeys preview GITHUB_TOKEN OPENROUTER_API_KEY</tspan>
+</text>
+<text x="22" y="241" fill="#d6d6d0" xml:space="preserve">
+<tspan x="22.0">GITHUB_TOKEN        </tspan>
+<tspan x="184.0" fill="#e94100">gh</tspan>
+<tspan x="200.2" opacity="0.55">...</tspan>
+<tspan x="224.5" fill="#e94100">f</tspan>
+<tspan x="232.6"> </tspan>
+<tspan x="240.7" opacity="0.55">40</tspan>
+</text>
+<text x="22" y="262" fill="#d6d6d0" xml:space="preserve">
+<tspan x="22.0">OPENROUTER_API_KEY  </tspan>
+<tspan x="184.0" fill="#e94100">sk</tspan>
+<tspan x="200.2" opacity="0.55">...</tspan>
+<tspan x="224.5" fill="#e94100">2</tspan>
+<tspan x="232.6"> </tspan>
+<tspan x="240.7" opacity="0.55">73</tspan>
+</text>
+</svg>
