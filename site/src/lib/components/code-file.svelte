@@ -21,6 +21,7 @@
 
 	const promptColor = { color: '#e94100', '--shiki-dark': '#e94100' };
 	const outputColor = { color: '#6e7781', '--shiki-dark': '#8b949e' };
+	const profileColor = { color: '#116329', '--shiki-dark': '#7ee787', 'font-weight': '600' };
 	const markColors: Record<string, Record<string, string>> = {
 		'\u2713': { color: '#1a7f37', '--shiki-dark': '#3fb950' },
 		'\u2717': { color: '#cf222e', '--shiki-dark': '#f85149' }
@@ -41,6 +42,17 @@
 		].filter((part) => part.content.length > 0);
 	}
 
+	function asProfileLine(line: ThemedToken[]): ThemedToken[] {
+		const content = line.map((token) => token.content).join('');
+		const [profile, ...rest] = content.split(/(?=\s{2})/);
+		const tail = rest.join('');
+		const first = line[0];
+		return [
+			painted({ ...first, content: profile }, profileColor),
+			...(tail ? [painted({ ...first, content: tail }, outputColor)] : [])
+		];
+	}
+
 	function withPrompt(line: ThemedToken[]): ThemedToken[] {
 		const [first, ...rest] = line;
 		if (!first?.content.startsWith('$')) return line;
@@ -53,7 +65,9 @@
 		tokens: (lines) =>
 			lines.map((line, index) => {
 				if (index === 0) return withPrompt(line);
-				if (index >= commandLineCount) return line.flatMap(asOutput);
+				if (index >= commandLineCount) {
+					return line[0]?.content.startsWith('@') ? asProfileLine(line) : line.flatMap(asOutput);
+				}
 				return line;
 			})
 	};
