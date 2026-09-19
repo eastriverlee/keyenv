@@ -112,6 +112,15 @@ func printToStandardError(_ message: String) {
     FileHandle.standardError.write(Data((message + "\n").utf8))
 }
 
+func printHintToTerminal(_ message: String) {
+    guard isatty(STDERR_FILENO) != 0 else { return }
+    printToStandardError(message)
+}
+
+func isSetInThisEnvironment(_ name: String) -> Bool {
+    ProcessInfo.processInfo.environment[name] != nil
+}
+
 let usage = """
 keyenv — environment variables kept in the macOS keychain
 
@@ -138,6 +147,8 @@ func runSet(_ arguments: [String]) throws {
     guard !value.isEmpty else { throw KeychainFailure.emptyValue }
     try storeValue(value, forName: name)
     printToStandardError("stored \(name)")
+    printHintToTerminal("this shell still has the value it started with; load the stored one with:")
+    printHintToTerminal("  eval \"$(keyenv export \(name))\"")
 }
 
 func runGet(_ arguments: [String]) throws {
@@ -148,6 +159,9 @@ func runRemove(_ arguments: [String]) throws {
     let name = try requireName(arguments)
     try removeValue(forName: name)
     printToStandardError("removed \(name)")
+    guard isSetInThisEnvironment(name) else { return }
+    printHintToTerminal("this shell still carries it; clear it with:")
+    printHintToTerminal("  unset \(name)")
 }
 
 func runList() throws {

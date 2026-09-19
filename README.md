@@ -33,7 +33,15 @@ Store a value. The prompt hides what you type:
 $ keyenv set OPENROUTER_API_KEY
 Value:
 stored OPENROUTER_API_KEY
+this shell still has the value it started with; load the stored one with:
+  eval "$(keyenv export OPENROUTER_API_KEY)"
 ```
+
+Storing a value cannot reach the shell that ran `keyenv`, because a process
+only ever changes its own environment. The line it suggests is how you get the
+value into the shell you are standing in; a shell you open later picks it up on
+its own. Those two lines go to standard error, and only when standard error is
+a terminal, so a script that pipes `set` sees nothing extra.
 
 Do that for each secret your `~/.zshrc` currently holds as a plain line:
 
