@@ -217,7 +217,7 @@ values are missing, that nothing happened, and what to ask its person for.
 A project names what it needs once, in a `.monkeys` file next to the code:
 
 ```
-@shop
+@monkeys
 DATABASE_URL
 STRIPE_SECRET_KEY
 OPENROUTER_API_KEY
@@ -235,7 +235,7 @@ monkeys run npm run dev
 ```
 
 The profile scopes every name. `monkeys set STRIPE_SECRET_KEY` there stores
-`shop/STRIPE_SECRET_KEY`, which is what `run` reads, and `preview` with no
+`monkeys/STRIPE_SECRET_KEY`, which is what `run` reads, and `preview` with no
 names gives the file's names from that profile. `list` stays global and
 shows the prefixes, so you can see which project each value belongs to.
 
@@ -244,7 +244,7 @@ clones the repository gets the same names, and each of them fills their own
 keyring, so a `.monkeys` file can be committed and a keyring never has to be.
 
 A profile never reads from the personal one. Names stored without a profile
-are yours alone, and a name missing in `@shop` is missing there even when a
+are yours alone, and a name missing in `@monkeys` is missing there even when a
 bare copy exists, so a project cannot quietly pick up a value meant for
 another.
 
@@ -253,15 +253,15 @@ another.
 A profile line can name several profiles, and a file can hold several blocks:
 
 ```
-@test.shop.eastriver,staging.shop.eastriver
+@monkeys,test.monkeys
 DATABASE_URL
 STRIPE_SECRET_KEY
-@staging.shop.eastriver
+@monkeys
 SENTRY_DSN
 ```
 
 A profile's names are those of every block that lists it, so both profiles
-here need `DATABASE_URL` and `STRIPE_SECRET_KEY`, and staging also needs
+here need `DATABASE_URL` and `STRIPE_SECRET_KEY`, and `monkeys` also needs
 `SENTRY_DSN`. The first profile in the file is the one `run` uses when none is
 given. A leading `@profile` picks another declared one, and a prefix that fits
 only one of them is enough, the way a short git hash is. A profile the file
@@ -269,30 +269,31 @@ does not declare is refused with the declared ones listed, and a prefix that
 fits several is refused with those:
 
 ```sh
-monkeys run @staging ./deploy
-monkeys set @staging SENTRY_DSN
+monkeys run @test ./hello
+monkeys set @test STRIPE_SECRET_KEY
 ```
 
 A value missing in one profile stops only that profile, and only when it is
-used: staging can be half filled while test runs. `doctor` reads the whole
+used: test can be half filled while monkeys runs. `doctor` reads the whole
 file and shows every profile with what it has and lacks, in colour on a
 terminal, and exits non-zero while anything is missing:
 
 ```
 $ monkeys doctor
-@test.shop.eastriver  default
+@monkeys  default
   ✓ DATABASE_URL
   ✓ STRIPE_SECRET_KEY
-@staging.shop.eastriver
+  ✓ SENTRY_DSN
+@test.monkeys
   ✓ DATABASE_URL
   ✗ STRIPE_SECRET_KEY
-  ✗ SENTRY_DSN
 ```
 
 Profile names take letters, digits, `_`, `-` and `.`. A dotted name in the
-style of a bundle identifier, `staging.shop.eastriver`, keeps two projects'
-staging apart in one keyring; a single word does for a profile nothing else
-will collide with.
+style of a bundle identifier keeps two projects' test apart in one keyring.
+Two parts, `test.monkeys`, is enough for most; a third, `test.monkeys.lee`,
+is for a keyring that holds many projects and collides at two. A single word
+does for a profile nothing else will collide with.
 
 A bare `@` is the personal profile, and since no project lives there, it also
 sets the file aside and takes names again, which is how one value reaches a
@@ -307,9 +308,9 @@ from any directory:
 
 ```
 $ monkeys run ./hello
-monkeys: STRIPE_SECRET_KEY is not stored yet in @shop
+monkeys: STRIPE_SECRET_KEY is not stored yet in @monkeys
 nothing ran. ask the person to store it, then try again:
-  monkeys set @shop STRIPE_SECRET_KEY
+  monkeys set @monkeys STRIPE_SECRET_KEY
 ```
 
 Inside a project, everything after `run` is the command. The older form,
@@ -324,11 +325,11 @@ A profile leaves the keyring as one encrypted file, and only that way:
 $ monkeys pack
 Passphrase:
 Again:
-wrote shop.monkeys: @shop, 3 values
+wrote monkeys.monkeys: @monkeys, 3 values
 ```
 
 The file takes the profile's name. A word after `pack` names it otherwise,
-and `monkeys pack @staging.shop.eastriver` bundles another declared profile,
+and `monkeys pack @test` bundles another declared profile,
 with the names the file lists for it.
 
 It carries the profile's name, the names the project lists, and their values,
@@ -340,13 +341,13 @@ that fills half a profile is a bug for whoever receives it.
 The other side runs `unpack` where the project should live:
 
 ```sh
-$ monkeys unpack shop
+$ monkeys unpack monkeys
 Passphrase:
-wrote .monkeys: @shop, 3 names
-stored shop/DATABASE_URL, shop/STRIPE_SECRET_KEY, shop/OPENROUTER_API_KEY
+wrote .monkeys: @monkeys, 3 names
+stored monkeys/DATABASE_URL, monkeys/STRIPE_SECRET_KEY, monkeys/OPENROUTER_API_KEY
 ```
 
-The values go into that person's keyring under the bundle's profile, `shop/`,
+The values go into that person's keyring under the bundle's profile, `monkeys/`,
 and the profile and names become a `.monkeys` file in the current directory,
 so `monkeys run ./hello` works from the next command. When a `.monkeys` file
 is already there, `unpack` adds the bundle's profile as a block at the end,
@@ -366,7 +367,7 @@ because `*.monkeys` alone also matches the `.monkeys` file you do commit:
 
 ## Every shell, if you want it
 
-`run` hands a value to one process, and `monkeys run @shop zsh` hands a whole
+`run` hands a value to one process, and `monkeys run @monkeys zsh` hands a whole
 profile to one shell, which forgets it on exit. For a value that every shell
 should carry from startup, `export` writes the lines and you paste them:
 

@@ -17,29 +17,29 @@
     -H "Authorization: Bearer ${'$'}OPENROUTER_API_KEY" \\
     https://openrouter.ai/api/v1/key
 '`;
-	const projectFile = `@shop
+	const projectFile = `@monkeys
 OPENROUTER_API_KEY`;
 	const runInProject = `monkeys run sh -c '
   curl -s -o /dev/null -w "%{http_code}\\n" \\
     -H "Authorization: Bearer ${'$'}OPENROUTER_API_KEY" \\
     https://openrouter.ai/api/v1/key
 '`;
-	const profilesFile = `@test.shop.eastriver,staging.shop.eastriver
+	const profilesFile = `@monkeys,test.monkeys
 OPENROUTER_API_KEY
 STRIPE_SECRET_KEY
-@staging.shop.eastriver
+@monkeys
 SENTRY_DSN`;
 	const doctorLine = 'monkeys doctor';
-	const doctorOutput = `@test.shop.eastriver  default
+	const doctorOutput = `@monkeys  default
   ✓ OPENROUTER_API_KEY
   ✓ STRIPE_SECRET_KEY
-@staging.shop.eastriver
+  ✓ SENTRY_DSN
+@test.monkeys
   ✓ OPENROUTER_API_KEY
-  ✗ STRIPE_SECRET_KEY
-  ✗ SENTRY_DSN`;
-	const runStaging = 'monkeys run @staging ./deploy';
+  ✗ STRIPE_SECRET_KEY`;
+	const runStaging = 'monkeys run @test ./hello';
 	const packLine = 'monkeys pack';
-	const unpackLine = 'monkeys unpack ~/Downloads/shop.monkeys';
+	const unpackLine = 'monkeys unpack ~/Downloads/monkeys.monkeys';
 
 	const stars = browser
 		? fetch(`https://api.github.com/repos/${repository.owner}/${repository.repo}`)
@@ -163,7 +163,7 @@ SENTRY_DSN`;
 		</p>
 		<div class="grid gap-3 sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)]">
 			<TreeView.Root class="rounded-lg border p-2">
-				<TreeView.Folder name="shop" open>
+				<TreeView.Folder name="monkeys" open>
 					<TreeView.File name=".monkeys" />
 					<TreeView.Folder name="src">
 						<TreeView.File name="index.ts" />
@@ -191,7 +191,7 @@ SENTRY_DSN`;
 	<section class="flex flex-col gap-4">
 		<h2 class="text-xl font-semibold">Hand the profile to a teammate</h2>
 		<p class="max-w-prose">
-			<code>pack</code> asks for a passphrase and writes <code>shop.monkeys</code>: the profile, its
+			<code>pack</code> asks for a passphrase and writes <code>monkeys.monkeys</code>: the profile, its
 			names and its values, sealed. Send the file however you like, and the passphrase another way.
 		</p>
 		<CodeFile code={packLine} />

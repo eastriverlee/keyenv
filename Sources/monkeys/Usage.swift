@@ -61,7 +61,7 @@ var usage: String {
 
     A project keeps its names in \(projectFileName), under the profile they live in:
 
-      \(outputStyle("@shop", .argument))
+      \(outputStyle("@monkeys", .argument))
       \(outputStyle("DATABASE_URL", .argument))
       \(outputStyle("STRIPE_SECRET_KEY", .argument))
 
@@ -69,26 +69,26 @@ var usage: String {
     and remove read and write that profile:
 
       \(outputStyle("monkeys run ./bench", .argument))
-      \(outputStyle("monkeys set STRIPE_SECRET_KEY", .argument))        stored as shop/STRIPE_SECRET_KEY
+      \(outputStyle("monkeys set STRIPE_SECRET_KEY", .argument))        stored as monkeys/STRIPE_SECRET_KEY
 
     A profile line can name several profiles, and a file can have several
     blocks. Each profile gets the names of every block that lists it; the first
     profile in the file is the one run uses when none is given:
 
-      \(outputStyle("@test.shop,staging.shop", .argument))
+      \(outputStyle("@monkeys,test.monkeys", .argument))
       \(outputStyle("DATABASE_URL", .argument))
-      \(outputStyle("@staging.shop", .argument))
+      \(outputStyle("@monkeys", .argument))
       \(outputStyle("SENTRY_DSN", .argument))
 
-      \(outputStyle("monkeys run @staging.shop ./deploy", .argument))
-      \(outputStyle("monkeys doctor", .argument))               which profile lacks what
+      \(outputStyle("monkeys run @test ./hello", .argument))          test.monkeys, by its prefix
+      \(outputStyle("monkeys doctor", .argument))                     which profile lacks what
 
     A leading @profile picks another declared profile, and a prefix that fits
     only one of them is enough. A bare @ is the personal profile, where names
     without a prefix live; it sets the project file aside, so names are given
     again:
 
-      \(outputStyle("monkeys set @staging DATABASE_URL", .argument))        @staging.shop, in a project
+      \(outputStyle("monkeys set @test DATABASE_URL", .argument))      stored as test.monkeys/DATABASE_URL
       \(outputStyle("monkeys run @ TYPESAFE_API_KEY claude", .argument))
 
     For a shell that should carry values from startup, export writes the lines
@@ -102,8 +102,8 @@ var usage: String {
     say otherwise. pack asks for a passphrase; unpack asks again, stores the
     values, and writes the names into a .monkeys file here:
 
-      \(outputStyle("monkeys pack", .argument))                  writes shop.monkeys
-      \(outputStyle("monkeys unpack shop", .argument))
+      \(outputStyle("monkeys pack", .argument))                  writes monkeys.monkeys
+      \(outputStyle("monkeys unpack monkeys", .argument))
 
     \(styledAgentGuide)
     """
