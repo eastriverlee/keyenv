@@ -60,10 +60,17 @@ gnome-keyring on most desktops and KWallet on KDE, reached through
 
 ## Install
 
-On macOS, through Homebrew:
+On macOS or Linux, through Homebrew:
 
 ```sh
 brew install eastriverlee/tap/monkeys
+```
+
+Tap it once and the bare name works from then on:
+
+```sh
+brew tap eastriverlee/tap
+brew install monkeys
 ```
 
 On macOS or Linux, from the latest release:
