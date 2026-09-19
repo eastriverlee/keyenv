@@ -35,14 +35,31 @@ Value:
 stored OPENROUTER_API_KEY
 ```
 
-Add one line to `~/.zshrc`, below whatever puts the install directory on
-`PATH`:
+Do that for each secret your `~/.zshrc` currently holds as a plain line:
 
 ```sh
+export OPENROUTER_API_KEY=sk-or-v1-0000000000000000
+export GITHUB_TOKEN=ghp_0000000000000000
+```
+
+Then delete those lines and leave one behind. It has to sit below whatever puts
+the install directory on `PATH`, since the shell has to find `keyenv` to run
+it:
+
+```sh
+export PATH="$HOME/.local/bin:$PATH"
+
 eval "$(keyenv export)"
 ```
 
-Every shell you open from then on has the stored names in its environment.
+Open a new shell, or run `source ~/.zshrc` in this one. What `eval` runs is the
+same thing you deleted, read back from the keychain:
+
+```
+$ keyenv export
+export GITHUB_TOKEN='ghp_0000000000000000'
+export OPENROUTER_API_KEY='sk-or-v1-0000000000000000'
+```
 
 ## Commands
 
