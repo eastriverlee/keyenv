@@ -496,7 +496,8 @@ the rest of the file alone.
 
 `run` looks for the file from the current directory upward, nearest first, and
 stops at the root of the git checkout, so a file above the checkout is never
-read. Outside a checkout only the current directory counts.
+read. Outside a checkout only the current directory counts, and where no file
+is found `run` takes the names on the line, as it does anywhere else.
 
 Both commands read the passphrase from standard input when it is not a
 terminal, for the rare script that needs to.
