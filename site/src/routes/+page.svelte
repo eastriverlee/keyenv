@@ -164,7 +164,7 @@ SENTRY_DSN`;
 		</p>
 		<div class="grid gap-3 sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)]">
 			<TreeView.Root class="rounded-lg border p-2">
-				<TreeView.Folder name="monkeys" open>
+				<TreeView.Folder name="foo" open>
 					<TreeView.File name=".monkeys" />
 					<TreeView.Folder name="src">
 						<TreeView.File name="index.ts" />
