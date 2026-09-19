@@ -19,11 +19,11 @@
 '`;
 	const projectFile = `@foo
 OPENROUTER_API_KEY`;
-	const runInProject = `monkeys run sh -c '
-  curl -s -o /dev/null -w "%{http_code}\\n" \\
-    -H "Authorization: Bearer ${'$'}OPENROUTER_API_KEY" \\
-    https://openrouter.ai/api/v1/key
-'`;
+	const helloScript = `#!/bin/sh
+curl -s -o /dev/null -w "%{http_code}\\n" \\
+  -H "Authorization: Bearer ${'$'}OPENROUTER_API_KEY" \\
+  https://openrouter.ai/api/v1/key`;
+	const runInProject = 'monkeys run ./hello.sh';
 	const profilesFile = `@test.foo,foo
 OPENROUTER_API_KEY
 STRIPE_SECRET_KEY
@@ -160,18 +160,20 @@ SENTRY_DSN`;
 		<h2 class="text-xl font-semibold">Let the project name what it needs</h2>
 		<p class="max-w-prose">
 			A <code>.monkeys</code> file next to the code lists the names, under a profile. Commit it. In
-			that directory, <code>run</code> takes only the command.
+			that directory, <code>run</code> takes only the command, and the script reads the variable
+			the way any program does.
 		</p>
 		<div class="grid gap-3 sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)]">
 			<TreeView.Root class="rounded-lg border p-2">
 				<TreeView.Folder name="foo" open>
 					<TreeView.File name=".monkeys" />
-					<TreeView.Folder name="src">
-						<TreeView.File name="index.ts" />
-					</TreeView.Folder>
+					<TreeView.File name="hello.sh" />
 				</TreeView.Folder>
 			</TreeView.Root>
-			<CodeFile name=".monkeys" lang="monkeys" code={projectFile} />
+			<div class="flex min-w-0 flex-col gap-3">
+				<CodeFile name=".monkeys" lang="monkeys" code={projectFile} />
+				<CodeFile name="hello.sh" lang="bash" code={helloScript} />
+			</div>
 		</div>
 		<CodeFile code={runInProject} output="200" />
 		<p class="max-w-prose">
