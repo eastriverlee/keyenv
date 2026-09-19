@@ -1,7 +1,14 @@
-# monkeys
+<p align="center">
+  <img src="monkeys.svg" alt="" width="200">
+</p>
 
-Environment variables kept in your operating system's keyring, put into your
-shell at startup. The name reads as *mon keys*: my keys.
+<h1 align="center">monkeys</h1>
+
+<p align="center">
+  Environment variables kept in your operating system's keyring,<br>
+  put into your shell at startup.<br>
+  The name reads as <em>mon keys</em>: my keys.
+</p>
 
 A secret written into `~/.zshrc` is readable by anything that can read your home
 directory, and it follows you into dotfile backups and git history. `monkeys`
