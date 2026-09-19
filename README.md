@@ -268,12 +268,12 @@ monkeys run OPENROUTER_API_KEY,ANTHROPIC_API_KEY ./bench
 
 > ```
 > monkeys: ANTHROPIC_API_KEY is not stored yet
-> nothing ran. ask the person to store it, then try again:
+> nothing ran. a human has to store it, then try again:
 >   monkeys set ANTHROPIC_API_KEY
 > ```
 
 That message is written to be passed on. An agent that meets it knows which
-values are missing, that nothing happened, and what to ask its person for.
+values are missing, that nothing happened, and what a human has to store.
 
 ## Projects and profiles
 
@@ -390,7 +390,7 @@ monkeys run ./hello.sh
 
 > ```
 > monkeys: STRIPE_SECRET_KEY is not stored yet in @foo
-> nothing ran. ask the person to store it, then try again:
+> nothing ran. a human has to store it, then try again:
 >   monkeys set @foo STRIPE_SECRET_KEY
 > ```
 
@@ -513,7 +513,7 @@ the decision to look at a secret is yours and deliberate.
 
 `monkeys help` ends with the same ground written for an agent to read: spend a
 value through `run`, pass on the message when one is missing, and leave storing
-to the person.
+to a human.
 
 ## What gets replaced
 

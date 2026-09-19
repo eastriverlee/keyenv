@@ -44,7 +44,7 @@ extension StoreFailure: CustomStringConvertible {
             let place = profileArgument.isEmpty ? "" : " in \(profileArgument.trimmingCharacters(in: .whitespaces))"
             return """
             \(names.joined(separator: ", ")) \(names.count == 1 ? "is" : "are") not stored yet\(place)
-            nothing ran. ask the person to store \(subject), then try again:
+            nothing ran. a human has to store \(subject), then try again:
             \(asks)
             """
         case .bundleFailed(let reason):

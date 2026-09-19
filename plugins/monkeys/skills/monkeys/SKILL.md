@@ -26,7 +26,7 @@ Nothing in that line holds the secret, so nothing you write can spill it. The
 exit status and the signals are the command's own. Its output comes back
 through `monkeys`, and a stored value in it comes back as `[redacted NAME]`, so
 `echo $NAME` tells you which value was there and never the value. Never add
-`--no-redact`; it is for a person writing a value into a file on purpose. Reach
+`--no-redact`; it is for a human writing a value into a file on purpose. Reach
 for `monkeys run --all <command>` only when you cannot tell which names the
 command reads.
 
@@ -60,7 +60,7 @@ bare copy exists.
 
 A shared `<name>.monkeys` bundle fills a profile with `monkeys unpack`, which
 writes `.monkeys` at the git root and
-asks for a passphrase. Tell the person to run it; do not run it yourself.
+asks for a passphrase. A human runs it; do not run it yourself.
 
 The command you start is what expands the variable, since that is where it
 exists. `$NAME` written into the `monkeys run` line is expanded by the shell
@@ -80,12 +80,12 @@ monkeys run OPENROUTER_API_KEY sh -c 'curl -H "Authorization: Bearer $OPENROUTER
 
 ```
 monkeys: ANTHROPIC_API_KEY is not stored yet in @test.foo
-nothing ran. ask the person to store it, then try again:
+nothing ran. a human has to store it, then try again:
   monkeys set @test.foo ANTHROPIC_API_KEY
 ```
 
-Pass that on. Storing is the person's move: typing a secret for them puts it in
-the conversation before it reaches the keyring.
+Pass that on. Storing is a human's job: typing a secret yourself puts it in the
+conversation before it reaches the keyring.
 
 ## Check without reading
 

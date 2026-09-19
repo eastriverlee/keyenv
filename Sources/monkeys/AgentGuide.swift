@@ -48,7 +48,7 @@ Nothing you write there holds the secret, so nothing you write can spill it.
 The exit status and the signals are the command's own. Its output comes back
 through monkeys, and a stored value in it comes back as [redacted NAME], so
 echo $NAME tells you which value was there and never the value. Do not add
---no-redact; that flag is for a person writing a value into a file on purpose.
+--no-redact; that flag is for a human writing a value into a file on purpose.
 
 A project that has a .monkeys file has already named what it needs, and run
 there takes only the command:
@@ -59,7 +59,7 @@ The file's @ lines scope every name, and the first profile in the file is the
 one run uses unless @profile says otherwise, so set in that directory stores
 into the same profile the command reads from. Read the file before adding a
 name; it is the list. Filling a profile from a shared .monkeys bundle is
-monkeys unpack, which asks for a passphrase, so that too is the person's move.
+monkeys unpack, which asks for a passphrase, so that too is a human's job.
 
 Name what the command actually reads. Naming is how you learn that a value is
 missing, and it keeps the rest of them out of a process that has no business
@@ -71,11 +71,11 @@ A name that is not stored stops the run before it starts, and says what to ask
 for:
 
   monkeys: ANTHROPIC_API_KEY is not stored yet
-  nothing ran. ask the person to store it, then try again:
+  nothing ran. a human has to store it, then try again:
     monkeys set ANTHROPIC_API_KEY
 
-Pass that on. Storing a secret is the person's move, not yours: typing one for
-them puts it in your context before it reaches the keyring.
+Pass that on. Storing a secret is a human's job, not yours: typing one yourself
+puts it in your context before it reaches the keyring.
 
 To see what exists, read the names with monkeys list, and their shape with
 monkeys preview:
