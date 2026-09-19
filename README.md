@@ -434,9 +434,19 @@ monkeys run ./hello.sh
 >   monkeys set @foo STRIPE_SECRET_KEY
 > ```
 
-Inside a project, everything after `run` is the command. The older form,
-`monkeys run NAME ./hello.sh`, tries to run a program called `NAME` there, and the
-error says which file is supplying the names instead.
+Inside a project, everything after `run` is the command, and a name the file
+already lists is refused rather than run as a program:
+
+```sh
+monkeys run STRIPE_SECRET_KEY ./hello.sh
+```
+
+> ```
+> monkeys: ~/foo/.monkeys already lists STRIPE_SECRET_KEY for @foo
+> inside a project, run takes only the command: monkeys run <command>
+> ```
+
+`--all` there means every name stored under the profile, listed or not.
 
 ### Sharing a profile
 

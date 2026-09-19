@@ -14,11 +14,19 @@ private func namesToSpend(_ scope: Scope, _ arguments: [String]) throws -> (name
         return (try storedNamesInScope(scope), Array(arguments.dropFirst()))
     }
     if let names = scope.projectNames {
+        try rejectListedNames(arguments.first, names, scope)
         return (names, arguments)
     }
     guard let list = arguments.first else { throw StoreFailure.badInvocation(runInvocation) }
     let names = list.split(separator: ",", omittingEmptySubsequences: false).map(String.init)
     return (names, Array(arguments.dropFirst()))
+}
+
+private func rejectListedNames(_ first: String?, _ listed: [String], _ scope: Scope) throws {
+    guard let first, let project = scope.project else { return }
+    let given = first.split(separator: ",").map(String.init)
+    guard !given.isEmpty, given.allSatisfy(listed.contains) else { return }
+    throw StoreFailure.namesAlreadyListed(given, scope.profile ?? "", abbreviatingHome(project.path))
 }
 
 private func withoutRedactFlag(_ arguments: [String]) -> (arguments: [String], isRedacting: Bool) {

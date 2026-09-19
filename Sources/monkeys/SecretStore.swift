@@ -12,6 +12,7 @@ enum StoreFailure: Error {
     case profileNotDeclared(String, [String], String)
     case profileAmbiguous(String, [String])
     case namesNotStored([String], String)
+    case namesAlreadyListed([String], String, String)
     case bundleFailed(String)
     case backendUnavailable(String)
     case backendFailed(String)
@@ -46,6 +47,11 @@ extension StoreFailure: CustomStringConvertible {
             \(names.joined(separator: ", ")) \(names.count == 1 ? "is" : "are") not stored yet\(place)
             nothing ran. a human has to store \(subject), then try again:
             \(asks)
+            """
+        case .namesAlreadyListed(let names, let profile, let path):
+            return """
+            \(path) already lists \(names.joined(separator: ", ")) for @\(profile)
+            inside a project, run takes only the command: monkeys run <command>
             """
         case .bundleFailed(let reason):
             return reason

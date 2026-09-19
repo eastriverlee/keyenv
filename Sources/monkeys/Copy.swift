@@ -2,12 +2,6 @@ import Foundation
 
 private let copyForm = "monkeys copy @profile --to @profile"
 
-private func namesStored(in scope: Scope, among stored: [String]) -> [String] {
-    guard let profile = scope.profile else { return stored.filter { !$0.contains("/") } }
-    let prefix = profile + "/"
-    return stored.filter { $0.hasPrefix(prefix) }.map { String($0.dropFirst(prefix.count)) }
-}
-
 private func label(_ scope: Scope) -> String {
     "@" + (scope.profile ?? "")
 }
@@ -30,7 +24,7 @@ func runCopy(_ arguments: [String]) throws {
     let (source, target) = try copyScopes(arguments)
     let stored = try secretStore.storedNames()
     let present = Set(stored)
-    let considered = target.projectNames ?? namesStored(in: source, among: stored)
+    let considered = try target.projectNames ?? storedNamesInScope(source)
     let lacking = considered.filter { !present.contains(target.storedName($0)) }
     let copied = lacking.filter { present.contains(source.storedName($0)) }
     let stillMissing = lacking.filter { !present.contains(source.storedName($0)) }
