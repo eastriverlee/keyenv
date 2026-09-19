@@ -76,20 +76,20 @@ SENTRY_DSN`;
 </script>
 
 <svelte:head>
-	<title>monkeys</title>
+	<title>monkeys: a cross-platform .env alternative for the LLM era</title>
 	<meta name="description" content="A cross-platform .env alternative for the LLM era. Secrets in your keyring, their names in your repo, spent one command at a time, never printed." />
 	<meta name="robots" content="index, follow" />
 	<link rel="canonical" href="https://monk3ys.dev/" />
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="monkeys" />
-	<meta property="og:title" content="monkeys" />
+	<meta property="og:title" content="monkeys: a cross-platform .env alternative for the LLM era" />
 	<meta property="og:description" content="A cross-platform .env alternative for the LLM era. Secrets in your keyring, their names in your repo, spent one command at a time, never printed." />
 	<meta property="og:url" content="https://monk3ys.dev/" />
 	<meta property="og:image" content="https://monk3ys.dev/og.png" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="monkeys" />
+	<meta name="twitter:title" content="monkeys: a cross-platform .env alternative for the LLM era" />
 	<meta name="twitter:description" content="A cross-platform .env alternative for the LLM era. Secrets in your keyring, their names in your repo, spent one command at a time, never printed." />
 	<meta name="twitter:image" content="https://monk3ys.dev/og.png" />
 	<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
