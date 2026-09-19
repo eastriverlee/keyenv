@@ -36,7 +36,7 @@ cat > hello <<'SCRIPT'
 curl -s https://openrouter.ai/api/v1/chat/completions \
   -H "Authorization: Bearer $OPENROUTER_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"model":"z-ai/glm-5.2:free","messages":[{"role":"user","content":"say hello world"}]}'
+  -d '{"model":"google/gemma-4-26b-a4b-it:free","messages":[{"role":"user","content":"say hello world"}]}'
 SCRIPT
 chmod +x hello
 ```
