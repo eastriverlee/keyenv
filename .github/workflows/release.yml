@@ -1,0 +1,58 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build a universal binary
+        run: swift build --configuration release --arch arm64 --arch x86_64
+      - name: Package
+        run: tar czf monkeys-macos-universal.tar.gz -C .build/apple/Products/Release monkeys
+      - uses: actions/upload-artifact@v4
+        with:
+          name: monkeys-macos-universal
+          path: monkeys-macos-universal.tar.gz
+
+  linux:
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            architecture: x86_64
+          - runner: ubuntu-24.04-arm
+            architecture: arm64
+    runs-on: ${{ matrix.runner }}
+    container: swift:6.0-noble
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build without the Swift runtime as a dependency
+        run: swift build --configuration release --static-swift-stdlib
+      - name: Package
+        run: tar czf monkeys-linux-${{ matrix.architecture }}.tar.gz -C .build/release monkeys
+      - uses: actions/upload-artifact@v4
+        with:
+          name: monkeys-linux-${{ matrix.architecture }}
+          path: monkeys-linux-${{ matrix.architecture }}.tar.gz
+
+  publish:
+    needs: [macos, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+      - name: Checksums
+        run: sha256sum *.tar.gz | tee checksums.txt
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release create "${GITHUB_REF_NAME}" --generate-notes *.tar.gz checksums.txt

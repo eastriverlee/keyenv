@@ -20,10 +20,38 @@
   <img src="terminal.svg" alt="monkeys run refusing a missing value, then running the command, then preview" width="640">
 </p>
 
+## Quickstart
+
+```sh
+brew install eastriverlee/tap/monkeys
+```
+
+Store a key. The prompt hides what you type, and nothing you typed holds it:
+
+```sh
+monkeys set OPENROUTER_API_KEY
+```
+
+Spend it on the command that needs it:
+
+```sh
+monkeys run OPENROUTER_API_KEY ./bench
+```
+
+That is the whole tool. `monkeys run` sets the names you give it in that one
+command's environment and then becomes the command, so its exit status, output
+and signals are its own.
+
+## Why
+
 A secret written into a shell startup file is readable by anything that can read
 your home directory, and it follows you into dotfile backups and git history.
 `monkeys` keeps it in the keyring and puts it into the environment of the one
 command you are running, by name.
+
+Nothing it offers prints a stored value, which is what makes it safe to hand to
+a coding agent: the agent writes the command, the shell spends the secret, and
+the value never passes through the conversation.
 
 On macOS the keyring is the login keychain, reached through Security.framework.
 On Linux it is whatever answers the Secret Service D-Bus API, which is
@@ -32,9 +60,23 @@ gnome-keyring on most desktops and KWallet on KDE, reached through
 
 ## Install
 
-Needs a Swift toolchain, and macOS 13 or later, or a Linux distribution Swift
-supports. On Linux, install `secret-tool` as well: `libsecret-tools` on Debian
-and Ubuntu, `libsecret` on Fedora and Arch.
+On macOS, through Homebrew:
+
+```sh
+brew install eastriverlee/tap/monkeys
+```
+
+On macOS or Linux, from the latest release:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/eastriverlee/monkeys/main/tools/install.sh | sh
+```
+
+The script picks the build for your operating system and processor, checks the
+published checksum, and installs into `~/.local/bin`. Set `INSTALL_DIRECTORY`
+to put it elsewhere.
+
+From source, with a Swift toolchain and macOS 13 or later:
 
 ```sh
 git clone https://github.com/eastriverlee/monkeys
@@ -42,12 +84,8 @@ cd monkeys
 make install
 ```
 
-The binary lands in `~/.local/bin`. Point `INSTALL_DIRECTORY` somewhere else if
-you keep your tools elsewhere:
-
-```sh
-make install INSTALL_DIRECTORY=/usr/local/bin
-```
+On Linux, `monkeys` reaches the keyring through `secret-tool`: install
+`libsecret-tools` on Debian and Ubuntu, `libsecret` on Fedora and Arch.
 
 ### For a coding agent
 
@@ -62,68 +100,13 @@ claude plugin marketplace add eastriverlee/monkeys
 claude plugin install monkeys@monkeys
 ```
 
-Elsewhere, copy `skills/monkeys/SKILL.md` into whatever directory your agent
-reads skills from.
+`/monkeys:install` then fetches the binary, and a session that starts without
+one says so. Elsewhere, copy `skills/monkeys/SKILL.md` into whatever directory
+your agent reads skills from.
 
 The skill restates a few invocations so an agent knows them before it runs
 anything. `make check` holds that copy to the binary, failing when the skill
 names a command `monkeys help` does not list.
-
-## Use
-
-Store a value. The prompt hides what you type:
-
-```
-$ monkeys set OPENROUTER_API_KEY
-Value:
-stored OPENROUTER_API_KEY
-give it to a command with:
-  monkeys run OPENROUTER_API_KEY <command>
-```
-
-Then spend it on the one command that needs it:
-
-```sh
-monkeys run OPENROUTER_API_KEY ./bench
-monkeys run OPENROUTER_API_KEY,GITHUB_TOKEN ./deploy
-```
-
-`run` puts the values you name into that command's environment and nowhere
-else, then replaces itself with the command, so the exit status, the output and
-the signals are the command's own. With every name stored it is invisible: the
-line behaves as though you had typed `./bench`.
-
-A name you have not stored stops the run before it starts:
-
-```
-$ monkeys run OPENROUTER_API_KEY,ANTHROPIC_API_KEY ./bench
-monkeys: ANTHROPIC_API_KEY is not stored yet
-nothing ran. ask the person to store it, then try again:
-  monkeys set ANTHROPIC_API_KEY
-```
-
-That message is written to be passed on. An agent that meets it knows which
-values are missing, that nothing happened, and what to ask its person for.
-
-## Every shell, if you want it
-
-`run` hands a value to one process. The older habit is to put every value into
-every shell, which `export` and `shell-init` still do:
-
-```sh
-monkeys shell-init      # appends the line below to your startup file
-eval "$(monkeys export)"
-```
-
-It costs what it sounds like it costs. Every program you start from that shell
-inherits every secret you own, including the ones it has no business seeing.
-`run` exists because most commands need one value and none of the rest.
-
-`shell-init` writes `~/.zshrc` for zsh and `~/.bashrc` for bash
-(`~/.bash_profile` on macOS), says so when the line is already there, and puts
-it at the end of the file, below whatever adds the install directory to `PATH`.
-Set `MONKEYS_SHELL_PROFILE` to send it somewhere else, such as a file your
-startup file sources.
 
 ## Commands
 
@@ -156,6 +139,56 @@ Output is coloured only when it is going to a terminal, and never for `export`
 or `list`, whose output a shell or a script reads. `NO_COLOR` turns colour off,
 `CLICOLOR_FORCE` turns it on for a pipe, and an empty value for either counts
 as unset.
+
+## Spending a value
+
+Storing one looks like this:
+
+```
+$ monkeys set OPENROUTER_API_KEY
+Value:
+stored OPENROUTER_API_KEY
+give it to a command with:
+  monkeys run OPENROUTER_API_KEY <command>
+```
+
+A command that needs two gets both, and nothing else:
+
+```sh
+monkeys run OPENROUTER_API_KEY,GITHUB_TOKEN ./deploy
+```
+
+A name you have not stored stops the run before it starts:
+
+```
+$ monkeys run OPENROUTER_API_KEY,ANTHROPIC_API_KEY ./bench
+monkeys: ANTHROPIC_API_KEY is not stored yet
+nothing ran. ask the person to store it, then try again:
+  monkeys set ANTHROPIC_API_KEY
+```
+
+That message is written to be passed on. An agent that meets it knows which
+values are missing, that nothing happened, and what to ask its person for.
+
+## Every shell, if you want it
+
+`run` hands a value to one process. The older habit is to put every value into
+every shell, which `export` and `shell-init` still do:
+
+```sh
+monkeys shell-init      # appends the line below to your startup file
+eval "$(monkeys export)"
+```
+
+It costs what it sounds like it costs. Every program you start from that shell
+inherits every secret you own, including the ones it has no business seeing.
+`run` exists because most commands need one value and none of the rest.
+
+`shell-init` writes `~/.zshrc` for zsh and `~/.bashrc` for bash
+(`~/.bash_profile` on macOS), says so when the line is already there, and puts
+it at the end of the file, below whatever adds the install directory to `PATH`.
+Set `MONKEYS_SHELL_PROFILE` to send it somewhere else, such as a file your
+startup file sources.
 
 ## Looking without reading
 
@@ -234,9 +267,10 @@ further. A command free to print what it reads will print this too, and no
 filter here would be honest about catching that. What `run` settles is that
 the value never appears in the line you typed.
 
-On macOS the binary carries an ad-hoc signature, whose identity is a hash of the
-binary itself. A rebuild changes that identity, so the keychain may ask you to
-allow access once when the new build first reads an item the old one stored.
+On macOS a binary built from source carries an ad-hoc signature, whose identity
+is a hash of the binary itself. A rebuild changes that identity, so the keychain
+may ask you to allow access once when the new build first reads an item the old
+one stored.
 
 On Linux the Secret Service is a desktop session service. Over SSH or in a
 container there is usually no session bus and no keyring daemon, and `monkeys`

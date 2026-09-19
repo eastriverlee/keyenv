@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "command -v monkeys >/dev/null 2>&1 || printf '%s' '{\"systemMessage\":\"monkeys is not installed. Run /monkeys:install to fetch it.\"}'"
+          }
+        ]
+      }
+    ]
+  }
+}
