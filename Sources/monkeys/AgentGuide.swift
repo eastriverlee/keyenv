@@ -74,8 +74,8 @@ for:
   nothing ran. a human has to store it, then try again:
     monkeys set ANTHROPIC_API_KEY
 
-Pass that on. Storing a secret is a human's job, not yours: typing one yourself
-puts it in your context before it reaches the keyring.
+Pass that on. Storing a secret is a human's job, not yours: typing one
+yourself puts it in your context before it reaches the keyring.
 
 To see what exists, read the names with monkeys list, and their shape with
 monkeys preview:
