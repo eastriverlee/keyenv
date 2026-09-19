@@ -63,7 +63,7 @@ var usage: String {
 
     A project keeps its names in \(projectFileName), under the profile they live in:
 
-      \(outputStyle("@monkeys", .argument))
+      \(outputStyle("@foo", .argument))
       \(outputStyle("DATABASE_URL", .argument))
       \(outputStyle("STRIPE_SECRET_KEY", .argument))
 
@@ -77,12 +77,12 @@ var usage: String {
     blocks. Each profile gets the names of every block that lists it; the first
     profile in the file is the one run uses when none is given:
 
-      \(outputStyle("@test.monkeys,monkeys", .argument))
+      \(outputStyle("@test.foo,foo", .argument))
       \(outputStyle("DATABASE_URL", .argument))
-      \(outputStyle("@monkeys", .argument))
+      \(outputStyle("@foo", .argument))
       \(outputStyle("SENTRY_DSN", .argument))
 
-      \(outputStyle("monkeys run @monkeys ./deploy", .argument))
+      \(outputStyle("monkeys run @foo ./deploy", .argument))
       \(outputStyle("monkeys doctor", .argument))                     which profile lacks what
 
     A leading @profile picks another declared profile, and a prefix that fits
@@ -90,7 +90,7 @@ var usage: String {
     without a prefix live; it sets the project file aside, so names are given
     again:
 
-      \(outputStyle("monkeys set @monkeys SENTRY_DSN", .argument))      stored as monkeys/SENTRY_DSN
+      \(outputStyle("monkeys set @foo SENTRY_DSN", .argument))      stored as foo/SENTRY_DSN
       \(outputStyle("monkeys run @ TYPESAFE_API_KEY claude", .argument))
 
     For a shell that should carry values from startup, export writes the lines

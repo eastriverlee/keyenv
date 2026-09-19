@@ -251,7 +251,7 @@ values are missing, that nothing happened, and what to ask its person for.
 A project names what it needs once, in a `.monkeys` file next to the code:
 
 ```
-@monkeys
+@foo
 DATABASE_URL
 STRIPE_SECRET_KEY
 OPENROUTER_API_KEY
@@ -278,7 +278,7 @@ clones the repository gets the same names, and each of them fills their own
 keyring, so a `.monkeys` file can be committed and a keyring never has to be.
 
 A profile never reads from the personal one. Names stored without a profile
-are yours alone, and a name missing in `@monkeys` is missing there even when a
+are yours alone, and a name missing in `@foo` is missing there even when a
 bare copy exists, so a project cannot quietly pick up a value meant for
 another.
 
@@ -287,10 +287,10 @@ another.
 A profile line can name several profiles, and a file can hold several blocks:
 
 ```
-@test.monkeys,monkeys
+@test.foo,foo
 DATABASE_URL
 STRIPE_SECRET_KEY
-@monkeys
+@foo
 SENTRY_DSN
 ```
 
@@ -303,8 +303,8 @@ does not declare is refused with the declared ones listed, and a prefix that
 fits several is refused with those:
 
 ```sh
-monkeys run @monkeys ./deploy
-monkeys set @monkeys SENTRY_DSN
+monkeys run @foo ./deploy
+monkeys set @foo SENTRY_DSN
 ```
 
 A value missing in one profile stops only that profile, and only when it is
@@ -314,10 +314,10 @@ terminal, and exits non-zero while anything is missing:
 
 ```
 $ monkeys doctor
-@test.monkeys  default
+@test.foo  default
   ✓ DATABASE_URL
   ✓ STRIPE_SECRET_KEY
-@monkeys
+@foo
   ✓ DATABASE_URL
   ✗ STRIPE_SECRET_KEY
   ✗ SENTRY_DSN
@@ -329,12 +329,12 @@ script or an agent:
 
 ```
 $ monkeys doctor --short
-missing @monkeys: STRIPE_SECRET_KEY,SENTRY_DSN
+missing @foo: STRIPE_SECRET_KEY,SENTRY_DSN
 ```
 
 Profile names take letters, digits, `_`, `-` and `.`. A dotted name in the
 style of a bundle identifier keeps two projects' test apart in one keyring.
-Two parts, `test.monkeys`, is enough for most; a third, `test.monkeys.lee`,
+Two parts, `test.foo`, is enough for most; a third, `test.monkeys.lee`,
 is for a keyring that holds many projects and collides at two. A single word
 does for a profile nothing else will collide with.
 
@@ -351,9 +351,9 @@ from any directory:
 
 ```
 $ monkeys run ./hello
-monkeys: STRIPE_SECRET_KEY is not stored yet in @monkeys
+monkeys: STRIPE_SECRET_KEY is not stored yet in @foo
 nothing ran. ask the person to store it, then try again:
-  monkeys set @monkeys STRIPE_SECRET_KEY
+  monkeys set @foo STRIPE_SECRET_KEY
 ```
 
 Inside a project, everything after `run` is the command. The older form,
@@ -368,7 +368,7 @@ A profile leaves the keyring as one encrypted file, and only that way:
 $ monkeys pack
 Passphrase:
 Again:
-wrote monkeys.monkeys: @monkeys, 3 values
+wrote foo.monkeys: @foo, 3 values
 ```
 
 The file takes the profile's name. A word after `pack` names it otherwise,
@@ -386,7 +386,7 @@ The other side runs `unpack` where the project should live:
 ```sh
 $ monkeys unpack monkeys
 Passphrase:
-wrote .monkeys: @monkeys, 3 names
+wrote .monkeys: @foo, 3 names
 stored monkeys/DATABASE_URL, monkeys/STRIPE_SECRET_KEY, monkeys/OPENROUTER_API_KEY
 ```
 
@@ -410,7 +410,7 @@ because `*.monkeys` alone also matches the `.monkeys` file you do commit:
 
 ## Every shell, if you want it
 
-`run` hands a value to one process, and `monkeys run @monkeys zsh` hands a whole
+`run` hands a value to one process, and `monkeys run @foo zsh` hands a whole
 profile to one shell, which forgets it on exit. For a value that every shell
 should carry from startup, `export` writes the lines and you paste them:
 

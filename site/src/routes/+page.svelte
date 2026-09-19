@@ -17,27 +17,27 @@
     -H "Authorization: Bearer ${'$'}OPENROUTER_API_KEY" \\
     https://openrouter.ai/api/v1/key
 '`;
-	const projectFile = `@monkeys
+	const projectFile = `@foo
 OPENROUTER_API_KEY`;
 	const runInProject = `monkeys run sh -c '
   curl -s -o /dev/null -w "%{http_code}\\n" \\
     -H "Authorization: Bearer ${'$'}OPENROUTER_API_KEY" \\
     https://openrouter.ai/api/v1/key
 '`;
-	const profilesFile = `@test.monkeys,monkeys
+	const profilesFile = `@test.foo,foo
 OPENROUTER_API_KEY
 STRIPE_SECRET_KEY
-@monkeys
+@foo
 SENTRY_DSN`;
 	const doctorLine = 'monkeys doctor';
-	const doctorOutput = `@test.monkeys  default
+	const doctorOutput = `@test.foo  default
   ✓ OPENROUTER_API_KEY
   ✓ STRIPE_SECRET_KEY
-@monkeys
+@foo
   ✓ OPENROUTER_API_KEY
   ✗ STRIPE_SECRET_KEY
   ✗ SENTRY_DSN`;
-	const runStaging = 'monkeys run @monkeys ./deploy';
+	const runStaging = 'monkeys run @foo ./deploy';
 	const packLine = 'monkeys pack';
 	const unpackLine = 'monkeys unpack ~/Downloads/monkeys.monkeys';
 

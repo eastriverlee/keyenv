@@ -33,7 +33,7 @@ command reads.
 A project with a `.monkeys` file has already named what it needs:
 
 ```
-@test.monkeys,monkeys
+@test.foo,foo
 DATABASE_URL
 STRIPE_SECRET_KEY
 ```
@@ -44,7 +44,7 @@ the same profile the command reads from:
 
 ```sh
 monkeys run ./hello
-monkeys run @monkeys ./deploy    # another profile the file declares
+monkeys run @foo ./deploy    # another profile the file declares
 ```
 
 A `@` line may name several profiles, and a file may hold several blocks; a
@@ -55,7 +55,7 @@ or a prefix that fits just one of them.
 with a gap, nothing when there is none, and exits non-zero while any remains.
 
 Read the file before adding a name; it is the list. A profile never falls back
-to the personal one: a name missing in `@monkeys` is missing there even when a
+to the personal one: a name missing in `@foo` is missing there even when a
 bare copy exists.
 
 A shared `<name>.monkeys` bundle fills a profile with `monkeys unpack`, which
@@ -78,9 +78,9 @@ monkeys run OPENROUTER_API_KEY sh -c 'curl -H "Authorization: Bearer $OPENROUTER
 `run` stops before anything happens and names what to ask for:
 
 ```
-monkeys: ANTHROPIC_API_KEY is not stored yet in @test.monkeys
+monkeys: ANTHROPIC_API_KEY is not stored yet in @test.foo
 nothing ran. ask the person to store it, then try again:
-  monkeys set @test.monkeys ANTHROPIC_API_KEY
+  monkeys set @test.foo ANTHROPIC_API_KEY
 ```
 
 Pass that on. Storing is the person's move: typing a secret for them puts it in
