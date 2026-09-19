@@ -1,0 +1,17 @@
+{
+  "name": "monkeys",
+  "owner": {
+    "name": "eastriverlee",
+    "url": "https://github.com/eastriverlee"
+  },
+  "plugins": [
+    {
+      "name": "monkeys",
+      "source": "./",
+      "description": "Spend an API key, token or password from the OS keyring on one command, without the value entering the conversation.",
+      "version": "0.1.0",
+      "license": "MIT"
+    }
+  ],
+  "description": "monkeys, and nothing else."
+}

@@ -1,0 +1,11 @@
+{
+  "name": "monkeys",
+  "description": "Spend an API key, token or password from the OS keyring on one command, without the value entering the conversation.",
+  "version": "0.1.0",
+  "license": "MIT",
+  "author": {
+    "name": "eastriverlee",
+    "url": "https://github.com/eastriverlee"
+  },
+  "homepage": "https://github.com/eastriverlee/monkeys"
+}

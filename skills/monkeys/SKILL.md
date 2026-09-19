@@ -1,0 +1,59 @@
+---
+name: monkeys
+description: Give a command an API key, token or password held in the OS keyring, without the value entering the conversation. Use when a command needs a credential, when one fails for a missing or empty credential, when asked where a key is kept, or when asked to store one.
+---
+
+# monkeys
+
+`monkeys` keeps secrets in the macOS keychain or the Linux Secret Service and
+spends them on one command at a time. Nothing it offers prints a stored value,
+so the only thing to get right is how you spend one.
+
+If `monkeys` is not on `PATH`, say so and point at
+<https://github.com/eastriverlee/monkeys>. Do not work around it by asking for
+the secret yourself.
+
+## Spend a value
+
+Name what the command reads, then the command:
+
+```sh
+monkeys run OPENROUTER_API_KEY ./bench
+monkeys run OPENROUTER_API_KEY,GITHUB_TOKEN ./deploy
+```
+
+Nothing in that line holds the secret, so nothing you write can spill it. With
+every name stored, `run` replaces itself with the command, so the exit status,
+the output and the signals are the command's own. Reach for
+`monkeys run --all <command>` only when you cannot tell which names the command
+reads.
+
+## When a value is missing
+
+`run` stops before anything happens and names what to ask for:
+
+```
+monkeys: ANTHROPIC_API_KEY is not stored yet
+nothing ran. ask the person to store it, then try again:
+  monkeys set ANTHROPIC_API_KEY
+```
+
+Pass that on. Storing is the person's move: typing a secret for them puts it in
+the conversation before it reaches the keyring.
+
+## Check without reading
+
+`monkeys list` gives the names. `monkeys preview` gives each one masked, with
+its length, which is enough to tell a key pasted whole from one that lost a
+character.
+
+## Never
+
+- `monkeys export` on its own, which prints every value
+- `echo "$SOME_KEY"`, `env`, `printenv`
+- writing a value into a file, a log, a commit, or a bug report
+
+Where a config file wants the secret, write whatever reference its format
+offers, such as `${OPENROUTER_API_KEY}`, and let the program expand it.
+
+`monkeys help` carries the full contract.

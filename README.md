@@ -49,6 +49,26 @@ you keep your tools elsewhere:
 make install INSTALL_DIRECTORY=/usr/local/bin
 ```
 
+### For a coding agent
+
+The binary is the whole tool, and an agent that can run a shell can already use
+it. Installing the skill is what makes it reach for `monkeys` on its own,
+rather than asking you to paste a key.
+
+In Claude Code:
+
+```sh
+claude plugin marketplace add eastriverlee/monkeys
+claude plugin install monkeys@monkeys
+```
+
+Elsewhere, copy `skills/monkeys/SKILL.md` into whatever directory your agent
+reads skills from.
+
+The skill restates a few invocations so an agent knows them before it runs
+anything. `make check` holds that copy to the binary, failing when the skill
+names a command `monkeys help` does not list.
+
 ## Use
 
 Store a value. The prompt hides what you type:
