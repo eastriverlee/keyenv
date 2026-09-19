@@ -33,7 +33,8 @@ for the people on a project to share a secret and use it, so it went in a
 file. C had a memory problem too, and being careful didn't fix it. Rust did.
 
 `monkeys` keeps each secret in your keyring and hands it to one command at a
-time. Nothing prints a stored value, so there is nothing to read.
+time. Nothing prints a stored value, the command you hand it to included, so there
+is nothing to read.
 
 ## Quickstart
 
@@ -136,6 +137,7 @@ names a command `monkeys help` does not list.
 | `monkeys remove <NAME>` | delete one value |
 | `monkeys run <NAME>[,<NAME>] <command>` | run a command with those values in its environment |
 | `monkeys run --all <command>` | the same, with every stored value |
+| `monkeys run --no-redact <command>` | the same, output untouched |
 | `monkeys run <command>` | the same, with the names a `.monkeys` file lists |
 | `monkeys export [NAME...]` | keyring lookup lines, to paste into a startup file |
 | `monkeys pack [name]` | write the profile as `name.monkeys`, encrypted |
@@ -199,6 +201,38 @@ monkeys run OPENROUTER_API_KEY sh -c 'curl -H "Authorization: Bearer $OPENROUTER
 ```
 
 A script file works for the same reason, and reads better.
+
+### What comes back
+
+`run` stays between the command and your terminal, and a stored value in the
+command's output comes back as `[redacted NAME]`:
+
+```
+$ monkeys run OPENROUTER_API_KEY sh -c 'echo "key=$OPENROUTER_API_KEY"'
+key=[redacted OPENROUTER_API_KEY]
+```
+
+That is the reflex this exists for. An agent that meets an empty variable will
+`echo` it, and now the echo says which value was there and nothing else. The
+exit status and the signals are still the command's own, and the output is
+streamed as it arrives: a byte is held back only while it could still be the
+start of a value, and on a terminal that moment shows as `*` until the next
+byte settles it.
+
+It catches the value written whole or in pieces, on stdout or stderr. It does
+not catch the value transformed, so `echo $KEY | base64` goes through; this is
+for the reflex, not for someone trying.
+
+`--no-redact` turns it off and runs the command in `monkeys`'s place, for the
+one case that needs the value in the output, such as writing it into a file a
+program will read:
+
+```sh
+monkeys run --no-redact OPENROUTER_API_KEY envsubst < template > config
+```
+
+A short stored value is redacted wherever it appears, so store secrets here and
+keep `PORT=3000` in the repository.
 
 A name you have not stored stops the run before it starts:
 

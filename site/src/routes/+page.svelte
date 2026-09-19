@@ -120,7 +120,8 @@ SENTRY_DSN`;
 		</p>
 		<p class="max-w-prose">
 			<code>monkeys</code> keeps each secret in your keyring and hands it to one command at a
-			time. Nothing prints a stored value, so there is nothing to read.
+			time. Nothing prints a stored value, the command you hand it to included, so there is
+			nothing to read.
 		</p>
 	</section>
 

@@ -22,11 +22,13 @@ monkeys run OPENROUTER_API_KEY ./hello
 monkeys run OPENROUTER_API_KEY,GITHUB_TOKEN ./deploy
 ```
 
-Nothing in that line holds the secret, so nothing you write can spill it. With
-every name stored, `run` replaces itself with the command, so the exit status,
-the output and the signals are the command's own. Reach for
-`monkeys run --all <command>` only when you cannot tell which names the command
-reads.
+Nothing in that line holds the secret, so nothing you write can spill it. The
+exit status and the signals are the command's own. Its output comes back
+through `monkeys`, and a stored value in it comes back as `[redacted NAME]`, so
+`echo $NAME` tells you which value was there and never the value. Never add
+`--no-redact`; it is for a person writing a value into a file on purpose. Reach
+for `monkeys run --all <command>` only when you cannot tell which names the
+command reads.
 
 A project with a `.monkeys` file has already named what it needs:
 
