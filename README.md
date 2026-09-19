@@ -373,13 +373,15 @@ Two parts, `test.foo`, is enough for most; a third, `test.foo.lee`,
 is for a keyring that holds many projects and collides at two. A single word
 does for a profile nothing else will collide with.
 
-A bare `@` is the personal profile, and since no project lives there, it also
-sets the file aside and takes names again, which is how one value reaches a
-tool you start from any directory:
+Outside a project, names have no prefix and no `@` is needed:
 
 ```sh
-monkeys run @ TYPESAFE_API_KEY claude
+monkeys run TYPESAFE_API_KEY claude
 ```
+
+Inside one, a bare `@` reaches those same personal names, setting the
+project file aside and taking names again: `monkeys run @ TYPESAFE_API_KEY
+claude` from within a checkout.
 
 A missing value says where it is missing from, and the `set` it asks for works
 from any directory:
@@ -464,7 +466,7 @@ profile to one shell, which forgets it on exit. For a value that every shell
 should carry from startup, `export` writes the lines and you paste them:
 
 ```sh
-monkeys export @ TYPESAFE_API_KEY
+monkeys export TYPESAFE_API_KEY
 ```
 
 > ```
