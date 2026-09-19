@@ -30,9 +30,9 @@ make install INSTALL_DIRECTORY=/usr/local/bin
 Store a value. The prompt hides what you type:
 
 ```
-$ keyenv set OPENAI_API_KEY
+$ keyenv set OPENROUTER_API_KEY
 Value:
-stored OPENAI_API_KEY
+stored OPENROUTER_API_KEY
 ```
 
 Add one line to `~/.zshrc`, below whatever puts the install directory on
@@ -72,7 +72,7 @@ Access for `keyenv` and you will see them; delete one there and it is gone.
 The same item answers to:
 
 ```sh
-security find-generic-password -s keyenv -a OPENAI_API_KEY
+security find-generic-password -s keyenv -a OPENROUTER_API_KEY
 ```
 
 Items are created with `kSecAttrAccessibleAfterFirstUnlock`, so a shell that
@@ -88,7 +88,7 @@ process started from that shell. To give a secret to one command only, leave it
 out of the export and read it at the call site:
 
 ```sh
-TYPESAFE_API_KEY="$(keyenv get TYPESAFE_API_KEY)" some-command
+OPENROUTER_API_KEY="$(keyenv get OPENROUTER_API_KEY)" ./run-eval
 ```
 
 The binary carries an ad-hoc signature, whose identity is a hash of the binary
