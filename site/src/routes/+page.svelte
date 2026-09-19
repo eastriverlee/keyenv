@@ -265,7 +265,5 @@ SENTRY_DSN`;
 		<span>MIT</span>
 		<span>·</span>
 		<span>macOS and Linux</span>
-		<span>·</span>
-		<code>brew install eastriverlee/tap/monkeys</code>
 	</footer>
 </main>
