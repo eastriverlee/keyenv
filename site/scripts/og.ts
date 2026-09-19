@@ -6,15 +6,15 @@ const statics = join(import.meta.dirname, '..', 'static');
 const orange = '#e94100';
 const ink = '#17181c';
 
-const headline = (parts: { text: string; color?: string; italic?: boolean }[]) => ({
+const line = (parts: { text: string; color?: string; italic?: boolean }[]) => ({
 	type: 'container',
-	style: { display: 'flex', flexDirection: 'row', alignItems: 'baseline' },
+	style: { display: 'flex', flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center' },
 	children: parts.map((part) => ({
 		type: 'text',
 		text: part.text,
 		style: {
 			fontFamily: 'Cascadia Code',
-			fontSize: 64,
+			fontSize: 72,
 			fontWeight: part.color ? 700 : 600,
 			fontStyle: part.italic === false ? 'normal' : 'italic',
 			color: part.color ?? ink,
@@ -32,7 +32,7 @@ const card = {
 		flexDirection: 'column',
 		alignItems: 'center',
 		justifyContent: 'center',
-		gap: 36,
+		gap: 30,
 		backgroundColor: '#ffffff'
 	},
 	children: [
@@ -47,11 +47,14 @@ const card = {
 				}
 			]
 		},
-		headline([
-			{ text: 'LLMs read ' },
-			{ text: '.env', color: orange, italic: false },
-			{ text: ', not anymore.' }
-		]),
+		{
+			type: 'container',
+			style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 },
+			children: [
+				line([{ text: 'LLMs read ' }, { text: '.env', color: orange, italic: false }, { text: ',' }]),
+				line([{ text: 'not anymore.' }])
+			]
+		},
 		{
 			type: 'text',
 			text: 'monk3ys.dev',
