@@ -2,8 +2,11 @@
 """Render a terminal transcript of real monkeys output as an SVG.
 
 Every line in the picture is produced by running the command shown above it,
-so the image cannot drift from what the tool prints. The demo names are stored
-first and removed afterwards, and a name you already hold is left alone.
+so the image cannot drift from what monkeys prints. The one exception is the
+answer the demo script gives back, which replays a real OpenRouter reply rather
+than calling out, so anyone can render this without a key. The demo names are
+stored first and removed afterwards, and a name you already hold is left
+alone.
 """
 
 import os
@@ -37,18 +40,27 @@ CONTROL = re.compile(r"[\x00-\x08\x0b-\x1a\x1c-\x1f\x7f]")
 COMMANDS = [
     "monkeys run OPENROUTER_API_KEY,ANTHROPIC_API_KEY ./hello",
     "monkeys run OPENROUTER_API_KEY ./hello",
-    "monkeys preview GITHUB_TOKEN OPENROUTER_API_KEY",
+    "monkeys preview GITHUB_TOKEN STRIPE_SECRET_KEY",
 ]
-BENCH = """#!/bin/sh
-echo "Authorization: Bearer <${#OPENROUTER_API_KEY} characters>"
+HELLO = """#!/bin/sh
+# Stands in for the README's curl to OpenRouter, replaying the answer that call
+# returned when it was run for real, so rendering needs no key and no network.
+# Change it when the README's script stops answering this.
+echo "Hello world!"
 """
-DEMO_VALUES = {
-    # Shaped only for the picture: two leading characters, one trailing, a
-    # length. Deliberately unlike any provider's real key, so a secret scanner
-    # has nothing to recognise.
+# Shaped only for the picture: two leading characters, one trailing, a length.
+# Deliberately unlike any provider's real key, so a secret scanner has nothing
+# to recognise.
+SHOWN_VALUES = {
     "GITHUB_TOKEN": "gh-demo-" + "x" * 31 + "f",
+    "STRIPE_SECRET_KEY": "sk-demo-" + "x" * 20 + "2",
+}
+# run prints neither the value nor its shape, so whatever is stored here is
+# safe to spend in the picture.
+SPENT_VALUES = {
     "OPENROUTER_API_KEY": "sk-demo-" + "x" * 64 + "2",
 }
+DEMO_VALUES = {**SHOWN_VALUES, **SPENT_VALUES}
 
 
 def stored_names():
@@ -59,6 +71,13 @@ def stored_names():
 def seeded():
     """Store the demo values that are missing, and report which to clean up."""
     held = stored_names()
+    collisions = sorted(SHOWN_VALUES.keys() & held)
+    if collisions:
+        sys.exit(
+            "already stored: " + ", ".join(collisions) + "\n"
+            "preview would put a real value's shape into the picture. "
+            "Remove those names, or rename them in SHOWN_VALUES."
+        )
     added = []
     for name, value in DEMO_VALUES.items():
         if name in held:
@@ -183,7 +202,7 @@ if __name__ == "__main__":
     with tempfile.TemporaryDirectory() as directory:
         helper = os.path.join(directory, "hello")
         with open(helper, "w") as handle:
-            handle.write(BENCH)
+            handle.write(HELLO)
         os.chmod(helper, 0o755)
         try:
             picture = rendered(transcript(directory))

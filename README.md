@@ -36,7 +36,8 @@ cat > hello <<'SCRIPT'
 curl -s https://openrouter.ai/api/v1/chat/completions \
   -H "Authorization: Bearer $OPENROUTER_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"model":"google/gemma-4-26b-a4b-it:free","messages":[{"role":"user","content":"say hello world"}]}'
+  -d '{"model":"google/gemma-4-26b-a4b-it:free","messages":[{"role":"user","content":"say hello world"}]}' |
+  python3 -c 'import json,sys; print(json.load(sys.stdin)["choices"][0]["message"]["content"].strip())'
 SCRIPT
 chmod +x hello
 ```
@@ -44,7 +45,8 @@ chmod +x hello
 Then let monkeys hand it over:
 
 ```sh
-monkeys run OPENROUTER_API_KEY ./hello
+$ monkeys run OPENROUTER_API_KEY ./hello
+Hello world!
 ```
 
 The key is in that one process and nowhere else. It never reached your shell
