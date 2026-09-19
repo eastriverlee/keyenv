@@ -38,7 +38,8 @@ DATABASE_URL
 STRIPE_SECRET_KEY
 ```
 
-In that directory or below it, `run` takes only the command, and every name is
+In that directory or below it within the git checkout, `run` takes only the
+command, and every name is
 scoped to that profile, so `monkeys set STRIPE_SECRET_KEY` there stores into
 the same profile the command reads from:
 

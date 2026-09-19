@@ -69,7 +69,8 @@ var usage: String {
       \(outputStyle("DATABASE_URL", .argument))
       \(outputStyle("STRIPE_SECRET_KEY", .argument))
 
-    In that directory or below it, run takes only the command, and set, preview
+    In that directory or below it within the checkout, run takes only the
+    command, and set, preview
     and remove read and write that profile:
 
       \(outputStyle("monkeys run ./hello.sh", .argument))

@@ -291,7 +291,8 @@ The first line names the profile; the rest are names, and `#` starts a
 comment. Commit it. It is the secret half of `.env.example`,
 and a project keeps one or the other, since two lists of the same names drift.
 
-In that directory or any below it, `run` takes only the command:
+In that directory or any below it within the checkout, `run` takes only the
+command:
 
 ```sh
 monkeys run ./hello.sh
@@ -493,8 +494,9 @@ directory, and a second argument names the directory outright. When a
 block at the end, with the names the file does not yet list for it, and leaves
 the rest of the file alone.
 
-`run` finds the file the way git finds `.git`: from the current directory
-upward, nearest first.
+`run` looks for the file from the current directory upward, nearest first, and
+stops at the root of the git checkout, so a file above the checkout is never
+read. Outside a checkout only the current directory counts.
 
 Both commands read the passphrase from standard input when it is not a
 terminal, for the rare script that needs to.

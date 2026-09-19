@@ -102,13 +102,22 @@ func resolveScope(_ arguments: [String]) throws -> (scope: Scope, rest: [String]
 }
 
 func locateProject() throws -> Project? {
-    var directory = FileManager.default.currentDirectoryPath
-    while true {
+    for directory in directoriesOfThisCheckout() {
         let path = directory + "/" + projectFileName
         if FileManager.default.fileExists(atPath: path) {
             return try parseProject(at: path, directory: directory)
         }
-        guard directory != "/" else { return nil }
+    }
+    return nil
+}
+
+private func directoriesOfThisCheckout() -> [String] {
+    var directory = FileManager.default.currentDirectoryPath
+    var climbed: [String] = []
+    while true {
+        climbed.append(directory)
+        if FileManager.default.fileExists(atPath: directory + "/.git") { return climbed }
+        guard directory != "/" else { return [climbed[0]] }
         directory = URL(fileURLWithPath: directory).deletingLastPathComponent().path
     }
 }
