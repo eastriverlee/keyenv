@@ -511,10 +511,27 @@ secret-tool lookup service monkeys account OPENROUTER_API_KEY
 
 ## Caveats
 
-`run` scopes a secret to one process, and it cannot follow the value any
-further. A command free to print what it reads will print this too, and no
-filter here would be honest about catching that. What `run` settles is that
-the value never appears in the line you typed.
+An agent that sets out to see a value can see it. `run` hands the value to a
+process, and a process can do what it likes with what it holds: encode it,
+split it, write it somewhere and read it back. Redaction catches the value
+written out as it is, which is what a reflex produces, and nothing here claims
+more than that.
+
+That is enough, because the reflex is the whole problem. An agent does not
+read `.env` out of curiosity. It reads it because a variable was empty, the
+task was stuck, and `cat .env` was the shortest path back to the task. Take the
+shortest path away and give it a shorter one, and the urge goes with it: `run`
+puts the value where the task needs it, a missing name comes back as a message
+that says what to ask for, `preview` and `doctor --short` answer "is it there"
+without reading anything. The agent gets on with the task. What remains after
+that is intent, and intent is a question for whoever runs the agent.
+
+The same holds for people. A secret shared with a teammate stops being a paste
+into a chat and becomes `pack` and `unpack`, sealed in transit and landing in
+that person's keyring. And the bookkeeping a project keeps about its secrets, a
+`.env` nobody commits, a `.env.example` that drifts from it, a `.gitignore` line
+to keep the two apart, collapses into one committed `.monkeys` file that says
+what is needed and holds nothing.
 
 On macOS a binary built from source carries an ad-hoc signature, whose identity
 is a hash of the binary itself. A rebuild changes that identity, so the keychain
