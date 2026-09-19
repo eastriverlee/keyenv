@@ -98,7 +98,7 @@ SENTRY_DSN`;
 	{@html structuredData}
 </svelte:head>
 
-<main class="mx-auto flex max-w-2xl flex-col gap-12 px-5 py-10">
+<main class="mx-auto flex max-w-2xl flex-col gap-16 px-5 py-10">
 	<header class="flex items-center justify-between">
 		<a href="/" class="flex items-center gap-2 font-semibold">
 			<img src="/favicon.svg" alt="" class="size-9" />
@@ -160,13 +160,24 @@ SENTRY_DSN`;
 	</section>
 
 	<section class="flex flex-col gap-4">
-		<h2 class="text-xl font-semibold">Install</h2>
+		<h2 class="text-2xl font-bold tracking-tight">Install</h2>
 		<p class="max-w-prose">
 			One binary, no runtime. The script picks the build for your machine, checks the published
 			checksum, and puts it in <code>~/.local/bin</code>; Homebrew upgrades it along with
 			everything else.
 		</p>
 		<CommandTabs tabs={installTabs} />
+		<p class="max-w-prose">
+			For a coding agent, install the skill as well. It is what makes the agent reach for
+			<code>monkeys</code> on its own instead of asking you to paste a key; a key it needs but
+			you have not stored comes back as a message that says what to ask you for.
+		</p>
+		<CommandTabs tabs={agentTabs} />
+		<p class="text-muted-foreground max-w-prose text-sm">
+			The plugin follows the <a href="https://agent-plugins.org" class="underline underline-offset-4">Agent Plugins</a>
+			layout, and the third tab is the one file any other agent needs, in whatever directory it
+			reads skills from.
+		</p>
 	</section>
 
 	<img
@@ -176,7 +187,7 @@ SENTRY_DSN`;
 	/>
 
 	<section class="flex flex-col gap-4">
-		<h2 class="text-xl font-semibold">Store a key once</h2>
+		<h2 class="text-2xl font-bold tracking-tight">Store a key once</h2>
 		<p class="max-w-prose">
 			Paste it at the prompt. It goes into the keychain on macOS and the Secret Service on Linux, and
 			nothing you type lands in your shell history.
@@ -185,7 +196,7 @@ SENTRY_DSN`;
 	</section>
 
 	<section class="flex flex-col gap-4">
-		<h2 class="text-xl font-semibold">Spend it on one command</h2>
+		<h2 class="text-2xl font-bold tracking-tight">Spend it on one command</h2>
 		<p class="max-w-prose">
 			Name what the command reads, then the command, written the way you always write it.
 			<code>run</code> puts the value in that one process and becomes it.
@@ -199,7 +210,7 @@ SENTRY_DSN`;
 	</section>
 
 	<section class="flex flex-col gap-4">
-		<h2 class="text-xl font-semibold">Let the project name what it needs</h2>
+		<h2 class="text-2xl font-bold tracking-tight">Let the project name what it needs</h2>
 		<p class="max-w-prose">
 			A <code>.monkeys</code> file next to the code lists the names, under a profile. Commit it. In
 			that directory, <code>run</code> takes only the command, and the script reads the variable
@@ -234,7 +245,7 @@ SENTRY_DSN`;
 	</section>
 
 	<section class="flex flex-col gap-4">
-		<h2 class="text-xl font-semibold">Hand the profile to a teammate</h2>
+		<h2 class="text-2xl font-bold tracking-tight">Hand the profile to a teammate</h2>
 		<p class="max-w-prose">
 			<code>pack</code> asks for a passphrase and writes <code>foo.monkeys</code>: the profile, its
 			names and its values, sealed. Send the file however you like, and the passphrase another way.
@@ -246,21 +257,6 @@ SENTRY_DSN`;
 			That is the only way a value leaves the keyring.
 		</p>
 		<CodeFile code={unpackLine} />
-	</section>
-
-	<section class="flex flex-col gap-4">
-		<h2 class="text-xl font-semibold">Give it to your agent</h2>
-		<p class="max-w-prose">
-			The skill is what makes an agent reach for <code>monkeys</code> on its own instead of asking
-			you to paste a key. Nothing it can run prints a stored value, and a key it needs but you have
-			not stored comes back as a message that says what to ask you for.
-		</p>
-		<CommandTabs tabs={agentTabs} />
-		<p class="text-muted-foreground max-w-prose text-sm">
-			The plugin follows the <a href="https://agent-plugins.org" class="underline underline-offset-4">Agent Plugins</a>
-			layout, and the third tab is the one file any other agent needs, in whatever directory it
-			reads skills from.
-		</p>
 	</section>
 
 	<footer class="text-muted-foreground flex flex-wrap items-center gap-x-2 text-sm">
