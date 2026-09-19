@@ -80,7 +80,7 @@
 		<div class="border-border flex h-9 items-center border-b px-6">
 			<div class="flex items-center gap-2">
 				{#if isMonkeysFile}
-					<img src="/favicon.png" alt="" class="size-4" />
+					<img src="/favicon.svg" alt="" class="size-4" />
 				{/if}
 				<span class="text-sm font-medium">{name}</span>
 			</div>

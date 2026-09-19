@@ -66,7 +66,8 @@ SENTRY_DSN`;
 	<meta name="twitter:title" content="monkeys" />
 	<meta name="twitter:description" content="LLMs read .env, not anymore. monkeys keeps each secret in your keyring and hands it to one command at a time." />
 	<meta name="twitter:image" content="https://monk3ys.dev/og.png" />
-	<link rel="icon" href="/favicon.png" type="image/png" />
+	<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+	<link rel="icon" href="/favicon.png" type="image/png" sizes="any" />
 	<link rel="apple-touch-icon" href="/favicon.png" />
 	{@html structuredData}
 </svelte:head>
@@ -74,7 +75,7 @@ SENTRY_DSN`;
 <main class="mx-auto flex max-w-2xl flex-col gap-12 px-5 py-10">
 	<header class="flex items-center justify-between">
 		<a href="/" class="flex items-center gap-2 font-semibold">
-			<img src="/monkeys.circle.svg" alt="" class="size-9" />
+			<img src="/favicon.svg" alt="" class="size-9" />
 			monkeys
 		</a>
 		<GitHubButton repo={repository} {stars} size="sm" />
