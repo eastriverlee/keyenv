@@ -268,6 +268,6 @@ SENTRY_DSN`;
 		<span>·</span>
 		<span>© 2026 13e7 corp.</span>
 		<span>·</span>
-		<a href="https://github.com/sponsors/eastriverlee" class="underline underline-offset-4">Sponsor</a>
+		<a href="https://github.com/sponsors/onethreeeseven" class="underline underline-offset-4">Sponsor</a>
 	</footer>
 </main>
