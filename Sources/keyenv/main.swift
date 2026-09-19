@@ -46,18 +46,19 @@ func shellSingleQuoted(_ value: String) -> String {
 let usage = """
 keyenv - environment variables kept in your operating system's keyring
 
-  keyenv set <NAME>         read a value from the terminal (hidden) or stdin and store it
+  keyenv set <NAME>         store a value read from the terminal or stdin
   keyenv get <NAME>         print one stored value
   keyenv list               print every stored name
   keyenv preview [NAME...]  print each value masked, with its length
   keyenv remove <NAME>      delete one stored value
-  keyenv export [NAME...]   print shell export lines; all names when none are given
+  keyenv export [NAME...]   print shell export lines, for every name or some
   keyenv shell-init         add the export line to your shell startup file
-  keyenv help agent         how an LLM or a script should use this
 
 In your shell startup file:
 
   \(shellInitLine)
+
+\(agentGuide)
 """
 
 func requireName(_ arguments: [String]) throws -> String {
@@ -128,12 +129,6 @@ func runPreview(_ arguments: [String]) throws {
     }
 }
 
-func runHelp(_ arguments: [String]) {
-    switch arguments.first {
-    case "agent", "llm": print(agentGuide)
-    default: print(usage)
-    }
-}
 
 func runExport(_ arguments: [String]) throws {
     let names = arguments.isEmpty ? try secretStore.storedNames() : arguments
@@ -175,7 +170,7 @@ do {
     case "remove": try runRemove(rest)
     case "export": try runExport(rest)
     case "shell-init": try runShellInit()
-    case "help", "-h", "--help": runHelp(rest)
+    case "help", "-h", "--help": print(usage)
     default:
         printToStandardError("unknown command: \(command)")
         printToStandardError(usage)

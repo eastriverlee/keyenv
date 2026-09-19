@@ -106,7 +106,6 @@ shell-init` and leaves the file alone.
 | `keyenv remove <NAME>` | delete one value |
 | `keyenv export [NAME...]` | print shell export lines; all names when none are given |
 | `keyenv shell-init` | add the export line to your shell startup file |
-| `keyenv help agent` | how an LLM or a script should use this |
 
 There is no way to pass a value as a command line argument, which keeps it out
 of your shell history and out of the process table. When standard input is not
@@ -142,9 +141,9 @@ SHORT_ONE  ... 6
 A length and a two-character prefix are enough to tell a key pasted whole from
 one that lost a character on the way, or one provider's key from another's.
 
-`keyenv help agent` prints the same rules for the agent itself to read, along
-with how to hand a secret to a command without the value passing through the
-agent.
+`keyenv help` ends with the same rules written for the agent to read: never run
+`get` on its own, reach a secret only as an environment variable, and hand it to
+a command through the shell so the value skips the agent entirely.
 
 ## What gets replaced
 
