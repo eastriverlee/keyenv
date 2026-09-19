@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Hold plugin.json to Agent Plugins 1.1.0, and the Claude Code manifest to it.
+"""Hold plugin.json to Agent Plugins 1.0.0, and the Claude Code manifest to it.
+
+1.0.0 and 1.1.0 permit the same manifest fields, and Codex accepts 1.0.0 alone
+(verified by installing: 1.1.0 is refused as an invalid plugin.json).
 
 The portable manifest is closed: only the fields the specification names may
 appear, and the name has a fixed grammar. Claude Code reads its own copy at
@@ -13,7 +16,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SCHEMA = "https://agent-plugins.org/schemas/1.1.0/plugin.schema.json"
+SCHEMA = "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"
 PERMITTED = {"$schema", "name", "version", "description", "author", "homepage", "repository", "license", "keywords", "extensions"}
 NAME = re.compile(r"^(?!.*(--|\.\.))[a-z0-9](?:[a-z0-9.-]{0,62}[a-z0-9])?$")
 SHARED = ("name", "version", "description", "license")

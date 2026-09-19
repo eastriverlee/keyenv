@@ -63,9 +63,12 @@ chmod +x hello
 Then let monkeys hand it over:
 
 ```sh
-$ monkeys run OPENROUTER_API_KEY ./hello
-Hello world!
+monkeys run OPENROUTER_API_KEY ./hello
 ```
+
+> ```
+> Hello world!
+> ```
 
 The key is in that one process and nowhere else. It never reached your shell
 history, your startup file, or the line you just typed. `run` becomes the
@@ -129,21 +132,17 @@ one says so.
 
 **Codex**
 
-Codex reads skills from `~/.agents/skills` and from `.agents/skills` inside a
-repository. One file is all there is to place:
-
 ```sh
-mkdir -p ~/.agents/skills/monkeys
-curl -fsSL https://monk3ys.dev/skill -o ~/.agents/skills/monkeys/SKILL.md
+codex plugin marketplace add eastriverlee/monkeys
+codex plugin add monkeys@eastriverlee
 ```
 
-The same file under `.agents/skills/monkeys/` in a project ships with the
-code. The binary is installed separately, from the section above.
+The binary is installed separately, from the section above.
 
 **Anything else**
 
 Copy `skills/monkeys/SKILL.md` into whatever directory your agent reads
-skills from.
+skills from; <https://monk3ys.dev/skill> serves that one file.
 
 The skill restates a few invocations so an agent knows them before it runs
 anything. `make check` holds that copy to the binary, failing when the skill
@@ -190,13 +189,16 @@ as unset.
 
 Storing one looks like this:
 
+```sh
+monkeys set OPENROUTER_API_KEY
 ```
-$ monkeys set OPENROUTER_API_KEY
-Value:
-stored OPENROUTER_API_KEY
-give it to a command with:
-  monkeys run OPENROUTER_API_KEY <command>
-```
+
+> ```
+> Value:
+> stored OPENROUTER_API_KEY
+> give it to a command with:
+>   monkeys run OPENROUTER_API_KEY <command>
+> ```
 
 A command that needs two gets both, and nothing else:
 
@@ -229,10 +231,13 @@ A script file works for the same reason, and reads better.
 `run` stays between the command and your terminal, and a stored value in the
 command's output comes back as `[redacted NAME]`:
 
+```sh
+monkeys run OPENROUTER_API_KEY sh -c 'echo "key=$OPENROUTER_API_KEY"'
 ```
-$ monkeys run OPENROUTER_API_KEY sh -c 'echo "key=$OPENROUTER_API_KEY"'
-key=[redacted OPENROUTER_API_KEY]
-```
+
+> ```
+> key=[redacted OPENROUTER_API_KEY]
+> ```
 
 That is the reflex this exists for. An agent that meets an empty variable will
 `echo` it, and now the echo says which value was there and nothing else. The
@@ -258,12 +263,15 @@ keep `PORT=3000` in the repository.
 
 A name you have not stored stops the run before it starts:
 
+```sh
+monkeys run OPENROUTER_API_KEY,ANTHROPIC_API_KEY ./bench
 ```
-$ monkeys run OPENROUTER_API_KEY,ANTHROPIC_API_KEY ./bench
-monkeys: ANTHROPIC_API_KEY is not stored yet
-nothing ran. ask the person to store it, then try again:
-  monkeys set ANTHROPIC_API_KEY
-```
+
+> ```
+> monkeys: ANTHROPIC_API_KEY is not stored yet
+> nothing ran. ask the person to store it, then try again:
+>   monkeys set ANTHROPIC_API_KEY
+> ```
 
 That message is written to be passed on. An agent that meets it knows which
 values are missing, that nothing happened, and what to ask its person for.
@@ -334,25 +342,31 @@ used: monkeys can be half filled while test runs. `doctor` reads the whole
 file and shows every profile with what it has and lacks, in colour on a
 terminal, and exits non-zero while anything is missing:
 
+```sh
+monkeys doctor
 ```
-$ monkeys doctor
-@test.foo  default
-  ✓ DATABASE_URL
-  ✓ STRIPE_SECRET_KEY
-@foo
-  ✓ DATABASE_URL
-  ✗ STRIPE_SECRET_KEY
-  ✗ SENTRY_DSN
-```
+
+> ```
+> @test.foo  default
+>   ✓ DATABASE_URL
+>   ✓ STRIPE_SECRET_KEY
+> @foo
+>   ✓ DATABASE_URL
+>   ✗ STRIPE_SECRET_KEY
+>   ✗ SENTRY_DSN
+> ```
 
 `doctor --short` says only what is wrong, one line per profile with a
 problem, and nothing at all when there is none, which is the form to hand a
 script or an agent:
 
+```sh
+monkeys doctor --short
 ```
-$ monkeys doctor --short
-missing @foo: STRIPE_SECRET_KEY,SENTRY_DSN
-```
+
+> ```
+> missing @foo: STRIPE_SECRET_KEY,SENTRY_DSN
+> ```
 
 Profile names take letters, digits, `_`, `-` and `.`. A dotted name in the
 style of a bundle identifier keeps two projects' test apart in one keyring.
@@ -371,12 +385,15 @@ monkeys run @ TYPESAFE_API_KEY claude
 A missing value says where it is missing from, and the `set` it asks for works
 from any directory:
 
+```sh
+monkeys run ./hello
 ```
-$ monkeys run ./hello
-monkeys: STRIPE_SECRET_KEY is not stored yet in @foo
-nothing ran. ask the person to store it, then try again:
-  monkeys set @foo STRIPE_SECRET_KEY
-```
+
+> ```
+> monkeys: STRIPE_SECRET_KEY is not stored yet in @foo
+> nothing ran. ask the person to store it, then try again:
+>   monkeys set @foo STRIPE_SECRET_KEY
+> ```
 
 Inside a project, everything after `run` is the command. The older form,
 `monkeys run NAME ./hello`, tries to run a program called `NAME` there, and the
@@ -387,11 +404,14 @@ error says which file is supplying the names instead.
 A profile leaves the keyring as one encrypted file, and only that way:
 
 ```sh
-$ monkeys pack
-Passphrase:
-Again:
-wrote foo.monkeys: @foo, 3 values
+monkeys pack
 ```
+
+> ```
+> Passphrase:
+> Again:
+> wrote foo.monkeys: @foo, 3 values
+> ```
 
 The file takes the profile's name. A word after `pack` names it otherwise,
 and `monkeys pack @test` bundles another declared profile,
@@ -406,13 +426,16 @@ that fills half a profile is a bug for whoever receives it.
 The other side runs `unpack` anywhere inside the checkout:
 
 ```sh
-$ monkeys unpack monkeys
-Passphrase:
-wrote .monkeys: @foo, 3 names
-stored monkeys/DATABASE_URL, monkeys/STRIPE_SECRET_KEY, monkeys/OPENROUTER_API_KEY
+monkeys unpack foo
 ```
 
-The values go into that person's keyring under the bundle's profile, `monkeys/`,
+> ```
+> Passphrase:
+> wrote .monkeys: @foo, 3 names
+> stored foo/DATABASE_URL, foo/STRIPE_SECRET_KEY, foo/OPENROUTER_API_KEY
+> ```
+
+The values go into that person's keyring under the bundle's profile, `foo/`,
 and the profile and names become a `.monkeys` file at the root of the git
 checkout, the way `.gitignore` sits at the root, so `monkeys run ./hello` works
 from any directory in it. Outside a checkout the file goes in the current
@@ -442,9 +465,12 @@ profile to one shell, which forgets it on exit. For a value that every shell
 should carry from startup, `export` writes the lines and you paste them:
 
 ```sh
-$ monkeys export @ TYPESAFE_API_KEY
-export TYPESAFE_API_KEY="$(security find-generic-password -s monkeys -a TYPESAFE_API_KEY -w)"
+monkeys export @ TYPESAFE_API_KEY
 ```
+
+> ```
+> export TYPESAFE_API_KEY="$(security find-generic-password -s monkeys -a TYPESAFE_API_KEY -w)"
+> ```
 
 No value is in that line. It asks the keychain when the shell starts, the way
 you would have written it by hand, and on Linux it asks `secret-tool` instead.
@@ -460,20 +486,26 @@ quiet.
 Nothing here prints a stored value. The closest is `preview`, which answers the
 question you usually have, which is whether the right value is in there:
 
+```sh
+monkeys preview
 ```
-$ monkeys preview
-GITHUB_TOKEN        gh...f 40
-OPENROUTER_API_KEY  sk...2 73
-```
+
+> ```
+> GITHUB_TOKEN        gh...f 40
+> OPENROUTER_API_KEY  sk...2 73
+> ```
 
 It shows the first two characters, the last one, and the length. A value is
 masked whole whenever fewer than five characters would stay hidden, so nothing
 under eight characters long gives any of itself away:
 
+```sh
+monkeys preview SHORT_ONE
 ```
-$ monkeys preview SHORT_ONE
-SHORT_ONE  ... 6
-```
+
+> ```
+> SHORT_ONE  ... 6
+> ```
 
 A length and a two-character prefix are enough to tell a key pasted whole from
 one that lost a character on the way, or one provider's key from another's. To

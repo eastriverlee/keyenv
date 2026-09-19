@@ -1,5 +1,5 @@
 {
-  "$schema": "https://agent-plugins.org/schemas/1.1.0/plugin.schema.json",
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "monkeys",
   "version": "0.1.0",
   "description": "Spend an API key, token or password from the OS keyring on one command, without the value entering the conversation.",
