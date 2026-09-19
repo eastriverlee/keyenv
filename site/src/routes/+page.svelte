@@ -10,6 +10,7 @@
 
 	const repository = { owner: 'eastriverlee', repo: 'monkeys' };
 
+	const structuredData = `<script type="application/ld+json">${JSON.stringify({"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "monkeys", "url": "https://monk3ys.dev", "description": "LLMs read .env, not anymore. monkeys keeps each secret in your keyring and hands it to one command at a time.", "applicationCategory": "DeveloperApplication", "operatingSystem": "macOS, Linux", "license": "https://github.com/eastriverlee/monkeys/blob/main/LICENSE", "downloadUrl": "https://github.com/eastriverlee/monkeys/releases", "sameAs": ["https://github.com/eastriverlee/monkeys"], "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "eastriverlee", "url": "https://github.com/eastriverlee"}})}<\/script>`;
 	const installLine = 'curl -fsSL https://monk3ys.dev/install | sh';
 	const storeLine = 'monkeys set OPENROUTER_API_KEY';
 	const spendLine = `monkeys run OPENROUTER_API_KEY sh -c '
@@ -50,18 +51,24 @@ SENTRY_DSN`;
 
 <svelte:head>
 	<title>monkeys</title>
-	<meta
-		name="description"
-		content="LLMs read .env, not anymore. monkeys keeps each secret in your keyring and hands it to one command at a time."
-	/>
+	<meta name="description" content="LLMs read .env, not anymore. monkeys keeps each secret in your keyring and hands it to one command at a time." />
+	<meta name="robots" content="index, follow" />
+	<link rel="canonical" href="https://monk3ys.dev/" />
+	<meta property="og:type" content="website" />
+	<meta property="og:site_name" content="monkeys" />
 	<meta property="og:title" content="monkeys" />
-	<meta
-		property="og:description"
-		content="LLMs read .env, not anymore. monkeys keeps each secret in your keyring and hands it to one command at a time."
-	/>
-	<meta property="og:url" content="https://monk3ys.dev" />
+	<meta property="og:description" content="LLMs read .env, not anymore. monkeys keeps each secret in your keyring and hands it to one command at a time." />
+	<meta property="og:url" content="https://monk3ys.dev/" />
+	<meta property="og:image" content="https://monk3ys.dev/og.png" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="monkeys" />
+	<meta name="twitter:description" content="LLMs read .env, not anymore. monkeys keeps each secret in your keyring and hands it to one command at a time." />
+	<meta name="twitter:image" content="https://monk3ys.dev/og.png" />
 	<link rel="icon" href="/favicon.png" type="image/png" />
 	<link rel="apple-touch-icon" href="/favicon.png" />
+	{@html structuredData}
 </svelte:head>
 
 <main class="mx-auto flex max-w-2xl flex-col gap-12 px-5 py-10">
