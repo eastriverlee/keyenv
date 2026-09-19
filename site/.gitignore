@@ -25,3 +25,5 @@ vite.config.ts.timestamp-*
 
 /static/llms-full.txt
 /static/llms.txt
+/static/monkeys.svg
+/static/terminal.svg
