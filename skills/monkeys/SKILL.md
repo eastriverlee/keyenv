@@ -49,7 +49,7 @@ Read the file before adding a name; it is the list. A profile never falls back
 to the personal one: a name missing in `@test` is missing there even when a
 bare copy exists.
 
-A shared `<name>.monkeys` bundle fills a profile with `monkeys import`, which
+A shared `<name>.monkeys` bundle fills a profile with `monkeys unpack`, which
 asks for a passphrase. Tell the person to run it; do not run it yourself.
 
 The command you start is what expands the variable, since that is where it
@@ -85,7 +85,6 @@ character.
 
 ## Never
 
-- `monkeys export` on its own, which prints every value
 - `echo "$SOME_KEY"`, `env`, `printenv`
 - writing a value into a file, a log, a commit, or a bug report
 

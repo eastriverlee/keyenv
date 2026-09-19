@@ -39,20 +39,10 @@ func readValueFromInput() -> String {
     return String(cString: entered)
 }
 
-func shellSingleQuoted(_ value: String) -> String {
-    "'" + value.replacingOccurrences(of: "'", with: "'\\''") + "'"
-}
-
 func requireName(_ arguments: [String]) throws -> String {
     guard let name = arguments.first else { throw StoreFailure.invalidVariableName("") }
     guard isValidVariableName(name) else { throw StoreFailure.invalidVariableName(name) }
     return name
-}
-
-func reportShellInit(appendedTo path: String) {
-    printToStandardError("appended to \(abbreviatingHome(path)):")
-    printToStandardError("  " + messageStyle(shellInitLine, .argument))
-    printToStandardError("open a new shell, or: source \(abbreviatingHome(path))")
 }
 
 func spendHint(_ scope: Scope, _ name: String) -> String {
@@ -101,23 +91,13 @@ func runPreview(_ arguments: [String]) throws {
     }
 }
 
-func runExport(_ arguments: [String]) throws {
+func runPack(_ arguments: [String]) throws {
     let (scope, rest) = try resolveScope(arguments)
-    if rest.count == 1, isBundlePath(rest[0]) {
-        try exportBundle(scope, to: rest[0])
-        return
-    }
-    let names = try validatedNames(scope, rest)
-    let lines = try names.map { name in
-        "export \(name)=\(shellSingleQuoted(try secretStore.read(forName: scope.storedName(name))))"
-    }
-    for line in lines { print(line) }
-}
-
-func exportBundle(_ scope: Scope, to path: String) throws {
+    guard rest.count <= 1 else { throw StoreFailure.badInvocation("monkeys pack [@profile] [name]") }
     guard let profile = scope.profile else {
         throw StoreFailure.bundleFailed("a bundle carries a profile: run this in a project with a \(projectFileName) file, or name one with @profile")
     }
+    let path = bundlePath(rest.first ?? profile)
     var values: [(name: String, value: String)] = []
     var missing: [String] = []
     for name in try namesInScope(scope) {
@@ -149,11 +129,11 @@ func reconcileProjectFile(profile: String, names: [String]) throws {
     printToStandardError("\(projectFileName) already lists these names")
 }
 
-func runImport(_ arguments: [String]) throws {
-    guard let path = arguments.first, arguments.count == 1, isBundlePath(path) else {
-        throw StoreFailure.badInvocation("monkeys import <name>\(bundleSuffix)")
+func runUnpack(_ arguments: [String]) throws {
+    guard let name = arguments.first, arguments.count == 1 else {
+        throw StoreFailure.badInvocation("monkeys unpack <name>")
     }
-    let bundle = try readBundle(from: path)
+    let bundle = try readBundle(from: bundlePath(name))
     let names = bundle.values.map(\.name)
     try reconcileProjectFile(profile: bundle.profile, names: names)
     for entry in bundle.values {
@@ -161,21 +141,6 @@ func runImport(_ arguments: [String]) throws {
     }
     let stored = names.map { messageStyle(bundle.profile + "/" + $0, .bold) }.joined(separator: ", ")
     printToStandardError(messageStyle("stored", .good) + " " + stored)
-}
-
-func runShellInit() throws {
-    guard let path = shellProfilePath() else {
-        printToStandardError(messageStyle("monkeys:", .bad) + " \(loginShellName()) has no startup file monkeys knows about.")
-        printToStandardError("monkeys export prints POSIX shell syntax; add it yourself with:")
-        printToStandardError("  \(shellInitLine)")
-        exit(1)
-    }
-    guard !profileCallsMonkeysExport(path) else {
-        printToStandardError("\(abbreviatingHome(path)) already calls monkeys export")
-        return
-    }
-    try appendShellInit(to: path)
-    reportShellInit(appendedTo: path)
 }
 
 let arguments = Array(CommandLine.arguments.dropFirst())
@@ -191,10 +156,10 @@ do {
     case "list": try runList()
     case "preview": try runPreview(rest)
     case "remove": try runRemove(rest)
-    case "export": try runExport(rest)
+    case "pack": try runPack(rest)
     case "run": try runCommandWithSecrets(rest)
-    case "import": try runImport(rest)
-    case "shell-init": try runShellInit()
+    case "unpack": try runUnpack(rest)
+    case "export": try runExport(rest)
     case "help", "-h", "--help": print(usage)
     default:
         printToStandardError(messageStyle("unknown command:", .bad) + " \(command)")

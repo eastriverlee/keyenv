@@ -138,8 +138,9 @@ names a command `monkeys help` does not list.
 | `monkeys run <NAME>[,<NAME>] <command>` | run a command with those values in its environment |
 | `monkeys run --all <command>` | the same, with every stored value |
 | `monkeys run <command>` | the same, with the names a `.monkeys` file lists |
-| `monkeys export [NAME...]` | print shell export lines, for a shell to eval |
-| `monkeys shell-init` | add that eval to your shell startup file |
+| `monkeys export [NAME...]` | keyring lookup lines, to paste into a startup file |
+| `monkeys pack [name]` | write the profile as `name.monkeys`, encrypted |
+| `monkeys unpack <name>` | store its values, write its `.monkeys` |
 
 `monkeys` takes no value as an argument, so storing one never types it: your
 shell history and the process table both see `monkeys set GITHUB_TOKEN` and
@@ -156,8 +157,8 @@ told, since the names are how it knows what to check for and what to leave out;
 `--all` is there for when you would rather not say. Any command takes a leading
 `@profile`, which is covered below.
 
-Output is coloured only when it is going to a terminal, and never for `export`
-or `list`, whose output a shell or a script reads. `NO_COLOR` turns colour off,
+Output is coloured only when it is going to a terminal, and never for `list`,
+whose output a script reads. `NO_COLOR` turns colour off,
 `CLICOLOR_FORCE` turns it on for a pipe, and an empty value for either counts
 as unset.
 
@@ -222,8 +223,8 @@ STRIPE_SECRET_KEY
 OPENROUTER_API_KEY
 ```
 
-The `@` line is the profile, the rest are names, `#` starts a comment. Commit
-it. It is the secret half of `.env.example`, and a project keeps one or the
+The `@` line is the profile and every project has one; the rest are names,
+and `#` starts a comment. Commit it. It is the secret half of `.env.example`, and a project keeps one or the
 other, since two lists of the same names drift.
 
 In that directory or any below it, `run` takes only the command:
@@ -234,8 +235,8 @@ monkeys run npm run dev
 ```
 
 The profile scopes every name. `monkeys set STRIPE_SECRET_KEY` there stores
-`test/STRIPE_SECRET_KEY`, which is what `run` reads, and `preview` and `export`
-with no names give the file's names from that profile. `list` stays global and
+`test/STRIPE_SECRET_KEY`, which is what `run` reads, and `preview` with no
+names gives the file's names from that profile. `list` stays global and
 shows the prefixes, so you can see which project each value belongs to.
 
 The profile's name is the project's and its values are yours. Everyone who
@@ -247,11 +248,15 @@ are yours alone, and a name missing in `@test` is missing there even when a
 bare copy exists, so a project cannot quietly pick up a value meant for
 another.
 
-A leading `@profile` picks another set of values for the same names, anywhere:
+A leading `@profile` picks another set of values for the same names, anywhere.
+A bare `@` is the personal profile, and since no project lives there, it also
+sets the file aside and takes names again, which is how one value reaches a
+tool you start from any directory:
 
 ```sh
 monkeys run @staging ./deploy
 monkeys set @staging DATABASE_URL
+monkeys run @ TYPESAFE_API_KEY claude
 ```
 
 A missing value says where it is missing from, and the `set` it asks for works
@@ -273,22 +278,25 @@ error says which file is supplying the names instead.
 A profile leaves the keyring as one encrypted file, and only that way:
 
 ```sh
-$ monkeys export test.monkeys
+$ monkeys pack
 Passphrase:
 Again:
 wrote test.monkeys: @test, 3 values
 ```
 
+The file takes the profile's name. A word after `pack` names it otherwise,
+and `monkeys pack @staging` bundles another profile.
+
 It carries the profile's name, the names the project lists, and their values,
 sealed with ChaCha20-Poly1305 under a key scrypt derives from the passphrase.
 The file is safe to send over whatever you already use; the passphrase goes
-another way. An export with a value still missing refuses, since a bundle
+another way. A pack with a value still missing refuses, since a bundle
 that fills half a profile is a bug for whoever receives it.
 
-The other side runs `import` where the project should live:
+The other side runs `unpack` where the project should live:
 
 ```sh
-$ monkeys import test.monkeys
+$ monkeys unpack test
 Passphrase:
 wrote .monkeys: @test, 3 names
 stored test/DATABASE_URL, test/STRIPE_SECRET_KEY, test/OPENROUTER_API_KEY
@@ -296,7 +304,7 @@ stored test/DATABASE_URL, test/STRIPE_SECRET_KEY, test/OPENROUTER_API_KEY
 
 The values go into that person's keyring under `test/`, and the names become
 a `.monkeys` file in the current directory, so `monkeys run ./hello` works
-from the next command. When a `.monkeys` file is already there, `import`
+from the next command. When a `.monkeys` file is already there, `unpack`
 stores nothing unless it lists the same profile and names, and says what
 differs; that file is committed, and a bundle does not get to rewrite it.
 
@@ -313,23 +321,23 @@ because `*.monkeys` alone also matches the `.monkeys` file you do commit:
 
 ## Every shell, if you want it
 
-`run` hands a value to one process. The older habit is to put every value into
-every shell, which `export` and `shell-init` still do:
+`run` hands a value to one process, and `monkeys run @test zsh` hands a whole
+profile to one shell, which forgets it on exit. For a value that every shell
+should carry from startup, `export` writes the lines and you paste them:
 
 ```sh
-monkeys shell-init      # appends the line below to your startup file
-eval "$(monkeys export)"
+$ monkeys export @ TYPESAFE_API_KEY
+export TYPESAFE_API_KEY="$(security find-generic-password -s monkeys -a TYPESAFE_API_KEY -w)"
 ```
 
-It costs what it sounds like it costs. Every program you start from that shell
-inherits every secret you own, including the ones it has no business seeing.
-`run` exists because most commands need one value and none of the rest.
+No value is in that line. It asks the keychain when the shell starts, the way
+you would have written it by hand, and on Linux it asks `secret-tool` instead.
+`monkeys` writes nothing into your startup file for you: a value that every
+process on the machine inherits is a decision to make with the file open.
 
-`shell-init` writes `~/.zshrc` for zsh and `~/.bashrc` for bash
-(`~/.bash_profile` on macOS), says so when the line is already there, and puts
-it at the end of the file, below whatever adds the install directory to `PATH`.
-Set `MONKEYS_SHELL_PROFILE` to send it somewhere else, such as a file your
-startup file sources.
+The keychain treats `security` as its own program, so the first shell that
+runs the line asks once whether to allow it. Answer Always Allow and it stays
+quiet.
 
 ## Looking without reading
 
@@ -370,9 +378,10 @@ from.
 the shell already exported is overridden for that command. Names you leave out
 are passed through untouched.
 
-`run` and `export` both read every value before either sets a variable or
-prints a line, so a name you never stored stops them with nothing done. A
-command cannot start with half of its secrets.
+`run`, `export` and `pack` each check every name before doing anything, so a
+name you never stored stops them with nothing done. A command cannot start with
+half of its secrets, a startup file cannot ask for a value that is not there,
+and a bundle cannot carry half of a profile.
 
 ## How it stores things
 
@@ -397,9 +406,6 @@ which puts them in your desktop keyring:
 ```sh
 secret-tool lookup service monkeys account OPENROUTER_API_KEY
 ```
-
-`export` single-quotes each value and escapes any quote inside it, so a value
-carrying quotes, spaces or newlines survives `eval` unchanged.
 
 ## Caveats
 

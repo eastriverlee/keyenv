@@ -2,9 +2,20 @@ import Foundation
 
 let projectFileName = ".monkeys"
 
+func homeDirectory() -> String {
+    if let home = ProcessInfo.processInfo.environment["HOME"], !home.isEmpty { return home }
+    return FileManager.default.homeDirectoryForCurrentUser.path
+}
+
+func abbreviatingHome(_ path: String) -> String {
+    let home = homeDirectory()
+    guard path.hasPrefix(home) else { return path }
+    return "~" + path.dropFirst(home.count)
+}
+
 struct Project {
     let directory: String
-    let profile: String?
+    let profile: String
     let names: [String]
 
     var path: String { directory + "/" + projectFileName }
@@ -30,17 +41,32 @@ func isValidProfileName(_ name: String) -> Bool {
     return name.allSatisfy { ($0.isASCII && ($0.isLetter || $0.isNumber)) || "_-.".contains($0) }
 }
 
-func takeProfileArgument(_ arguments: [String]) throws -> (profile: String?, rest: [String]) {
-    guard let first = arguments.first, first.hasPrefix("@") else { return (nil, arguments) }
+enum ProfileArgument {
+    case none
+    case personal
+    case named(String)
+}
+
+func takeProfileArgument(_ arguments: [String]) throws -> (profile: ProfileArgument, rest: [String]) {
+    guard let first = arguments.first, first.hasPrefix("@") else { return (.none, arguments) }
+    let rest = Array(arguments.dropFirst())
+    guard first != "@" else { return (.personal, rest) }
     let name = String(first.dropFirst())
     guard isValidProfileName(name) else { throw StoreFailure.invalidProfileName(first) }
-    return (name, Array(arguments.dropFirst()))
+    return (.named(name), rest)
 }
 
 func resolveScope(_ arguments: [String]) throws -> (scope: Scope, rest: [String]) {
     let (chosen, rest) = try takeProfileArgument(arguments)
-    let project = try locateProject()
-    return (Scope(profile: chosen ?? project?.profile, project: project), rest)
+    switch chosen {
+    case .personal:
+        return (Scope(profile: nil, project: nil), rest)
+    case .named(let name):
+        return (Scope(profile: name, project: try locateProject()), rest)
+    case .none:
+        let project = try locateProject()
+        return (Scope(profile: project?.profile, project: project), rest)
+    }
 }
 
 func locateProject() throws -> Project? {
@@ -81,6 +107,9 @@ func parseProject(at path: String, directory: String) throws -> Project {
             throw StoreFailure.badProjectFile(shown, "\(line) is listed twice")
         }
         names.append(line)
+    }
+    guard let profile else {
+        throw StoreFailure.badProjectFile(shown, "no @profile line; a project's names live in a named profile")
     }
     return Project(directory: directory, profile: profile, names: names)
 }

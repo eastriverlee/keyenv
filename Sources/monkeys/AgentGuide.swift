@@ -56,7 +56,7 @@ there takes only the command:
 The file's @profile line scopes every name, so set in that directory stores
 into the same profile the command reads from. Read the file before adding a
 name; it is the list. Filling a profile from a shared .monkeys bundle is
-monkeys import, which asks for a passphrase, so that too is the person's move.
+monkeys unpack, which asks for a passphrase, so that too is the person's move.
 
 Name what the command actually reads. Naming is how you learn that a value is
 missing, and it keeps the rest of them out of a process that has no business
@@ -86,11 +86,10 @@ monkeys preview:
 A length and a two-character prefix confirm that the right value arrived
 without reading it.
 
-monkeys export prints every value as shell assignments, for a startup file to
-eval. Never run it yourself, and never print a variable that already holds a
-secret. Each of these puts a value in front of you:
+monkeys export writes keyring lookups for a startup file and holds no value,
+which is why it may print. Never print a variable that already holds a secret.
+Each of these puts a value in front of you:
 
-  monkeys export
   echo "$OPENROUTER_API_KEY"
   env
   printenv

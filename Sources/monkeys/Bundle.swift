@@ -20,8 +20,8 @@ struct ProfileBundle {
     let values: [(name: String, value: String)]
 }
 
-func isBundlePath(_ argument: String) -> Bool {
-    argument.hasSuffix(bundleSuffix) && argument != projectFileName
+func bundlePath(_ argument: String) -> String {
+    argument.hasSuffix(bundleSuffix) ? argument : argument + bundleSuffix
 }
 
 private func readPassphrase(confirming: Bool) throws -> String {
