@@ -7,5 +7,7 @@
     "name": "eastriverlee",
     "url": "https://github.com/eastriverlee"
   },
-  "homepage": "https://github.com/eastriverlee/monkeys"
+  "homepage": "https://github.com/eastriverlee/monkeys",
+  "commands": "./.claude-plugin/commands/",
+  "hooks": "./.claude-plugin/hooks.json"
 }
