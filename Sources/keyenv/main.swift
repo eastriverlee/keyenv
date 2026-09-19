@@ -156,10 +156,11 @@ func runList() throws {
 
 func runExport(_ arguments: [String]) throws {
     let names = arguments.isEmpty ? try storedNames() : arguments
-    for name in names {
+    let lines = try names.map { name -> String in
         guard isValidVariableName(name) else { throw KeychainFailure.invalidVariableName(name) }
-        print("export \(name)=\(shellSingleQuoted(try readValue(forName: name)))")
+        return "export \(name)=\(shellSingleQuoted(try readValue(forName: name)))"
     }
+    for line in lines { print(line) }
 }
 
 let arguments = Array(CommandLine.arguments.dropFirst())
