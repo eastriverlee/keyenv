@@ -111,7 +111,7 @@ SENTRY_DSN`;
 
 	<section class="flex flex-col gap-4">
 		<h1 class="text-4xl leading-[1.08] font-semibold tracking-tight text-balance italic sm:text-5xl">
-			LLMs read <code class="text-primary bg-transparent p-0">.env</code>,
+			LLMs read <code class="text-primary bg-transparent p-0">.env</code>;
 			<span class="block">not anymore.</span>
 		</h1>
 		<p class="max-w-prose">

@@ -19,7 +19,7 @@
   <img src="terminal.svg" alt="monkeys run refusing a missing value, then running the command, then preview" width="640">
 </p>
 
-## LLMs read `.env`, not anymore.
+## LLMs read `.env`; not anymore.
 
 For LLMs, `cat .env` is just too
 tempting, and once it's in the transcript, it's there for good. The usual

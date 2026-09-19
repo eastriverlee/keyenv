@@ -51,7 +51,7 @@ const card = {
 			type: 'container',
 			style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 },
 			children: [
-				line([{ text: 'LLMs read ' }, { text: '.env', color: orange, italic: false }, { text: ',' }]),
+				line([{ text: 'LLMs read ' }, { text: '.env', color: orange, italic: false }, { text: ';' }]),
 				line([{ text: 'not anymore.' }])
 			]
 		},
