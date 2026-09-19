@@ -11,7 +11,7 @@
 
 	const repository = { owner: 'eastriverlee', repo: 'monkeys' };
 
-	const structuredData = `<script type="application/ld+json">${JSON.stringify({"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "monkeys", "url": "https://monk3ys.dev", "description": "LLMs read .env, not anymore. monkeys keeps each secret in your keyring and hands it to one command at a time.", "applicationCategory": "DeveloperApplication", "operatingSystem": "macOS, Linux", "license": "https://github.com/eastriverlee/monkeys/blob/main/LICENSE", "downloadUrl": "https://github.com/eastriverlee/monkeys/releases", "sameAs": ["https://github.com/eastriverlee/monkeys"], "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "eastriverlee", "url": "https://github.com/eastriverlee"}})}<\/script>`;
+	const structuredData = `<script type="application/ld+json">${JSON.stringify({"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "monkeys", "url": "https://monk3ys.dev", "description": "LLMs read .env, not anymore. monkeys keeps each secret in your keyring and hands it to one command at a time.", "applicationCategory": "DeveloperApplication", "operatingSystem": "macOS, Linux", "license": "https://github.com/eastriverlee/monkeys/blob/main/LICENSE", "downloadUrl": "https://github.com/eastriverlee/monkeys/releases", "sameAs": ["https://github.com/eastriverlee/monkeys"], "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "eastriverlee", "url": "https://github.com/eastriverlee"}, "copyrightHolder": {"@type": "Organization", "name": "13e7 corp."}})}<\/script>`;
 	const installTabs = [
 		{ label: 'curl', code: 'curl -fsSL https://monk3ys.dev/install | sh' },
 		{ label: 'Homebrew', code: 'brew install eastriverlee/tap/monkeys' },
@@ -267,5 +267,7 @@ SENTRY_DSN`;
 		<span>macOS and Linux</span>
 		<span>·</span>
 		<span>© 2026 13e7 corp.</span>
+		<span>·</span>
+		<a href="https://github.com/sponsors/eastriverlee" class="underline underline-offset-4">Sponsor</a>
 	</footer>
 </main>

@@ -71,7 +71,7 @@ var usage: String {
     and remove read and write that profile:
 
       \(outputStyle("monkeys run ./hello.sh", .argument))
-      \(outputStyle("monkeys set STRIPE_SECRET_KEY", .argument))        stored as monkeys/STRIPE_SECRET_KEY
+      \(outputStyle("monkeys set STRIPE_SECRET_KEY", .argument))        stored as foo/STRIPE_SECRET_KEY
 
     A profile line can name several profiles, and a file can have several
     blocks. Each profile gets the names of every block that lists it; the first
@@ -106,7 +106,7 @@ var usage: String {
     you are in, here when there is none, or in the directory you name:
 
       \(outputStyle("monkeys pack", .argument))                  writes foo.monkeys
-      \(outputStyle("monkeys unpack monkeys", .argument))
+      \(outputStyle("monkeys unpack foo", .argument))
 
     \(styledAgentGuide)
     """

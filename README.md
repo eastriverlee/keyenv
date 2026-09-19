@@ -12,7 +12,7 @@
 
 <p align="center">
   <img alt="license" src="https://img.shields.io/github/license/eastriverlee/monkeys?color=E94100">
-  <img alt="swift 6.0" src="https://img.shields.io/badge/swift-6.0-E94100">
+  <img alt="swift 6.1" src="https://img.shields.io/badge/swift-6.1-E94100">
   <img alt="macOS and Linux" src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-E94100">
 </p>
 
@@ -100,7 +100,7 @@ brew tap eastriverlee/tap
 brew install monkeys
 ```
 
-From source, with a Swift toolchain and macOS 13 or later:
+From source, with Swift 6.1 or later, on macOS 13 or later or on Linux:
 
 ```sh
 git clone https://github.com/eastriverlee/monkeys
@@ -163,6 +163,7 @@ names a command `monkeys help` does not list.
 | `monkeys pack [name]` | write the profile as `name.monkeys`, encrypted |
 | `monkeys unpack <name> [directory]` | store its values, write its `.monkeys` |
 | `monkeys doctor` | what each profile has and lacks |
+| `monkeys doctor --short` | one `missing @profile: A,B` line per gap, for a script or an agent |
 
 `monkeys` takes no value as an argument, so storing one never types it: your
 shell history and the process table both see `monkeys set GITHUB_TOKEN` and
@@ -174,13 +175,13 @@ pbpaste | monkeys set GITHUB_TOKEN        # macOS
 wl-paste | monkeys set GITHUB_TOKEN       # Linux, Wayland
 ```
 
-Naming no name means every name, for `preview` and `export`. `run` asks to be
-told, since the names are how it knows what to check for and what to leave out;
+Naming no name means every name for `preview` and `export`, or the project's
+names inside a project. `run` asks to be told, since the names are how it knows what to check for and what to leave out;
 `--all` is there for when you would rather not say. Any command takes a leading
 `@profile`, which is covered below.
 
-Output is coloured only when it is going to a terminal, and never for `list`,
-whose output a script reads. `NO_COLOR` turns colour off,
+Output is coloured only when it is going to a terminal, and never for `list`
+or `export`, whose output a script or a shell reads. `NO_COLOR` turns colour off,
 `CLICOLOR_FORCE` turns it on for a pipe, and an empty value for either counts
 as unset.
 
@@ -298,7 +299,7 @@ monkeys run npm run dev
 ```
 
 The profile scopes every name. `monkeys set STRIPE_SECRET_KEY` there stores
-`monkeys/STRIPE_SECRET_KEY`, which is what `run` reads, and `preview` with no
+`foo/STRIPE_SECRET_KEY`, which is what `run` reads, and `preview` with no
 names gives the file's names from that profile. `list` stays global and
 shows the prefixes, so you can see which project each value belongs to.
 
@@ -324,7 +325,7 @@ SENTRY_DSN
 ```
 
 A profile's names are those of every block that lists it, so both profiles
-here need `DATABASE_URL` and `STRIPE_SECRET_KEY`, and `monkeys` also needs
+here need `DATABASE_URL` and `STRIPE_SECRET_KEY`, and `foo` also needs
 `SENTRY_DSN`. The first profile in the file is the one `run` uses when none is
 given. A leading `@profile` picks another declared one, and a prefix that fits
 only one of them is enough, the way a short git hash is. A profile the file
@@ -337,7 +338,7 @@ monkeys set @foo SENTRY_DSN
 ```
 
 A value missing in one profile stops only that profile, and only when it is
-used: monkeys can be half filled while test runs. `doctor` reads the whole
+used: `foo` can be half filled while `test.foo` runs. `doctor` reads the whole
 file and shows every profile with what it has and lacks, in colour on a
 terminal, and exits non-zero while anything is missing:
 
@@ -532,8 +533,9 @@ and a bundle cannot carry half of a profile.
 
 ## How it stores things
 
-Each variable is one keyring item carrying two attributes, `service` set to
-`monkeys` and `account` set to the variable name, labelled `monkeys: <NAME>`.
+Each variable is one keyring item carrying two attributes: `service` is
+`monkeys`, and `account` is `<profile>/<NAME>`, or `<NAME>` alone in the
+personal profile. The label is `monkeys: ` followed by the account.
 Your desktop's own keyring tools see the same items, and deleting one there
 deletes it for `monkeys`.
 
@@ -542,6 +544,7 @@ Access for `monkeys`, or ask for one by name:
 
 ```sh
 security find-generic-password -s monkeys -a OPENROUTER_API_KEY
+security find-generic-password -s monkeys -a foo/OPENROUTER_API_KEY
 ```
 
 Items are created with `kSecAttrAccessibleAfterFirstUnlock`, so a shell that
@@ -551,7 +554,7 @@ On Linux the same attributes go to the Secret Service D-Bus API through
 `secret-tool`, which is gnome-keyring on most desktops and KWallet on KDE:
 
 ```sh
-secret-tool lookup service monkeys account OPENROUTER_API_KEY
+secret-tool lookup service monkeys account foo/OPENROUTER_API_KEY
 ```
 
 ## Caveats
@@ -589,4 +592,5 @@ fails saying so. Machines like that want a different mechanism, not this one.
 
 ## License
 
-MIT
+MIT. If it saves you a leaked key, [sponsoring](https://github.com/sponsors/eastriverlee)
+keeps it maintained.
