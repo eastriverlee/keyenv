@@ -1,7 +1,7 @@
 {
   "name": "monkeys",
   "description": "A cross-platform .env alternative for the LLM era: secrets in your keyring, their names in your repo, spent one command at a time, never printed.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "license": "MIT",
   "author": {
     "name": "eastriverlee",
