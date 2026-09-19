@@ -12,6 +12,7 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
 	},
 	"devDependencies": {
+		"@internationalized/date": "^3.12.0",
 		"@lucide/svelte": "^1.47.0",
 		"@shikijs/langs": "^4.0.2",
 		"@shikijs/themes": "^4.0.2",
@@ -20,7 +21,7 @@
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
 		"@tailwindcss/vite": "^4.1.18",
 		"@takumi-rs/core": "^2.14.0",
-		"bits-ui": "^2.16.5",
+		"bits-ui": "^2.18.0",
 		"clsx": "^2.1.1",
 		"runed": "^0.37.1",
 		"shadcn-svelte": "^1.7.0",
