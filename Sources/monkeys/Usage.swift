@@ -86,11 +86,17 @@ var usage: String {
       \(outputStyle("monkeys doctor", .argument))                     which profile lacks what
 
     A leading @profile picks another declared profile, and a prefix that fits
-    only one of them is enough. Outside a project names have no prefix; inside
-    one, a bare @ reaches those personal names, setting the file aside:
+    only one of them is enough:
 
       \(outputStyle("monkeys set @foo SENTRY_DSN", .argument))      stored as foo/SENTRY_DSN
-      \(outputStyle("monkeys run @ TYPESAFE_API_KEY claude", .argument))   from inside a checkout
+
+    A name stored outside any project has no prefix and needs no @. Inside a
+    project every command is scoped to its profile, so a bare @ says the
+    personal profile instead: it sets the file aside, names are given again,
+    and the unprefixed names are reached without leaving the directory:
+
+      \(outputStyle("monkeys run TYPESAFE_API_KEY claude", .argument))     outside a project
+      \(outputStyle("monkeys run @ TYPESAFE_API_KEY claude", .argument))   inside one, the same value
 
     For a shell that should carry values from startup, export writes the lines
     to paste into your startup file yourself. Each asks the keyring for one

@@ -373,15 +373,32 @@ Two parts, `test.foo`, is enough for most; a third, `test.foo.lee`,
 is for a keyring that holds many projects and collides at two. A single word
 does for a profile nothing else will collide with.
 
-Outside a project, names have no prefix and no `@` is needed:
+### The personal profile
+
+A name stored outside any project has no prefix and needs no `@`. That is
+where a value that belongs to you rather than to a project lives, such as
+the key a tool you start from anywhere reads:
 
 ```sh
+monkeys set TYPESAFE_API_KEY
 monkeys run TYPESAFE_API_KEY claude
 ```
 
-Inside one, a bare `@` reaches those same personal names, setting the
-project file aside and taking names again: `monkeys run @ TYPESAFE_API_KEY
-claude` from within a checkout.
+Inside a project every command is scoped to that project's profile, so
+those personal names are out of reach there: `monkeys run` reads `foo/`,
+and `monkeys set TYPESAFE_API_KEY` would write `foo/TYPESAFE_API_KEY`. A
+bare `@` means the personal profile. It sets the project file aside, so
+names are given again, and reaches the unprefixed names without leaving
+the directory:
+
+```sh
+monkeys run @ TYPESAFE_API_KEY claude
+monkeys set @ TYPESAFE_API_KEY
+monkeys preview @ TYPESAFE_API_KEY
+```
+
+It is the same value either way; the `@` only says which profile to look
+in when a file would otherwise decide.
 
 A missing value says where it is missing from, and the `set` it asks for works
 from any directory:

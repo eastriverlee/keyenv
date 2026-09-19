@@ -56,7 +56,9 @@ with a gap, nothing when there is none, and exits non-zero while any remains.
 
 Read the file before adding a name; it is the list. A profile never falls back
 to the personal one: a name missing in `@foo` is missing there even when a
-bare copy exists.
+bare copy exists. A name stored outside any project has no prefix; inside a
+project a bare `@` reaches it, with the name given again:
+`monkeys run @ TYPESAFE_API_KEY claude`.
 
 A shared `<name>.monkeys` bundle fills a profile with `monkeys unpack`, which
 writes `.monkeys` at the git root and
