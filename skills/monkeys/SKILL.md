@@ -49,7 +49,8 @@ A `@` line may name several profiles, and a file may hold several blocks; a
 profile's names are those of every block listing it, the first profile in the
 file is the default, and `run @name` takes only a profile the file declares,
 or a prefix that fits just one of them.
-`monkeys doctor` shows what each profile has and lacks.
+`monkeys doctor --short` prints one `missing @profile: A,B` line per profile
+with a gap, nothing when there is none, and exits non-zero while any remains.
 
 Read the file before adding a name; it is the list. A profile never falls back
 to the personal one: a name missing in `@monkeys` is missing there even when a

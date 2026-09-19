@@ -289,6 +289,15 @@ $ monkeys doctor
   ✗ SENTRY_DSN
 ```
 
+`doctor --short` says only what is wrong, one line per profile with a
+problem, and nothing at all when there is none, which is the form to hand a
+script or an agent:
+
+```
+$ monkeys doctor --short
+missing @monkeys: STRIPE_SECRET_KEY,SENTRY_DSN
+```
+
 Profile names take letters, digits, `_`, `-` and `.`. A dotted name in the
 style of a bundle identifier keeps two projects' test apart in one keyring.
 Two parts, `test.monkeys`, is enough for most; a third, `test.monkeys.lee`,

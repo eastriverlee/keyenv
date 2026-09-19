@@ -140,20 +140,24 @@ private func mark(_ isStored: Bool) -> String {
 }
 
 func runDoctor(_ arguments: [String]) throws {
-    guard arguments.isEmpty else { throw StoreFailure.badInvocation("monkeys doctor") }
+    let isShort = arguments == ["--short"]
+    guard arguments.isEmpty || isShort else { throw StoreFailure.badInvocation("monkeys doctor [--short]") }
     guard let project = try locateProject() else {
         throw StoreFailure.badInvocation("monkeys doctor next to a \(projectFileName) file")
     }
     let stored = Set(try secretStore.storedNames())
     var isComplete = true
     for profile in project.profiles {
+        let names = project.names(for: profile)
+        let missing = names.filter { !stored.contains(profile + "/" + $0) }
+        isComplete = isComplete && missing.isEmpty
+        if isShort {
+            if !missing.isEmpty { print("missing @\(profile): " + missing.joined(separator: ",")) }
+            continue
+        }
         let label = profile == project.defaultProfile ? outputStyle("  default", .dim) : ""
         print(outputStyle("@" + profile, .bold) + label)
-        for name in project.names(for: profile) {
-            let isStored = stored.contains(profile + "/" + name)
-            isComplete = isComplete && isStored
-            print("  " + mark(isStored) + " " + name)
-        }
+        for name in names { print("  " + mark(!missing.contains(name)) + " " + name) }
     }
     guard isComplete else { exit(1) }
 }

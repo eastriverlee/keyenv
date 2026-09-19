@@ -25,7 +25,7 @@ let commandSummaries = [
                    summary: "write the profile encrypted, to share"),
     CommandSummary(verb: "unpack", arguments: "<name>",
                    summary: "store its values, write its .monkeys"),
-    CommandSummary(verb: "doctor", arguments: "",
+    CommandSummary(verb: "doctor", arguments: "[--short]",
                    summary: "what each profile has and lacks"),
 ]
 
