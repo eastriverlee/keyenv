@@ -31,11 +31,11 @@ reads.
 A project with a `.monkeys` file has already named what it needs:
 
 ```
+@shop
 DATABASE_URL
 STRIPE_SECRET_KEY
 ```
 
-Its profile is the directory's name unless an `@profile` line says otherwise.
 In that directory or below it, `run` takes only the command, and every name is
 scoped to that profile, so `monkeys set STRIPE_SECRET_KEY` there stores into
 the same profile the command reads from:

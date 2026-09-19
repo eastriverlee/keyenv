@@ -217,24 +217,15 @@ values are missing, that nothing happened, and what to ask its person for.
 A project names what it needs once, in a `.monkeys` file next to the code:
 
 ```
+@shop
 DATABASE_URL
 STRIPE_SECRET_KEY
 OPENROUTER_API_KEY
 ```
 
-One name per line, `#` starts a comment. Commit it. It is the secret half of
-`.env.example`, and a project keeps one or the other, since two lists of the
-same names drift.
-
-The file's profile is the name of the directory it sits in, so a checkout at
-`~/work/shop` keeps its values under `shop/`. An `@profile` line at the top
-picks another name, for a directory called something else or two checkouts
-that should share one set:
-
-```
-@shop
-DATABASE_URL
-```
+The first line is the profile, and every project has one; the rest are names,
+and `#` starts a comment. Commit it. It is the secret half of `.env.example`,
+and a project keeps one or the other, since two lists of the same names drift.
 
 In that directory or any below it, `run` takes only the command:
 
@@ -312,11 +303,10 @@ stored shop/DATABASE_URL, shop/STRIPE_SECRET_KEY, shop/OPENROUTER_API_KEY
 ```
 
 The values go into that person's keyring under the bundle's profile, `shop/`,
-and the names become a `.monkeys` file in the current directory, with an
-`@shop` line when the directory is called something else, so `monkeys run
-./hello` works from the next command. When a `.monkeys` file is already
-there, `unpack` keeps it. It stores nothing if that file lists other names or
-resolves to another profile, and says which; the file is committed, and a
+and the profile and names become a `.monkeys` file in the current directory,
+so `monkeys run ./hello` works from the next command. When a `.monkeys` file
+is already there, `unpack` keeps it. It stores nothing if that file names
+another profile or other names, and says which; the file is committed, and a
 bundle does not get to rewrite it.
 
 Both commands read the passphrase from standard input when it is not a

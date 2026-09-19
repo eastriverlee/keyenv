@@ -116,7 +116,7 @@ func reconcileProjectFile(profile: String, names: [String]) throws {
     let directory = FileManager.default.currentDirectoryPath
     let path = directory + "/" + projectFileName
     guard FileManager.default.fileExists(atPath: path) else {
-        try projectFileContents(profile: profile, names: names, in: directory).write(toFile: path, atomically: true, encoding: .utf8)
+        try projectFileContents(profile: profile, names: names).write(toFile: path, atomically: true, encoding: .utf8)
         printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(projectFileName, .bold) + ": @\(profile), \(names.count) name\(names.count == 1 ? "" : "s")")
         return
     }

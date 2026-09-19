@@ -53,11 +53,10 @@ there takes only the command:
 
   monkeys run ./bench
 
-Its profile, the directory's name or an @profile line, scopes every name, so
-set in that directory stores into the same profile the command reads from.
-Read the file before adding a name; it is the list. Filling a profile from a
-shared .monkeys bundle is monkeys unpack, which asks for a passphrase, so that
-too is the person's move.
+The file's @profile line scopes every name, so set in that directory stores
+into the same profile the command reads from. Read the file before adding a
+name; it is the list. Filling a profile from a shared .monkeys bundle is
+monkeys unpack, which asks for a passphrase, so that too is the person's move.
 
 Name what the command actually reads. Naming is how you learn that a value is
 missing, and it keeps the rest of them out of a process that has no business

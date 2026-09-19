@@ -57,9 +57,9 @@ var usage: String {
 
       \(outputStyle("monkeys run OPENROUTER_API_KEY ./bench", .argument))
 
-    A project keeps its names in a \(projectFileName) file. Its profile is the directory's
-    name, or what an @profile line says:
+    A project keeps its names in \(projectFileName), under the profile they live in:
 
+      \(outputStyle("@shop", .argument))
       \(outputStyle("DATABASE_URL", .argument))
       \(outputStyle("STRIPE_SECRET_KEY", .argument))
 

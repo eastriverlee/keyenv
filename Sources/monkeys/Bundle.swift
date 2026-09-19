@@ -103,7 +103,6 @@ func readBundle(from path: String) throws -> ProfileBundle {
     }
 }
 
-func projectFileContents(profile: String, names: [String], in directory: String) -> String {
-    let heading = URL(fileURLWithPath: directory).lastPathComponent == profile ? [] : ["@" + profile]
-    return (heading + names).joined(separator: "\n") + "\n"
+func projectFileContents(profile: String, names: [String]) -> String {
+    (["@" + profile] + names).joined(separator: "\n") + "\n"
 }
