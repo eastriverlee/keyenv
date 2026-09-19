@@ -32,14 +32,14 @@ const card = {
 		flexDirection: 'column',
 		alignItems: 'center',
 		justifyContent: 'center',
-		gap: 44,
+		gap: 36,
 		backgroundColor: '#ffffff'
 	},
 	children: [
 		{
 			type: 'image',
-			src: readFileSync(join(statics, 'favicon.svg')),
-			style: { width: 280, height: 280 }
+			src: readFileSync(join(statics, 'monkeys.svg')),
+			style: { width: 520, height: 260, objectFit: 'cover' }
 		},
 		headline([
 			{ text: 'LLMs read ' },
