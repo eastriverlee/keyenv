@@ -35,6 +35,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build without the Swift runtime as a dependency
         run: swift build --configuration release --static-swift-stdlib
+      - name: Strip
+        run: strip .build/release/monkeys
       - name: Package
         run: tar czf monkeys-linux-${{ matrix.architecture }}.tar.gz -C .build/release monkeys
       - uses: actions/upload-artifact@v4
