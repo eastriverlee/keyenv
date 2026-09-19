@@ -122,8 +122,14 @@ claude plugin install monkeys@monkeys
 ```
 
 `/monkeys:install` then fetches the binary, and a session that starts without
-one says so. Elsewhere, copy `skills/monkeys/SKILL.md` into whatever directory
-your agent reads skills from.
+one says so.
+
+The repository is also an [Agent Plugins](https://agent-plugins.org) 1.1.0
+package: `plugin.json` at the root and the skill at `skills/monkeys/SKILL.md`,
+the two fixed locations the standard names, so a client that speaks the
+standard installs it from the repository URL. Claude Code's own manifest,
+command and hook sit at the paths Claude Code reads. Anywhere else, copy
+`skills/monkeys/SKILL.md` into whatever directory your agent reads skills from.
 
 The skill restates a few invocations so an agent knows them before it runs
 anything. `make check` holds that copy to the binary, failing when the skill

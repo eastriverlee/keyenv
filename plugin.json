@@ -1,0 +1,14 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.1.0/plugin.schema.json",
+  "name": "monkeys",
+  "version": "0.1.0",
+  "description": "Spend an API key, token or password from the OS keyring on one command, without the value entering the conversation.",
+  "author": {
+    "name": "eastriverlee",
+    "url": "https://github.com/eastriverlee"
+  },
+  "homepage": "https://monk3ys.dev",
+  "repository": "https://github.com/eastriverlee/monkeys",
+  "license": "MIT",
+  "keywords": ["secrets", "keyring", "keychain", "environment-variables", "dotenv", "coding-agent"]
+}
