@@ -110,11 +110,14 @@ On Linux, `monkeys` reaches the keyring through `secret-tool`: install
 
 ### For a coding agent
 
-The binary is the whole tool, and an agent that can run a shell can already use
-it. Installing the skill is what makes it reach for `monkeys` on its own,
-rather than asking you to paste a key.
+The binary is the whole tool, and an agent that can run a shell can already
+use it. The skill at `skills/monkeys/SKILL.md` is what makes it reach for
+`monkeys` on its own instead of asking you to paste a key. This repository is
+an [Agent Plugins](https://agent-plugins.org) package, so a client that speaks
+the standard installs it from the repository URL. Two clients have paths of
+their own.
 
-In Claude Code:
+**Claude Code**
 
 ```sh
 claude plugin marketplace add eastriverlee/monkeys
@@ -124,12 +127,23 @@ claude plugin install monkeys@monkeys
 `/monkeys:install` then fetches the binary, and a session that starts without
 one says so.
 
-The repository is also an [Agent Plugins](https://agent-plugins.org) 1.1.0
-package: `plugin.json` at the root and the skill at `skills/monkeys/SKILL.md`,
-the two fixed locations the standard names, so a client that speaks the
-standard installs it from the repository URL. Claude Code's own manifest,
-command and hook sit at the paths Claude Code reads. Anywhere else, copy
-`skills/monkeys/SKILL.md` into whatever directory your agent reads skills from.
+**Codex**
+
+Codex reads skills from `~/.agents/skills` and from `.agents/skills` inside a
+repository. One file is all there is to place:
+
+```sh
+mkdir -p ~/.agents/skills/monkeys
+curl -fsSL https://monk3ys.dev/skill -o ~/.agents/skills/monkeys/SKILL.md
+```
+
+The same file under `.agents/skills/monkeys/` in a project ships with the
+code. The binary is installed separately, from the section above.
+
+**Anything else**
+
+Copy `skills/monkeys/SKILL.md` into whatever directory your agent reads
+skills from.
 
 The skill restates a few invocations so an agent knows them before it runs
 anything. `make check` holds that copy to the binary, failing when the skill
