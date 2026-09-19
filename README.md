@@ -121,7 +121,7 @@ their own.
 
 ```sh
 claude plugin marketplace add eastriverlee/monkeys
-claude plugin install monkeys@monkeys
+claude plugin install monkeys@eastriverlee
 ```
 
 `/monkeys:install` then fetches the binary, and a session that starts without
