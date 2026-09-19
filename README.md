@@ -263,12 +263,14 @@ SENTRY_DSN
 A profile's names are those of every block that lists it, so both profiles
 here need `DATABASE_URL` and `STRIPE_SECRET_KEY`, and staging also needs
 `SENTRY_DSN`. The first profile in the file is the one `run` uses when none is
-given. A leading `@profile` picks another declared one, and a profile the file
-does not declare is refused, with the declared ones listed:
+given. A leading `@profile` picks another declared one, and a prefix that fits
+only one of them is enough, the way a short git hash is. A profile the file
+does not declare is refused with the declared ones listed, and a prefix that
+fits several is refused with those:
 
 ```sh
-monkeys run @staging.shop.eastriver ./deploy
-monkeys set @staging.shop.eastriver SENTRY_DSN
+monkeys run @staging ./deploy
+monkeys set @staging SENTRY_DSN
 ```
 
 A value missing in one profile stops only that profile, and only when it is

@@ -37,7 +37,7 @@ SENTRY_DSN`;
   ✓ OPENROUTER_API_KEY
   ✗ STRIPE_SECRET_KEY
   ✗ SENTRY_DSN`;
-	const runStaging = 'monkeys run @staging.shop.eastriver ./deploy';
+	const runStaging = 'monkeys run @staging ./deploy';
 	const packLine = 'monkeys pack';
 	const unpackLine = 'monkeys unpack ~/Downloads/shop.monkeys';
 
@@ -176,7 +176,8 @@ SENTRY_DSN`;
 		<p class="max-w-prose">
 			A profile line can name several profiles, and a file can hold several blocks. A profile's
 			names are those of every block that lists it; the first profile in the file is the one
-			<code>run</code> uses when none is given, and one the file does not declare is refused.
+			<code>run</code> uses when none is given, and one the file does not declare is refused. A
+			prefix that fits only one declared profile is enough, the way a short git hash is.
 		</p>
 		<CodeFile name=".monkeys" lang="monkeys" code={profilesFile} />
 		<CodeFile code={runStaging} />

@@ -83,11 +83,12 @@ var usage: String {
       \(outputStyle("monkeys run @staging.shop ./deploy", .argument))
       \(outputStyle("monkeys doctor", .argument))               which profile lacks what
 
-    A leading @profile picks another declared profile. A bare @ is the personal
-    profile, where names without a prefix live; it sets the project file aside,
-    so names are given again:
+    A leading @profile picks another declared profile, and a prefix that fits
+    only one of them is enough. A bare @ is the personal profile, where names
+    without a prefix live; it sets the project file aside, so names are given
+    again:
 
-      \(outputStyle("monkeys set @staging.shop DATABASE_URL", .argument))
+      \(outputStyle("monkeys set @staging DATABASE_URL", .argument))        @staging.shop, in a project
       \(outputStyle("monkeys run @ TYPESAFE_API_KEY claude", .argument))
 
     For a shell that should carry values from startup, export writes the lines

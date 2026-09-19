@@ -35,6 +35,16 @@ struct Project {
     func names(for profile: String) -> [String] {
         blocks.filter { $0.profiles.contains(profile) }.flatMap(\.names)
     }
+
+    func profile(matching given: String) throws -> String {
+        if profiles.contains(given) { return given }
+        let candidates = profiles.filter { $0.hasPrefix(given) }
+        switch candidates.count {
+        case 1: return candidates[0]
+        case 0: throw StoreFailure.profileNotDeclared(given, profiles, abbreviatingHome(path))
+        default: throw StoreFailure.profileAmbiguous(given, candidates)
+        }
+    }
 }
 
 struct Scope {
@@ -83,11 +93,8 @@ func resolveScope(_ arguments: [String]) throws -> (scope: Scope, rest: [String]
     case .personal:
         return (Scope(profile: nil, project: nil), rest)
     case .named(let name):
-        let project = try locateProject()
-        if let project, !project.profiles.contains(name) {
-            throw StoreFailure.profileNotDeclared(name, project.profiles, abbreviatingHome(project.path))
-        }
-        return (Scope(profile: name, project: project), rest)
+        guard let project = try locateProject() else { return (Scope(profile: name, project: nil), rest) }
+        return (Scope(profile: try project.profile(matching: name), project: project), rest)
     case .none:
         let project = try locateProject()
         return (Scope(profile: project?.defaultProfile, project: project), rest)
