@@ -20,6 +20,21 @@
   <img src="terminal.svg" alt="monkeys run refusing a missing value, then running the command, then preview" width="640">
 </p>
 
+**LLMs read `.env`, not anymore.** No one has to, but `cat .env` is just too
+tempting, and once it's in the transcript, it's there for good. The usual
+ways to live with that:
+
+1. Ignore it.
+2. Trust the provider.
+3. Rotate the key after it leaks.
+
+Someone will call it a skill issue. It isn't. There has never been a safe way
+for the people on a project to share a secret and use it, so it went in a
+file. C had a memory problem too, and being careful didn't fix it. Rust did.
+
+`monkeys` keeps each secret in your keyring and hands it to one command at a
+time. Nothing prints a stored value, so there is nothing to read.
+
 ## Quickstart
 
 ```sh
@@ -53,22 +68,6 @@ The key is in that one process and nowhere else. It never reached your shell
 history, your startup file, or the line you just typed. `run` becomes the
 command once the values are set, so the exit status, the output and the signals
 are the command's own.
-
-## Why
-
-A secret written into a shell startup file is readable by anything that can read
-your home directory, and it follows you into dotfile backups and git history.
-`monkeys` keeps it in the keyring and puts it into the environment of the one
-command you are running, by name.
-
-Nothing it offers prints a stored value, which is what makes it safe to hand to
-a coding agent: the agent writes the command, the shell spends the secret, and
-the value never passes through the conversation.
-
-On macOS the keyring is the login keychain, reached through Security.framework.
-On Linux it is whatever answers the Secret Service D-Bus API, which is
-gnome-keyring on most desktops and KWallet on KDE, reached through
-`secret-tool`.
 
 ## Install
 
@@ -401,8 +400,8 @@ security find-generic-password -s monkeys -a OPENROUTER_API_KEY
 Items are created with `kSecAttrAccessibleAfterFirstUnlock`, so a shell that
 starts while the screen is locked can still read them.
 
-On Linux the same attributes go to the Secret Service through `secret-tool`,
-which puts them in your desktop keyring:
+On Linux the same attributes go to the Secret Service D-Bus API through
+`secret-tool`, which is gnome-keyring on most desktops and KWallet on KDE:
 
 ```sh
 secret-tool lookup service monkeys account OPENROUTER_API_KEY

@@ -1,0 +1,188 @@
+<script lang="ts">
+	import { browser } from '$app/environment';
+	import CodeFile from '$lib/components/code-file.svelte';
+	import * as Marker from '$lib/components/ui/marker';
+	import SearchIcon from '@lucide/svelte/icons/search';
+	import FileTextIcon from '@lucide/svelte/icons/file-text';
+	import { Spinner } from '$lib/components/ui/spinner';
+	import * as TreeView from '$lib/components/ui/tree-view';
+	import { GitHubButton } from '$lib/components/ui/github-button';
+
+	const repository = { owner: 'eastriverlee', repo: 'monkeys' };
+
+	const installLine = 'curl -fsSL https://monk3ys.dev/install | sh';
+	const storeLine = 'monkeys set OPENROUTER_API_KEY';
+	const spendLine = `monkeys run OPENROUTER_API_KEY sh -c '
+  curl -s -o /dev/null -w "%{http_code}\\n" \\
+    -H "Authorization: Bearer ${'$'}OPENROUTER_API_KEY" \\
+    https://openrouter.ai/api/v1/key
+'`;
+	const projectFile = `@shop
+OPENROUTER_API_KEY`;
+	const runInProject = `monkeys run sh -c '
+  curl -s -o /dev/null -w "%{http_code}\\n" \\
+    -H "Authorization: Bearer ${'$'}OPENROUTER_API_KEY" \\
+    https://openrouter.ai/api/v1/key
+'`;
+	const packLine = 'monkeys pack';
+	const unpackLine = 'monkeys unpack ~/Downloads/shop.monkeys';
+
+	const stars = browser
+		? fetch(`https://api.github.com/repos/${repository.owner}/${repository.repo}`)
+				.then((response) => response.json())
+				.then((body: { stargazers_count: number }) => body.stargazers_count)
+		: undefined;
+</script>
+
+<svelte:head>
+	<title>monkeys</title>
+	<meta
+		name="description"
+		content="LLMs read .env, not anymore. monkeys keeps each secret in your keyring and hands it to one command at a time."
+	/>
+	<meta property="og:title" content="monkeys" />
+	<meta
+		property="og:description"
+		content="LLMs read .env, not anymore. monkeys keeps each secret in your keyring and hands it to one command at a time."
+	/>
+	<meta property="og:url" content="https://monk3ys.dev" />
+	<link rel="icon" href="/favicon.png" type="image/png" />
+	<link rel="apple-touch-icon" href="/favicon.png" />
+</svelte:head>
+
+<main class="mx-auto flex max-w-2xl flex-col gap-12 px-5 py-10">
+	<header class="flex items-center justify-between">
+		<a href="/" class="flex items-center gap-2 font-semibold">
+			<img src="/monkeys.circle.svg" alt="" class="size-9" />
+			monkeys
+		</a>
+		<GitHubButton repo={repository} {stars} size="sm" />
+	</header>
+
+	<img src="/monkeys.svg" alt="" class="mx-auto h-36 w-72 object-cover sm:h-48 sm:w-96" />
+
+	<section class="flex flex-col gap-4">
+		<h1 class="text-4xl leading-[1.08] font-semibold tracking-tight text-balance italic sm:text-5xl">
+			LLMs read <code class="text-primary bg-transparent p-0">.env</code>,
+			<span class="block">not anymore.</span>
+		</h1>
+		<p class="max-w-prose">
+			No one has to, but <code>cat .env</code> is just too tempting, and once it's in the
+			transcript, it's there for good.
+		</p>
+		<div class="flex max-w-prose flex-col gap-2">
+			<Marker.Root>
+				<Marker.Icon>
+					<SearchIcon />
+				</Marker.Icon>
+				<Marker.Content>Explored 4 files</Marker.Content>
+			</Marker.Root>
+			<Marker.Root variant="separator">
+				<Marker.Content>Thought for 42s</Marker.Content>
+			</Marker.Root>
+			<Marker.Root>
+				<Marker.Icon>
+					<FileTextIcon />
+				</Marker.Icon>
+				<Marker.Content>Opened .env</Marker.Content>
+			</Marker.Root>
+			<Marker.Root role="status">
+				<Marker.Icon>
+					<Spinner />
+				</Marker.Icon>
+				<Marker.Content class="shimmer">Reading .env</Marker.Content>
+			</Marker.Root>
+		</div>
+		<p class="max-w-prose">The usual ways to live with that:</p>
+		<ol class="max-w-prose list-inside list-decimal">
+			<li>Ignore it.</li>
+			<li>Trust the provider.</li>
+			<li>Rotate the key after it leaks.</li>
+		</ol>
+		<p class="max-w-prose">
+			Someone will call it a skill issue. It isn't. There has never been a safe way for the people
+			on a project to share a secret and use it, so it went in a file. C had a memory problem too,
+			and being careful didn't fix it. Rust did.
+		</p>
+		<p class="max-w-prose">
+			<code>monkeys</code> keeps each secret in your keyring and hands it to one command at a
+			time. Nothing prints a stored value, so there is nothing to read.
+		</p>
+	</section>
+
+	<CodeFile code={installLine} />
+
+	<img
+		src="/terminal.svg"
+		alt="monkeys run refusing a missing value, then running the command, then preview"
+		class="w-full rounded-xl"
+	/>
+
+	<section class="flex flex-col gap-4">
+		<h2 class="text-xl font-semibold">Store a key once</h2>
+		<p class="max-w-prose">
+			Paste it at the prompt. It goes into the keychain on macOS and the Secret Service on Linux, and
+			nothing you type lands in your shell history.
+		</p>
+		<CodeFile code={storeLine} />
+	</section>
+
+	<section class="flex flex-col gap-4">
+		<h2 class="text-xl font-semibold">Spend it on one command</h2>
+		<p class="max-w-prose">
+			Name what the command reads, then the command, written the way you always write it.
+			<code>run</code> puts the value in that one process and becomes it.
+		</p>
+		<CodeFile code={spendLine} output="200" />
+		<p class="max-w-prose">
+			The key went into the request and the status came back. Nothing else did. The single quotes
+			matter: the shell <code>run</code> starts is the one that has the value, so it has to be the
+			one that expands <code>$OPENROUTER_API_KEY</code>.
+		</p>
+	</section>
+
+	<section class="flex flex-col gap-4">
+		<h2 class="text-xl font-semibold">Let the project name what it needs</h2>
+		<p class="max-w-prose">
+			A <code>.monkeys</code> file next to the code lists the names, under a profile. Commit it. In
+			that directory, <code>run</code> takes only the command.
+		</p>
+		<div class="grid gap-3 sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)]">
+			<TreeView.Root class="rounded-lg border p-2">
+				<TreeView.Folder name="shop" open>
+					<TreeView.File name=".monkeys" />
+					<TreeView.Folder name="src">
+						<TreeView.File name="index.ts" />
+					</TreeView.Folder>
+				</TreeView.Folder>
+			</TreeView.Root>
+			<CodeFile name=".monkeys" lang="monkeys" code={projectFile} />
+		</div>
+		<CodeFile code={runInProject} output="200" />
+	</section>
+
+	<section class="flex flex-col gap-4">
+		<h2 class="text-xl font-semibold">Hand the profile to a teammate</h2>
+		<p class="max-w-prose">
+			<code>pack</code> asks for a passphrase and writes <code>shop.monkeys</code>: the profile, its
+			names and its values, sealed. Send the file however you like, and the passphrase another way.
+		</p>
+		<CodeFile code={packLine} />
+		<p class="max-w-prose">
+			On the other machine, <code>unpack</code> asks for the passphrase, stores the values, and
+			writes the <code>.monkeys</code> file where it runs. That is the only way a value leaves the
+			keyring.
+		</p>
+		<CodeFile code={unpackLine} />
+	</section>
+
+	<footer class="text-muted-foreground flex flex-wrap items-center gap-x-2 text-sm">
+		<a href="https://github.com/eastriverlee/monkeys" class="underline underline-offset-4">GitHub</a>
+		<span>·</span>
+		<span>MIT</span>
+		<span>·</span>
+		<span>macOS and Linux</span>
+		<span>·</span>
+		<code>brew install eastriverlee/tap/monkeys</code>
+	</footer>
+</main>

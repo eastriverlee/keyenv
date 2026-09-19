@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Fail when the skill names a command the binary does not have.
+"""Fail when the skill or the site names a command the binary does not have.
 
-The skill has to restate a few invocations, because an agent reads it before
-running anything. This keeps that copy honest: every `monkeys <verb>` written
-in SKILL.md must be a verb `monkeys help` lists.
+Both restate a few invocations: the skill because an agent reads it before
+running anything, the site because a visitor does. This keeps those copies
+honest: every `monkeys <verb>` written in them must be a verb `monkeys help`
+lists.
 """
 
 import pathlib
@@ -11,8 +12,24 @@ import re
 import subprocess
 import sys
 
-SKILL = pathlib.Path(__file__).resolve().parent.parent / "skills" / "monkeys" / "SKILL.md"
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+COPIES = [ROOT / "skills" / "monkeys" / "SKILL.md", ROOT / "site" / "src" / "routes" / "+page.svelte"]
 MENTION = re.compile(r"\bmonkeys ([a-z][a-z-]*)")
+CODE_IN_MARKUP = re.compile(r"<code[^>]*>.*?</code>", re.S)
+SCRIPT_BLOCK = re.compile(r"<script[^>]*>(.*?)</script>", re.S)
+STRING_LITERAL = re.compile(r"'[^']*'|`[^`]*`|\"[^\"]*\"", re.S)
+CODE_IN_MARKDOWN = re.compile(r"```.*?```|`[^`]*`", re.S)
+
+
+def code_spans(path):
+    """The parts of a page or a skill that are written as code, joined."""
+    text = path.read_text()
+    if path.suffix == ".md":
+        return "\n".join(match.group(0) for match in CODE_IN_MARKDOWN.finditer(text))
+    spans = [match.group(0) for match in CODE_IN_MARKUP.finditer(text)]
+    for script in SCRIPT_BLOCK.finditer(text):
+        spans.extend(match.group(0) for match in STRING_LITERAL.finditer(script.group(1)))
+    return "\n".join(spans)
 
 
 def listed_verbs(binary):
@@ -26,12 +43,11 @@ def main():
     if not known:
         sys.exit(f"{binary} printed no commands")
 
-    unknown = sorted(
-        {verb for verb in MENTION.findall(SKILL.read_text())} - known
-    )
-    if unknown:
-        sys.exit("SKILL.md names commands monkeys does not have: " + ", ".join(unknown))
-    print(f"SKILL.md agrees with {binary}")
+    for copy in COPIES:
+        unknown = sorted(set(MENTION.findall(code_spans(copy))) - known)
+        if unknown:
+            sys.exit(f"{copy.relative_to(ROOT)} names commands monkeys does not have: " + ", ".join(unknown))
+        print(f"{copy.relative_to(ROOT)} agrees with {binary}")
 
 
 if __name__ == "__main__":
