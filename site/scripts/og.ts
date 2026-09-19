@@ -37,9 +37,15 @@ const card = {
 	},
 	children: [
 		{
-			type: 'image',
-			src: readFileSync(join(statics, 'monkeys.svg')),
-			style: { width: 520, height: 260, objectFit: 'cover' }
+			type: 'container',
+			style: { width: 520, height: 260, overflow: 'hidden', display: 'flex', alignItems: 'center' },
+			children: [
+				{
+					type: 'image',
+					src: readFileSync(join(statics, 'monkeys.svg')),
+					style: { width: 520, height: 520 }
+				}
+			]
 		},
 		headline([
 			{ text: 'LLMs read ' },
