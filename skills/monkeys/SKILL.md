@@ -42,8 +42,13 @@ the same profile the command reads from:
 
 ```sh
 monkeys run ./hello
-monkeys run @staging ./deploy    # same names, another profile's values
+monkeys run @staging.shop ./deploy    # another profile the file declares
 ```
+
+A `@` line may name several profiles, and a file may hold several blocks; a
+profile's names are those of every block listing it, the first profile in the
+file is the default, and `run @name` takes only a profile the file declares.
+`monkeys doctor` shows what each profile has and lacks.
 
 Read the file before adding a name; it is the list. A profile never falls back
 to the personal one: a name missing in `@shop` is missing there even when a

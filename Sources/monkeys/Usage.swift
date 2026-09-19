@@ -25,6 +25,8 @@ let commandSummaries = [
                    summary: "write the profile encrypted, to share"),
     CommandSummary(verb: "unpack", arguments: "<name>",
                    summary: "store its values, write its .monkeys"),
+    CommandSummary(verb: "doctor", arguments: "",
+                   summary: "what each profile has and lacks"),
 ]
 
 private func plainInvocation(_ command: CommandSummary) -> String {
@@ -69,12 +71,23 @@ var usage: String {
       \(outputStyle("monkeys run ./bench", .argument))
       \(outputStyle("monkeys set STRIPE_SECRET_KEY", .argument))        stored as shop/STRIPE_SECRET_KEY
 
-    A leading @profile picks another set of values anywhere. A bare @ is the
-    personal profile, where names without a prefix live; it sets the project
-    file aside, so names are given again:
+    A profile line can name several profiles, and a file can have several
+    blocks. Each profile gets the names of every block that lists it; the first
+    profile in the file is the one run uses when none is given:
 
-      \(outputStyle("monkeys run @staging ./deploy", .argument))
-      \(outputStyle("monkeys set @staging DATABASE_URL", .argument))
+      \(outputStyle("@test.shop,staging.shop", .argument))
+      \(outputStyle("DATABASE_URL", .argument))
+      \(outputStyle("@staging.shop", .argument))
+      \(outputStyle("SENTRY_DSN", .argument))
+
+      \(outputStyle("monkeys run @staging.shop ./deploy", .argument))
+      \(outputStyle("monkeys doctor", .argument))               which profile lacks what
+
+    A leading @profile picks another declared profile. A bare @ is the personal
+    profile, where names without a prefix live; it sets the project file aside,
+    so names are given again:
+
+      \(outputStyle("monkeys set @staging.shop DATABASE_URL", .argument))
       \(outputStyle("monkeys run @ TYPESAFE_API_KEY claude", .argument))
 
     For a shell that should carry values from startup, export writes the lines

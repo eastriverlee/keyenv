@@ -12,8 +12,8 @@ private func namesToSpend(_ scope: Scope, _ arguments: [String]) throws -> (name
     if arguments.first == "--all" {
         return (try storedNamesInScope(scope), Array(arguments.dropFirst()))
     }
-    if let project = scope.project {
-        return (project.names, arguments)
+    if let names = scope.projectNames {
+        return (names, arguments)
     }
     guard let list = arguments.first else { throw StoreFailure.badInvocation(runInvocation) }
     let names = list.split(separator: ",", omittingEmptySubsequences: false).map(String.init)

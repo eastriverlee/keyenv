@@ -140,6 +140,7 @@ names a command `monkeys help` does not list.
 | `monkeys export [NAME...]` | keyring lookup lines, to paste into a startup file |
 | `monkeys pack [name]` | write the profile as `name.monkeys`, encrypted |
 | `monkeys unpack <name>` | store its values, write its `.monkeys` |
+| `monkeys doctor` | what each profile has and lacks |
 
 `monkeys` takes no value as an argument, so storing one never types it: your
 shell history and the process table both see `monkeys set GITHUB_TOKEN` and
@@ -222,8 +223,8 @@ STRIPE_SECRET_KEY
 OPENROUTER_API_KEY
 ```
 
-The first line is the profile, and every project has one; the rest are names,
-and `#` starts a comment. Commit it. It is the secret half of `.env.example`,
+The first line names the profile; the rest are names, and `#` starts a
+comment. Commit it. It is the secret half of `.env.example`,
 and a project keeps one or the other, since two lists of the same names drift.
 
 In that directory or any below it, `run` takes only the command:
@@ -247,14 +248,55 @@ are yours alone, and a name missing in `@shop` is missing there even when a
 bare copy exists, so a project cannot quietly pick up a value meant for
 another.
 
-A leading `@profile` picks another set of values for the same names, anywhere.
+### Several profiles
+
+A profile line can name several profiles, and a file can hold several blocks:
+
+```
+@test.shop.eastriver,staging.shop.eastriver
+DATABASE_URL
+STRIPE_SECRET_KEY
+@staging.shop.eastriver
+SENTRY_DSN
+```
+
+A profile's names are those of every block that lists it, so both profiles
+here need `DATABASE_URL` and `STRIPE_SECRET_KEY`, and staging also needs
+`SENTRY_DSN`. The first profile in the file is the one `run` uses when none is
+given. A leading `@profile` picks another declared one, and a profile the file
+does not declare is refused, with the declared ones listed:
+
+```sh
+monkeys run @staging.shop.eastriver ./deploy
+monkeys set @staging.shop.eastriver SENTRY_DSN
+```
+
+A value missing in one profile stops only that profile, and only when it is
+used: staging can be half filled while test runs. `doctor` reads the whole
+file and shows every profile with what it has and lacks, in colour on a
+terminal, and exits non-zero while anything is missing:
+
+```
+$ monkeys doctor
+@test.shop.eastriver  default
+  ✓ DATABASE_URL
+  ✓ STRIPE_SECRET_KEY
+@staging.shop.eastriver
+  ✓ DATABASE_URL
+  ✗ STRIPE_SECRET_KEY
+  ✗ SENTRY_DSN
+```
+
+Profile names take letters, digits, `_`, `-` and `.`. A dotted name in the
+style of a bundle identifier, `staging.shop.eastriver`, keeps two projects'
+staging apart in one keyring; a single word does for a profile nothing else
+will collide with.
+
 A bare `@` is the personal profile, and since no project lives there, it also
 sets the file aside and takes names again, which is how one value reaches a
 tool you start from any directory:
 
 ```sh
-monkeys run @staging ./deploy
-monkeys set @staging DATABASE_URL
 monkeys run @ TYPESAFE_API_KEY claude
 ```
 
@@ -284,7 +326,8 @@ wrote shop.monkeys: @shop, 3 values
 ```
 
 The file takes the profile's name. A word after `pack` names it otherwise,
-and `monkeys pack @staging` bundles another profile.
+and `monkeys pack @staging.shop.eastriver` bundles another declared profile,
+with the names the file lists for it.
 
 It carries the profile's name, the names the project lists, and their values,
 sealed with ChaCha20-Poly1305 under a key scrypt derives from the passphrase.
@@ -304,9 +347,9 @@ stored shop/DATABASE_URL, shop/STRIPE_SECRET_KEY, shop/OPENROUTER_API_KEY
 The values go into that person's keyring under the bundle's profile, `shop/`,
 and the profile and names become a `.monkeys` file in the current directory,
 so `monkeys run ./hello` works from the next command. When a `.monkeys` file
-is already there, `unpack` keeps it. It stores nothing if that file names
-another profile or other names, and says which; the file is committed, and a
-bundle does not get to rewrite it.
+is already there, `unpack` adds the bundle's profile as a block at the end,
+with the names the file does not yet list for it, and leaves the rest of the
+file alone.
 
 Both commands read the passphrase from standard input when it is not a
 terminal, for the rare script that needs to.

@@ -46,7 +46,7 @@ func requireName(_ arguments: [String]) throws -> String {
 }
 
 func spendHint(_ scope: Scope, _ name: String) -> String {
-    if let project = scope.project, project.names.contains(name) { return "monkeys run <command>" }
+    if let names = scope.projectNames, names.contains(name) { return "monkeys run <command>" }
     return "monkeys run \(scope.profileArgument)\(name) <command>"
 }
 
@@ -115,21 +115,47 @@ func runPack(_ arguments: [String]) throws {
 func reconcileProjectFile(profile: String, names: [String]) throws {
     let directory = FileManager.default.currentDirectoryPath
     let path = directory + "/" + projectFileName
+    let counted = "\(names.count) name\(names.count == 1 ? "" : "s")"
     guard FileManager.default.fileExists(atPath: path) else {
         try projectFileContents(profile: profile, names: names).write(toFile: path, atomically: true, encoding: .utf8)
-        printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(projectFileName, .bold) + ": @\(profile), \(names.count) name\(names.count == 1 ? "" : "s")")
+        printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(projectFileName, .bold) + ": @\(profile), \(counted)")
         return
     }
     let existing = try parseProject(at: path, directory: directory)
-    guard Set(existing.names) == Set(names) else {
-        let here = existing.names.joined(separator: ", ")
-        let brought = names.joined(separator: ", ")
-        throw StoreFailure.bundleFailed("\(projectFileName) here lists \(here); the bundle has \(brought). nothing was stored. move the bundle to its project, or edit the file first")
+    let listed = existing.names(for: profile)
+    let missing = names.filter { !listed.contains($0) }
+    guard !missing.isEmpty else {
+        printToStandardError("\(projectFileName) already lists these names under @\(profile)")
+        return
     }
-    guard existing.profile == profile else {
-        throw StoreFailure.bundleFailed("this directory resolves to @\(existing.profile) and the bundle is @\(profile). nothing was stored. add a line saying @\(profile) to \(projectFileName), then unpack again")
+    let current = try String(contentsOfFile: path, encoding: .utf8)
+    let separator = current.hasSuffix("\n") ? "" : "\n"
+    try (current + separator + projectFileContents(profile: profile, names: missing)).write(toFile: path, atomically: true, encoding: .utf8)
+    let added = "\(missing.count) name\(missing.count == 1 ? "" : "s")"
+    printToStandardError(messageStyle("added", .good) + " " + messageStyle("@\(profile)", .bold) + " with \(added) to \(projectFileName)")
+}
+
+private func mark(_ isStored: Bool) -> String {
+    isStored ? outputStyle("✓", .good) : outputStyle("✗", .bad)
+}
+
+func runDoctor(_ arguments: [String]) throws {
+    guard arguments.isEmpty else { throw StoreFailure.badInvocation("monkeys doctor") }
+    guard let project = try locateProject() else {
+        throw StoreFailure.badInvocation("monkeys doctor next to a \(projectFileName) file")
     }
-    printToStandardError("\(projectFileName) already lists these names")
+    let stored = Set(try secretStore.storedNames())
+    var isComplete = true
+    for profile in project.profiles {
+        let label = profile == project.defaultProfile ? outputStyle("  default", .dim) : ""
+        print(outputStyle("@" + profile, .bold) + label)
+        for name in project.names(for: profile) {
+            let isStored = stored.contains(profile + "/" + name)
+            isComplete = isComplete && isStored
+            print("  " + mark(isStored) + " " + name)
+        }
+    }
+    guard isComplete else { exit(1) }
 }
 
 func runUnpack(_ arguments: [String]) throws {
@@ -163,6 +189,7 @@ do {
     case "run": try runCommandWithSecrets(rest)
     case "unpack": try runUnpack(rest)
     case "export": try runExport(rest)
+    case "doctor": try runDoctor(rest)
     case "help", "-h", "--help": print(usage)
     default:
         printToStandardError(messageStyle("unknown command:", .bad) + " \(command)")

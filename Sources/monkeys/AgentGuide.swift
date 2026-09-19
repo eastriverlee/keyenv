@@ -53,7 +53,8 @@ there takes only the command:
 
   monkeys run ./bench
 
-The file's @profile line scopes every name, so set in that directory stores
+The file's @ lines scope every name, and the first profile in the file is the
+one run uses unless @profile says otherwise, so set in that directory stores
 into the same profile the command reads from. Read the file before adding a
 name; it is the list. Filling a profile from a shared .monkeys bundle is
 monkeys unpack, which asks for a passphrase, so that too is the person's move.
