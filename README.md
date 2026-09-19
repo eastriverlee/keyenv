@@ -79,7 +79,19 @@ a terminal, `set` reads the value from there:
 pbpaste | keyenv set GITHUB_TOKEN
 ```
 
-Storing a name that already exists replaces its value.
+## What gets replaced
+
+`set` on a name you already stored replaces its value and says nothing about
+it. The previous value is gone, and the keychain keeps no history to recover it
+from.
+
+`eval "$(keyenv export)"` assigns every stored name, so a value already in the
+environment gives way to the stored one. Position in `~/.zshrc` settles which
+wins: an `export` line below the `eval` survives, one above it is overwritten.
+
+`export` reads every value before it prints the first line, so a run that fails
+on a name you never stored prints nothing at all. A shell cannot end up with
+half of them set.
 
 ## How it stores things
 
