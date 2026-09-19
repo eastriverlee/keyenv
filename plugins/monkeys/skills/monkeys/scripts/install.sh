@@ -3,7 +3,7 @@
 #
 #   sh tools/install.sh                     into ~/.local/bin
 #   INSTALL_DIRECTORY=/usr/local/bin sh tools/install.sh
-#   MONKEYS_VERSION=v1.1.1 sh tools/install.sh
+#   MONKEYS_VERSION=v1.1.2 sh tools/install.sh
 set -eu
 
 REPOSITORY="eastriverlee/monkeys"
