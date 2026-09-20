@@ -16,7 +16,10 @@ export const docs = defineDocs({
   docs: {
     async: true,
     mdxOptions,
-    schema: frontmatterSchema.extend({ lead: z.string().optional() }),
+    schema: frontmatterSchema.extend({
+      lead: z.string().optional(),
+      searchTitle: z.string().optional(),
+    }),
     postprocess: {
       includeProcessedMarkdown: true,
     },

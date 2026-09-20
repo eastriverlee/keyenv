@@ -379,10 +379,13 @@ also says `@test` would share it.
 
 ## .monkeys
 
-A project lists the keys it needs once, in a `.monkeys` file next to the code.
+A `.monkeys` file is a project's list of the environment variables it needs,
+kept next to the code and committed with it.
 
 It is `.env.example` with the secrets left out: every key the program reads,
-and the values that were never secret. Commit it.
+and the values that were never secret. Commit it. The name is the whole of
+it, the way `.env` is: nothing comes before the dot, so `.monkeys` is the
+file's name rather than an extension on some other name.
 
 ### Format
 
@@ -451,7 +454,8 @@ reads it whole and says what each profile still lacks.
 
 ## *.monsecrets
 
-A bundle is profiles, keys and secrets in one encrypted file.
+A `.monsecrets` file is one or more profiles, their keys and their secrets,
+encrypted together so they can be handed to someone.
 
 `pack` writes one, `a.monsecrets` unless you name it, and `unpack` reads it.
 That is the only way a secret leaves the vault.
@@ -508,6 +512,84 @@ A bundle has no reason to be in a repository, and `.monkeys` needs no ignore
 rule, since it is meant to be committed. If a bundle is committed by mistake
 anyway, what leaked is a sealed file: without the passphrase it is noise, and
 the fix is to delete it and change the passphrase you would have sent.
+
+# How it works
+
+`monkeys` is one binary with no daemon, no configuration file and no storage of
+its own. A secret is a keychain item; a command is a child process; the rest is
+plumbing between the two.
+
+### Where a secret is kept
+
+On macOS each secret is a generic keychain item under the service `monkeys`,
+with the key as its account, so `foo.test/DATABASE_URL` is one item and
+`security find-generic-password -s monkeys -a foo.test/DATABASE_URL` finds it.
+Items are stored with `kSecAttrAccessibleAfterFirstUnlock`, which is why a
+command in a boot script can read one before anybody logs in.
+
+On Linux the same two attributes go to the Secret Service over D-Bus, through
+`secret-tool`, so the secret sits in whatever keyring the desktop already runs,
+GNOME Keyring or KWallet.
+
+Nothing of `monkeys`'s own is written anywhere. There is no database to back
+up, and the desktop's own tools list and delete what it stores.
+
+### How a command gets one
+
+`run` reads the secrets it needs, forks, and the child `execvp`s your command
+with those keys in its environment. Nothing reaches the command line, so the
+process table and your shell history hold the key names at most, and nothing is
+written to a file for the command to read.
+
+The parent stays alive rather than replacing itself, because something has to
+watch what comes back. It forwards the command's exit status, and when the
+command dies from a signal it re-raises that same signal on itself, so a
+`Ctrl-C` behaves as it would without `monkeys` in front. On a terminal the
+child is given a pty, so a command that colours its output or asks a question
+still sees a terminal, and window resizes are passed through.
+
+Values from `.monkeys` are put in the same environment straight from the file.
+The vault never sees them.
+
+### How redaction works
+
+The parent scans the child's standard output and standard error as they stream,
+looking for the bytes of each secret it handed over, and replaces a match with
+`[redacted KEY]`. The scan is a Boyer-Moore-Horspool search per secret, so the
+cost does not grow with how much the command prints.
+
+Only what could still be the start of a secret is held back, never more, so
+output is not buffered waiting for a command to finish. On a terminal the held
+bytes are shown as `*` and taken back the moment they turn out to be ordinary,
+which keeps a prompt from looking stuck.
+
+A file the command opens itself never passes through `monkeys`, so a secret
+that must land in a file gets there by the command writing it.
+
+### What export writes
+
+`export` prints a shell line that looks the secret up rather than a line that
+contains it. What you paste into your startup file is a `security
+find-generic-password` on macOS, a `secret-tool lookup` on Linux, run by your
+shell every time it starts. The startup file holds a question, not an answer.
+
+### What a bundle is
+
+`pack` writes one file: a header, then base64 of a 16-byte random salt followed
+by a ChaCha20-Poly1305 sealed box. The key comes from your passphrase through
+scrypt with N=2^17, r=8, p=1, which is about 128 MB of memory per attempt and
+is the point: a guess costs the attacker that memory too.
+
+The cost lives in the header, so a file made today still opens after those
+numbers are raised, and `unpack` reads what the file says rather than what this
+version prefers.
+
+### What none of it protects against
+
+Anything running as your user can read your vault, the same way it can read
+your shell startup files. `monkeys` moves secrets out of the repository and out
+of the files a tool stumbles on; it is not a sandbox. The
+[caveats](#caveats) say where that line falls.
 
 # Commands
 

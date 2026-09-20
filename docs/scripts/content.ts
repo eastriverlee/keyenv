@@ -20,6 +20,17 @@ const slugOf = (title: string) =>
 
 const cleanTitle = (heading: string) => heading.replace(/^#+ /, '').replace(/`/g, '');
 
+/** What someone types into a search engine, where a page's own name is shorter than that. */
+const groupDescriptions: Record<string, string> = {
+	'how-it-works':
+		'Where monkeys keeps a secret, how a command is handed one, how anything printed back is redacted, and what a .monsecrets bundle is made of.',
+};
+
+const searchTitles: Record<string, string> = {
+	'concepts/dot-monkeys': '.monkeys file',
+	'concepts/any-monsecrets': '.monsecrets file',
+};
+
 /** A ```tree fence becomes a fumadocs file tree; on GitHub it stays a code block. */
 function asFileTree(block: string) {
 	const rows = block
@@ -83,14 +94,15 @@ const sidebarIcons: Record<string, string> = {
 	skill: 'Bot'
 };
 
-type Frontmatter = { title: string; description?: string; icon?: string; lead?: string };
+type Frontmatter = { title: string; description?: string; icon?: string; lead?: string; searchTitle?: string };
 
-const frontmatter = ({ title, description, icon, lead }: Frontmatter) =>
+const frontmatter = ({ title, description, icon, lead, searchTitle }: Frontmatter) =>
 	[
 		'---',
 		`title: ${JSON.stringify(title)}`,
 		...(description ? [`description: ${JSON.stringify(description)}`] : []),
 		...(lead ? [`lead: ${JSON.stringify(lead)}`] : []),
+		...(searchTitle ? [`searchTitle: ${JSON.stringify(searchTitle)}`] : []),
 		...(icon ? [`icon: ${icon}`] : []),
 		'---',
 		''
@@ -196,11 +208,35 @@ function writePage(path: string, title: string, text: string, { description, shi
 	const summary = description ?? subtitle ?? firstParagraph(body);
 	writeFileSync(
 		join(content, `${path}.mdx`),
-		frontmatter({ title, description: summary, icon: sidebarIcons[path], lead: subtitle }) +
+		frontmatter({
+			title,
+			description: summary,
+			icon: sidebarIcons[path],
+			lead: subtitle,
+			searchTitle: searchTitles[path],
+		}) +
 			(linked ? linkingConcepts(body, ownSlug) : body) +
 			'\n'
 	);
 	written.push(path);
+}
+
+/**
+ * DOCS.md is one document on GitHub, where [drop](#drop) resolves; here each heading
+ * is its own page, so the same anchor has to become that page's path.
+ */
+function linkAcrossPages() {
+	const pageOf = new Map(written.map((path) => [path.split('/').pop()!, path]));
+	for (const path of written) {
+		const file = join(content, `${path}.mdx`);
+		const before = readFileSync(file, 'utf8');
+		const after = before.replace(/\]\(#([a-z0-9-]+)\)/g, (whole, anchor: string) => {
+			const target = pageOf.get(anchor);
+			if (!target || target === path) return whole;
+			return `](${docsRoute}/${target === 'index' ? '' : target})`;
+		});
+		if (after !== before) writeFileSync(file, after);
+	}
 }
 
 function writeSitemap() {
@@ -294,8 +330,8 @@ for (const group of groups) {
 	const { intro, chunks: pages } = splitOn(group.text, 2);
 	sources[slug] = 'DOCS.md';
 	if (pages.length === 0) {
-		writePage(slug, group.title, intro);
-		rest.push(slug);
+		writePage(slug, group.title, intro, { description: groupDescriptions[slug] });
+		(slug === 'how-it-works' ? gettingStarted : rest).push(slug);
 		continue;
 	}
 	writeGroup(slug, group.title, group.text, 2);
@@ -326,6 +362,7 @@ const sidebar = [
 	'---More---',
 	...rest
 ];
+linkAcrossPages();
 writeFileSync(join(content, 'meta.json'), JSON.stringify({ title: 'monkeys', pages: sidebar }, null, 2) + '\n');
 
 const listed = new Set(sidebar.filter((entry) => !entry.startsWith('---')));

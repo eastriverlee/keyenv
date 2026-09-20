@@ -47,7 +47,7 @@ function Content({
   // content is loaded lazily, call `page.preload()` in your loader to avoid suspending
   const { toc } = use(page.load());
   const Mdx = page.body;
-  const title = `${page.title} · ${appName}`;
+  const title = `${page.searchTitle ?? page.title} · ${appName}`;
   const canonical = `${docsOrigin}${url}/`;
 
   return (
