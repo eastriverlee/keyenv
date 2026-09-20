@@ -33,6 +33,7 @@ type Concept = { slug: string; word?: RegExp; code?: string; notAfter?: RegExp; 
 const concepts: Concept[] = [
 	{ slug: 'key', word: /\bkeys?\b/, notAfter: /API $/ },
 	{ slug: 'secret', word: /\bsecrets?\b/, notBefore: /^(-tool| (Service|store|browser|daemon))/ },
+	{ slug: 'value', word: /\bplain values?\b/ },
 	{ slug: 'vault', word: /\bvaults?\b/ },
 	{ slug: 'profile', word: /\bprofiles?\b/ },
 	{ slug: 'namespace', word: /\bnamespaces?\b/ },

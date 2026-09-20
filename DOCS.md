@@ -134,6 +134,34 @@ No `monkeys` command prints a secret. To read one in full, open the vault
 itself, Keychain Access on macOS or the desktop's secret browser on Linux,
 where the decision to look at one is yours and deliberate.
 
+## Value
+
+A value is the other thing a key can hold: a setting that is fine for anyone
+with the repository to read. `PORT=3000`, `API_URL=https://api.example.com`,
+`NODE_ENV=development`. In a `.env` file these sat on the same lines as the
+secrets; here they sit in `.monkeys` as `KEY=value` and the vault never sees
+them.
+
+### Where it lives
+
+A value is written into `.monkeys` on the key's own line, after an `=`, and
+belongs to every profile of the block above it. One that differs by profile,
+a port or a hostname, goes in that profile's own block. It is committed with
+the file, so a clone has it without anyone storing anything.
+
+### What it is not
+
+A value is public by definition. Anything that must stay out of the
+repository is a secret, and goes in the vault under a bare key. For one
+profile a key is one or the other, never both.
+
+### How the commands treat it
+
+`run` puts a value into the command's environment straight from the file,
+alongside the secrets from the vault, and never redacts it. `preview` and
+`doctor` show it as it is. `set --public` writes one, `remove` deletes the
+line, and `kill` writes one for every `.env` line answered as public.
+
 ## Vault
 
 The vault is the operating system's own secret store, and `monkeys` keeps
@@ -379,10 +407,8 @@ PORT=3000
 PORT=80
 ```
 
-`run` puts a value into the environment straight from the file, `preview` and
-`doctor` show it as it is, and the vault never sees it. For one profile a key
-is a secret or a value, never both; the second line is a duplicate and is
-refused. `set --public` writes a value line and `remove` deletes one.
+For one profile a key is a secret or a value, never both; the second line is
+a duplicate and is refused.
 
 A `.monvalues` file from 0.8 or 0.9 is no longer read: every command refuses
 until its lines are moved into `.monkeys` under the same `@` block and the file
