@@ -5,7 +5,7 @@
 <h1 align="center">monkeys</h1>
 
 <p align="center">
-  A cross-platform <code>.env</code> alternative for the LLM era.<br>
+  <code>.env</code> you can hand to an LLM, or <code>git add</code>.<br>
   The name reads as <em>mon keys</em>: my keys.
 </p>
 

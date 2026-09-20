@@ -69,7 +69,7 @@ private var commandLines: [String] {
 
 var usage: String {
     """
-    \(outputStyle("monkeys", .bold, .brand)) - a cross-platform .env alternative for the LLM era
+    \(outputStyle("monkeys", .bold, .brand)) - .env you can hand to an LLM, or git add
 
     \(commandLines.joined(separator: "\n"))
 
