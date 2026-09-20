@@ -1,5 +1,6 @@
 import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { docsRoute } from '../app/lib/shared';
 
 const repository = join(import.meta.dirname, '..', '..');
 const content = join(import.meta.dirname, '..', 'content', 'docs');
@@ -25,9 +26,63 @@ const asMdx = (markdown: string) =>
 const frontmatter = (title: string, description?: string) =>
 	['---', `title: ${JSON.stringify(title)}`, ...(description ? [`description: ${JSON.stringify(description)}`] : []), '---', ''].join('\n');
 
-function writePage(path: string, title: string, text: string, description?: string) {
+const conceptsRoute = `${docsRoute}/concepts`;
+
+type Concept = { slug: string; word?: RegExp; code?: string; notAfter?: RegExp; notBefore?: RegExp };
+
+const concepts: Concept[] = [
+	{ slug: 'key', word: /\bkeys?\b/, notAfter: /API $/ },
+	{ slug: 'secret', word: /\bsecrets?\b/, notBefore: /^(-tool| (Service|store|browser|daemon))/ },
+	{ slug: 'vault', word: /\bvaults?\b/ },
+	{ slug: 'profile', word: /\bprofiles?\b/ },
+	{ slug: 'namespace', word: /\bnamespaces?\b/ },
+	{ slug: 'dot-monkeys', code: '`.monkeys`' },
+	{ slug: 'any-monsecrets', word: /\bbundles?\b/ }
+];
+
+const linkSpan = /\[[^\]]*\]\([^)]*\)/g;
+const codeSpan = /`[^`]*`/g;
+
+const spansOf = (line: string, pattern: RegExp) =>
+	[...line.matchAll(pattern)].map((match) => [match.index, match.index + match[0].length] as const);
+
+function firstMention(line: string, concept: Concept) {
+	const untouchable = concept.code ? spansOf(line, linkSpan) : [...spansOf(line, linkSpan), ...spansOf(line, codeSpan)];
+	const pattern = concept.code
+		? new RegExp(concept.code.replace(/[.*]/g, '\\$&'), 'g')
+		: new RegExp(concept.word!.source, 'gi');
+	for (const match of line.matchAll(pattern)) {
+		const index = match.index;
+		if (untouchable.some(([start, end]) => index >= start && index < end)) continue;
+		if (concept.notAfter?.test(line.slice(0, index))) continue;
+		if (concept.notBefore?.test(line.slice(index + match[0].length))) continue;
+		return { index, length: match[0].length };
+	}
+}
+
+function linkingConcepts(text: string, ownSlug?: string) {
+	const pending = concepts.filter((concept) => concept.slug !== ownSlug);
+	let inFence = false;
+	const lines = text.split('\n').map((line) => {
+		if (line.startsWith('```')) inFence = !inFence;
+		if (inFence || line.startsWith('```') || /^(#|>|\|)/.test(line)) return line;
+		for (const concept of [...pending]) {
+			const found = firstMention(line, concept);
+			if (!found) continue;
+			const mention = line.slice(found.index, found.index + found.length);
+			line = line.slice(0, found.index) + `[${mention}](${conceptsRoute}/${concept.slug})` + line.slice(found.index + found.length);
+			pending.splice(pending.indexOf(concept), 1);
+		}
+		return line;
+	});
+	return lines.join('\n');
+}
+
+function writePage(path: string, title: string, text: string, description?: string, linked = true) {
 	mkdirSync(join(content, path, '..'), { recursive: true });
-	writeFileSync(join(content, `${path}.mdx`), frontmatter(title, description) + asMdx(text).trim() + '\n');
+	const ownSlug = path.startsWith('concepts/') ? path.slice('concepts/'.length) : undefined;
+	const body = asMdx(text).trim();
+	writeFileSync(join(content, `${path}.mdx`), frontmatter(title, description) + (linked ? linkingConcepts(body, ownSlug) : body) + '\n');
 }
 
 function splitOn(markdown: string, level: number) {
@@ -90,7 +145,8 @@ writePage(
 	'The skill',
 	'\nThis is `plugins/monkeys/skills/monkeys/SKILL.md`, the file a coding agent reads before it runs anything. Copy it as is: [monk3ys.dev/skill](https://monk3ys.dev/skill).\n\n' +
 		skill.replace(/^---[\s\S]*?---\n/, ''),
-	'The file a coding agent loads, verbatim.'
+	'The file a coding agent loads, verbatim.',
+	false
 );
 order.push('skill');
 
