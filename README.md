@@ -95,18 +95,6 @@ monkeys run SUPER_SECRET sh -c '
 Nothing ran at all: a missing secret stops `run` before the command starts,
 and the message says what to do, which is what an agent passes on.
 
-### Use a real key
-
-The same two lines:
-
-```sh
-monkeys set OPENROUTER_API_KEY
-monkeys run OPENROUTER_API_KEY ./hello.sh
-```
-
-with `hello.sh` reading `$OPENROUTER_API_KEY` the way any program reads a
-variable.
-
 ## Install
 
 On macOS or Linux, from the latest release:
