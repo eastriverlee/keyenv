@@ -1,0 +1,51 @@
+name: Bug
+description: monkeys did something other than what its documentation says.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        An issue is a transcript too. Before pasting output, replace any secret in it with `[redacted]`. A `preview` line (`sk...f 73`) is fine to paste as is.
+  - type: textarea
+    id: happened
+    attributes:
+      label: What happened
+      description: The command you ran and what it printed, exit status included if you have it.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      description: The documented behaviour, or a link to the page that describes it.
+    validations:
+      required: true
+  - type: textarea
+    id: project
+    attributes:
+      label: The .monkeys file, if one was involved
+      description: Keys only, so it is safe to paste whole. Leave empty if the command ran outside a project.
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: Version and install path
+      description: The release tag, and whether it came from Homebrew, the install script, or `make install`.
+      placeholder: v1.5.0, Homebrew
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - macOS
+        - Linux
+    validations:
+      required: true
+  - type: input
+    id: vault
+    attributes:
+      label: Vault
+      description: On Linux, which Secret Service answers (`gnome-keyring`, `KWallet`, something else). On macOS this is the login keychain and can be left empty.

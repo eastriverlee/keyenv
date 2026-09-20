@@ -1,0 +1,26 @@
+name: Proposal
+description: Something monkeys should do, or do differently.
+labels: [proposal]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        monkeys stays small on purpose, and most proposals get a no with a reason. The ones that get in start from a problem, so start there.
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What you were trying to do, and where monkeys got in the way or fell short. The situation, before any solution.
+    validations:
+      required: true
+  - type: textarea
+    id: today
+    attributes:
+      label: What you do instead today
+      description: The workaround, if there is one. This is often the best evidence that the problem is real.
+  - type: textarea
+    id: shape
+    attributes:
+      label: The shape you have in mind
+      description: A command line, a line in `.monkeys`, an output. Optional, and a sketch is enough.
+      render: shell

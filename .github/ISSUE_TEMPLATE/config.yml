@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://docs.monk3ys.dev
+    about: Every command and concept, with the exact output each one gives.
