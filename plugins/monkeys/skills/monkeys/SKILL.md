@@ -99,7 +99,7 @@ conversation before it reaches the vault.
 
 ## Check without reading
 
-`monkeys list` gives the keys. `monkeys preview` gives each secret masked,
+`monkeys list` gives the keys, as blocks by profile. `monkeys preview` gives each secret masked,
 with its length, which is enough to tell one pasted whole from one that lost a
 character.
 

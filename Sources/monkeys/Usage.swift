@@ -8,7 +8,7 @@ let commandSummaries = [
     CommandSummary(verb: "set", arguments: "<KEY> [--clipboard]",
                    summary: "store a secret typed, piped or pasted"),
     CommandSummary(verb: "list", arguments: "",
-                   summary: "print every stored key"),
+                   summary: "the whole vault, as blocks by profile"),
     CommandSummary(verb: "preview", arguments: "[KEY[,KEY...]]",
                    summary: "show each secret masked, with length"),
     CommandSummary(verb: "remove", arguments: "<KEY>",

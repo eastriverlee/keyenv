@@ -59,8 +59,15 @@ DEMO_VALUES = {**SHOWN_VALUES, **SPENT_VALUES}
 
 
 def stored_names():
-    listing = subprocess.run(["monkeys", "list"], capture_output=True, text=True)
-    return set(listing.stdout.split())
+    """The global keys, read from the first block that list prints."""
+    listing = subprocess.run(["monkeys", "list"], capture_output=True, text=True).stdout
+    names, in_global = set(), False
+    for line in listing.splitlines():
+        if line.startswith("@"):
+            in_global = line == "@"
+        elif in_global and line:
+            names.add(line)
+    return names
 
 
 def seeded():

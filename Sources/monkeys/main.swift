@@ -102,7 +102,24 @@ func runRemove(_ arguments: [String]) throws {
 }
 
 func runList() throws {
-    for name in try secretStore.storedKeys() { print(name) }
+    let stored = try secretStore.storedKeys()
+    guard !stored.isEmpty else {
+        printToStandardError("nothing stored")
+        return
+    }
+    var keysByProfile: [String: [String]] = [:]
+    for name in stored {
+        guard let slash = name.firstIndex(of: "/") else {
+            keysByProfile["", default: []].append(name)
+            continue
+        }
+        keysByProfile[String(name[..<slash]), default: []].append(String(name[name.index(after: slash)...]))
+    }
+    for (index, profile) in keysByProfile.keys.sorted().enumerated() {
+        if index > 0 { print() }
+        print(outputStyle("@" + profile, .good, .bold))
+        for key in keysByProfile[profile]!.sorted() { print(outputStyle(key, .argument)) }
+    }
 }
 
 func validatedKeys(_ scope: Scope, _ rest: [String]) throws -> [String] {

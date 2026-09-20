@@ -217,8 +217,8 @@ monkeys set STRIPE_SECRET_KEY        # stores foo.test/STRIPE_SECRET_KEY
 monkeys preview
 ```
 
-`list` stays global and shows the prefixes, so you can see which profile each
-secret belongs to.
+`list` stays global and shows the whole vault as blocks by profile, so you can
+see what each one holds.
 
 ### Several profiles
 
@@ -300,8 +300,8 @@ profile `foo.test`, and its secrets are stored as `foo.test/DATABASE_URL`.
 
 Two projects that both call a profile `test` would otherwise share
 `test/DATABASE_URL`. With a namespace each keeps its own, since
-`bar.test/DATABASE_URL` is another secret, and `list` reads as a list of
-projects.
+`bar.test/DATABASE_URL` is another secret, and `list` shows the two under
+separate profiles.
 
 ### Where it is written
 
@@ -436,7 +436,7 @@ the fix is to delete it and change the passphrase you would have sent.
 | command | what it does |
 | --- | --- |
 | `monkeys set <KEY> [--clipboard]` | read a secret and store it |
-| `monkeys list` | print every stored key |
+| `monkeys list` | the whole vault, as blocks by profile |
 | `monkeys preview [KEY[,KEY...]]` | print each secret masked, with its length |
 | `monkeys remove <KEY>` | delete one secret |
 | `monkeys run <KEY[,KEY...]> <command>` | run a command with those secrets in its environment |
@@ -455,8 +455,8 @@ word is one list. Giving no key means every key for `preview` and `export`, or t
 project's keys inside a project. `run` asks to be told, since the keys are how
 it knows what to check for and what to leave out.
 
-Output is coloured only when it is going to a terminal, and never for `list`
-or `export`, whose output a script or a shell reads. `NO_COLOR` turns colour
+Output is coloured only when it is going to a terminal, and never for
+`export`, whose output a shell reads. `NO_COLOR` turns colour
 off, `CLICOLOR_FORCE` turns it on for a pipe, and an empty value for either
 counts as unset.
 
@@ -516,22 +516,30 @@ context before it reaches the vault, so the skill tells it to ask instead.
 monkeys list
 ```
 
-Prints every stored key, one per line, with its profile prefix:
+Prints the whole vault in the shape of a `.monkeys` file, one block per
+profile, with every profile under its full name and the global keys first
+under a bare `@`:
 
 ```sh
 monkeys list
 ```
 
-> ```
+> ```monkeys
+> @
 > TYPESAFE_API_KEY
-> foo.test/DATABASE_URL
-> foo.test/STRIPE_SECRET_KEY
-> foo.production/DATABASE_URL
+>
+> @foo.production
+> DATABASE_URL
+> SENTRY_DSN
+>
+> @foo.test
+> DATABASE_URL
+> STRIPE_SECRET_KEY
 > ```
 
-`list` is global, so it shows which project and profile each secret belongs
-to. Its
-output is never coloured, since a script reads it.
+Two profiles that share a block in a project's file appear here as two
+blocks, since the vault holds a secret per profile. `list` is global, so it
+shows every project at once, and it prints nothing when the vault is empty.
 
 ## preview
 
