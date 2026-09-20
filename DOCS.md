@@ -8,15 +8,23 @@ command prints a stored secret.
 
 ## Why it exists
 
-Coding agents read `.env`. A variable was empty, the task was stuck, and
-`cat .env` was the shortest way back; the secret is then in the transcript
-for good. `monkeys` takes that path away and gives the agent a shorter one:
-the secret goes from the vault into the process, a missing one comes back
-as a message saying what to ask for, and the output comes back redacted.
+Two reasons, and either would have been enough.
 
-People get the same shape. A secret shared with a teammate becomes `pack`
-and `unpack`, and `.env`, `.env.example` and the `.gitignore` line between
-them collapse into one committed file that lists keys and holds nothing.
+1. **LLMs read `.env`.** A variable was empty, the task was stuck, and
+   `cat .env` was the shortest way back; the secret is then in the
+   transcript for good. `monkeys` takes that path away and gives the agent a
+   shorter one: the secret goes from the vault into the process, a missing
+   one comes back as a message saying what to ask for, and the output comes
+   back redacted.
+
+2. **`.env` was never good, even for people.** Sharing it means pasting the
+   whole file into a chat, or hand-picking lines for the one person who
+   needs three of them. Test and production values mean `.env.test`,
+   `.env.production` and a loader that picks one. Keeping it out of git
+   means an `.env.example` that drifts and a `.gitignore` line that guards
+   it. `monkeys` folds that into one committed file: profiles for test and
+   production, `pack` for the whole thing or the part a teammate needs, and
+   nothing in the repository to keep secret.
 
 ## What it is
 
