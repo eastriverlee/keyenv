@@ -21,21 +21,27 @@
 
 ## Overview
 
-For LLMs, `cat .env` is just too
-tempting, and once it's in the transcript, it's there for good. The usual
-ways to live with that:
+`monkeys` keeps each secret in your operating system's vault and hands it to
+one command at a time. The keys a project needs are listed in a committed
+`.monkeys` file, the secrets never leave the vault, and nothing prints a
+stored secret, the command you hand it to included.
 
-1. Ignore it.
-2. Trust the provider.
-3. Rotate the key after it leaks.
+It exists for two reasons, and either would have been enough.
 
-Someone will call it a skill issue. It isn't. There has never been a safe way
-for the people on a project to share a secret and use it, so it went in a
-file. C had a memory problem too, and being careful didn't fix it. Rust did.
+1. **LLMs read `.env`.** `cat .env` is just too tempting, and once it's in
+   the transcript, it's there for good. The usual answers are to ignore it,
+   trust the provider, or rotate the key after it leaks. Someone will call it
+   a skill issue. It isn't: there has never been a safe way for the people on
+   a project to share a secret and use it, so it went in a file. C had a
+   memory problem too, and being careful didn't fix it. Rust did.
 
-`monkeys` keeps each secret in your vault and hands it to one command at a
-time. Nothing prints a stored secret, the command you hand it to included, so there
-is nothing to read.
+2. **`.env` was never good, even for people.** Sharing it means pasting the
+   whole file into a chat. Test and production mean `.env.test`,
+   `.env.production` and a loader that picks one. Keeping it out of git means
+   an `.env.example` that drifts and a `.gitignore` line that guards it.
+   `monkeys` folds that into one committed file: profiles, `pack` for the
+   whole thing or the part a teammate needs, and nothing in the repository to
+   keep secret.
 
 ## Install
 
