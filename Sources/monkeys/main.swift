@@ -245,7 +245,7 @@ func runPack(_ arguments: [String]) throws {
     let (blocks, project, fileName) = try packedBlocks(arguments)
     guard !blocks.isEmpty else { throw StoreFailure.bundleFailed("nothing to pack: no keys are listed for that") }
     let filled = try blocks.map { try filledBlock($0, project: project) }
-    let path = bundlePath(fileName ?? filled[0].profiles[0])
+    let path = bundlePath(fileName ?? "a")
     try writeBundle(ProfileBundle(blocks: filled), to: path)
     let count = filled.reduce(0) { $0 + $1.entries.count * $1.profiles.count }
     printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(path, .bold) + ": \(blockLines(filled.map(\.profiles))), \(count) secret\(count == 1 ? "" : "s")")

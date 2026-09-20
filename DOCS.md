@@ -54,7 +54,7 @@ Secret:
 
 $ monkeys run ./hello.sh            # the command gets them, and nothing else does
 $ monkeys pack                      # to share: one encrypted file
-$ monkeys unpack foo.monkeys        # on their machine, into their vault
+$ monkeys unpack a.monkeys          # on their machine, into their vault
 ```
 
 The `.monkeys` file replaces all three of `.env`, `.env.example` and the
@@ -296,8 +296,8 @@ whole.
 
 ## *.monkeys
 
-A file named after a profile, `test.foo.monkeys`, is a bundle: one or more
-profiles with their keys and secrets, sealed with ChaCha20-Poly1305 under a
+A bundle, `a.monkeys` unless you name it, is one or more profiles with
+their keys and secrets, sealed with ChaCha20-Poly1305 under a
 key scrypt derives from a passphrase. `pack` writes one and `unpack` reads
 it, and that is the only way a secret leaves the vault.
 
@@ -652,10 +652,10 @@ monkeys pack
 > ```
 > Passphrase:
 > Again:
-> wrote test.foo.monkeys: @test.foo,foo @foo, 5 secrets
+> wrote a.monkeys: @test.foo,foo @foo, 5 secrets
 > ```
 
-The file takes the first profile's name unless a word after `pack` names it.
+The file is `a.monkeys` unless a word after `pack` names it.
 It carries each profile's name, the keys the project lists for it, and their
 secrets, sealed with ChaCha20-Poly1305 under a key scrypt derives from the
 passphrase. The file is safe to send over whatever you already use; the
@@ -682,11 +682,11 @@ monkeys pack --only @test.foo DATABASE_URL @foo SENTRY_DSN
 ```
 
 > ```
-> wrote test.foo.monkeys: @test.foo, 2 secrets
+> wrote a.monkeys: @test.foo, 2 secrets
 > wrote shared.monkeys: @test.foo @foo, 5 secrets
-> wrote test.foo.monkeys: @test.foo, 1 secret
-> wrote test.foo.monkeys: @test.foo,foo, 2 secrets
-> wrote test.foo.monkeys: @test.foo @foo, 2 secrets
+> wrote a.monkeys: @test.foo, 1 secret
+> wrote a.monkeys: @test.foo,foo, 2 secrets
+> wrote a.monkeys: @test.foo @foo, 2 secrets
 > ```
 
 The bundle keeps that shape, block for block, and `unpack` writes it back as
@@ -708,7 +708,7 @@ Reads a bundle, stores its secrets in your vault under each profile, writes
 the profiles and keys as a `.monkeys` file, and deletes the bundle:
 
 ```sh
-monkeys unpack test.foo
+monkeys unpack a
 ```
 
 > ```
@@ -716,7 +716,7 @@ monkeys unpack test.foo
 > wrote .monkeys: @test.foo,foo @foo, 3 keys
 > stored test.foo/DATABASE_URL, foo/DATABASE_URL, test.foo/STRIPE_SECRET_KEY, foo/STRIPE_SECRET_KEY
 > stored foo/SENTRY_DSN
-> removed test.foo.monkeys
+> removed a.monkeys
 > ```
 
 `<name>` is the bundle, with or without its `.monkeys` suffix; a path works
@@ -814,21 +814,21 @@ monkeys pack --only @test.foo
 > ```
 > Passphrase:
 > Again:
-> wrote test.foo.monkeys: @test.foo, 2 secrets
+> wrote a.monkeys: @test.foo, 2 secrets
 > ```
 
-Send `test.foo.monkeys`. On the other machine, anywhere inside their
+Send `a.monkeys`. On the other machine, anywhere inside their
 checkout:
 
 ```sh
-monkeys unpack ~/Downloads/test.foo.monkeys
+monkeys unpack ~/Downloads/a.monkeys
 ```
 
 > ```
 > Passphrase:
 > wrote .monkeys: @test.foo, 2 keys
 > stored test.foo/DATABASE_URL, test.foo/STRIPE_SECRET_KEY
-> removed /Users/them/Downloads/test.foo.monkeys
+> removed /Users/them/Downloads/a.monkeys
 > ```
 
 Their vault now holds the secrets under the same profile, and `monkeys run

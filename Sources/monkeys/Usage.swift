@@ -121,15 +121,15 @@ var usage: String {
     it belong to every profile in that block, the way the file is written;
     keys with no @ before them come from the default profile, the first
     the file mentions. The bundle keeps that shape, and unpack writes it
-    back as the project file. The file is named after the first profile it
-    carries unless you name it, before --only.
+    back as the project file. The file is a.monkeys unless you name it,
+    before --only.
     pack asks for a passphrase; unpack asks again, stores the secrets,
     writes the keys into .monkeys at the root of the git checkout you are
     in, here when there is none, or in the directory you name, and deletes
     the bundle, since it has done its job; --keep leaves it:
 
-      \(outputStyle("monkeys pack", .argument))                   writes test.foo.monkeys
-      \(outputStyle("monkeys pack --only @foo", .argument))       writes foo.monkeys
+      \(outputStyle("monkeys pack", .argument))                   writes a.monkeys
+      \(outputStyle("monkeys pack --only @foo", .argument))       the same, one profile
       \(outputStyle("monkeys pack --only OPENROUTER_API_KEY", .argument))
       \(outputStyle("monkeys pack --only @test.foo,foo OPENROUTER_API_KEY", .argument))
       \(outputStyle("monkeys pack shared --only @test.foo @foo SENTRY_DSN", .argument))
