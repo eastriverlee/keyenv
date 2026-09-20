@@ -110,7 +110,7 @@ names a command `monkeys help` does not list.
 
 ## Quickstart
 
-### Store a secret
+### Store
 
 ```sh
 monkeys set SUPER_SECRET
@@ -118,7 +118,7 @@ monkeys set SUPER_SECRET
 
 Type `sesame` at the prompt.
 
-### Open the door
+### Spend
 
 ```sh
 monkeys run SUPER_SECRET sh -c '
@@ -136,7 +136,7 @@ The right word reached the command, and what the command printed came back
 with the secret taken out. `run` becomes the command once the secret is set,
 so the exit status, the output and the signals are the command's own.
 
-### Try it without monkeys
+### Without monkeys
 
 ```sh
 sh -c 'test "$SUPER_SECRET" = sesame && echo opened || echo closed'
@@ -146,7 +146,7 @@ sh -c 'test "$SUPER_SECRET" = sesame && echo opened || echo closed'
 > closed
 > ```
 
-### Take the word away
+### Remove and retry
 
 ```sh
 monkeys remove SUPER_SECRET
