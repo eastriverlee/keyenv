@@ -2,10 +2,6 @@ import Foundation
 
 private let fillForm = "monkeys fill @profile --with @profile"
 
-private func label(_ scope: Scope) -> String {
-    "@" + (scope.profile ?? "")
-}
-
 private func fillScopes(_ arguments: [String]) throws -> (source: Scope, target: Scope) {
     guard arguments.count == 3, arguments[1] == "--with",
           arguments[0].hasPrefix("@"), arguments[2].hasPrefix("@") else {
@@ -14,7 +10,7 @@ private func fillScopes(_ arguments: [String]) throws -> (source: Scope, target:
     let (target, targetRest) = try resolveScope([arguments[0]])
     let (source, sourceRest) = try resolveScope([arguments[2]])
     guard sourceRest.isEmpty, targetRest.isEmpty else { throw StoreFailure.badInvocation(fillForm) }
-    guard source.profile != target.profile else {
+    guard source.qualifiedProfile != target.qualifiedProfile else {
         throw StoreFailure.badInvocation(fillForm + ", with two different profiles")
     }
     return (source, target)
@@ -36,17 +32,17 @@ func runFill(_ arguments: [String]) throws {
     }
 
     if filled.isEmpty {
-        printToStandardError(messageStyle("nothing to fill", .dim) + " in \(label(target)) from \(label(source))")
+        printToStandardError(messageStyle("nothing to fill", .dim) + " in \(target.shownProfile) from \(source.shownProfile)")
     } else {
         let keys = filled.map { messageStyle($0, .bold) }.joined(separator: ", ")
-        printToStandardError(messageStyle("filled", .good) + " \(label(target)) from \(label(source)): " + keys)
+        printToStandardError(messageStyle("filled", .good) + " \(target.shownProfile) from \(source.shownProfile): " + keys)
     }
     if kept > 0 {
-        printToStandardError(messageStyle("kept", .dim) + " \(kept) \(label(target)) already had")
+        printToStandardError(messageStyle("kept", .dim) + " \(kept) \(target.shownProfile) already had")
     }
     guard stillMissing.isEmpty else {
         let keys = stillMissing.map { messageStyle($0, .bold) }.joined(separator: ", ")
-        printToStandardError(messageStyle("still missing", .bad) + " in \(label(target)): " + keys)
+        printToStandardError(messageStyle("still missing", .bad) + " in \(target.shownProfile): " + keys)
         exit(1)
     }
 }

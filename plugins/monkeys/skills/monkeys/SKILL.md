@@ -34,37 +34,40 @@ the command reads.
 A project with a `.monkeys` file has already listed the keys it needs:
 
 ```
-@test.foo,foo
++foo
+@test,production
 DATABASE_URL
 STRIPE_SECRET_KEY
 ```
 
+The `+` line names the project, the namespace every profile of it lives in.
 In that directory or below it within the git checkout, `run` takes only the
 command, and every key is scoped to that profile, so `monkeys set
 STRIPE_SECRET_KEY` there stores into the same profile the command reads from:
 
 ```sh
 monkeys run ./hello.sh
-monkeys run @foo ./deploy    # another profile the file declares
+monkeys run @production ./deploy    # another profile the file declares
 ```
 
 A `@` line may name several profiles, and a file may hold several blocks; a
 profile's keys are those of every block listing it, the first profile in the
 file is the default, and `run @name` takes only a profile the file declares,
-or a prefix that fits just one of them. `monkeys doctor --short` prints one
+or a prefix that fits just one of them. From outside the project a profile is
+`@namespace.profile`, `@foo.production`. `monkeys doctor --short` prints one
 `missing @profile: A,B` line per profile with a gap, nothing when there is
 none, and exits non-zero while any remains. When another profile of the same
-project holds a missing key, `monkeys fill @foo --with @test.foo` fills the
-gap without printing a secret; a human decides that, since it may put a test
-secret into production.
+project holds a missing key, `monkeys fill @production --with @test` fills
+the gap without printing a secret; a human decides that, since it may put a
+test secret into production.
 
 Read the file before adding a key; it is the list. A profile never falls back
-to the global keys: a key missing in `@foo` is missing there even when a
-global copy exists. A key stored outside any project has no profile; inside a
-project a bare `@` means no profile and reaches it, with the key given again:
-`monkeys run @ TYPESAFE_API_KEY claude`.
+to the global keys: a key missing in `@production` is missing there even when
+a global copy exists. A key stored outside any project has no profile; inside
+a project a bare `@` means no profile and reaches it, with the key given
+again: `monkeys run @ TYPESAFE_API_KEY claude`.
 
-A shared `<name>.monkeys` bundle fills a profile with `monkeys unpack`, which
+A shared `<name>.monsecrets` bundle fills a profile with `monkeys unpack`, which
 writes `.monkeys` at the git root, asks for a passphrase and deletes the bundle. A human runs it;
 do not run it yourself.
 
@@ -85,9 +88,9 @@ monkeys run OPENROUTER_API_KEY sh -c 'curl -H "Authorization: Bearer $OPENROUTER
 `run` stops before anything happens and names what to ask for:
 
 ```
-monkeys: ANTHROPIC_API_KEY is not stored yet in @test.foo
+monkeys: ANTHROPIC_API_KEY is not stored yet in @foo.test
 nothing ran. a human has to store it, then try again:
-  monkeys set @test.foo ANTHROPIC_API_KEY
+  monkeys set @foo.test ANTHROPIC_API_KEY
 ```
 
 Pass that on. Storing is a human's job: typing a secret yourself puts it in the

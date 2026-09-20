@@ -20,6 +20,7 @@ struct Block {
 
 struct Project {
     let directory: String
+    let namespace: String
     let blocks: [Block]
 
     var path: String { directory + "/" + projectFileName }
@@ -36,7 +37,16 @@ struct Project {
         blocks.filter { $0.profiles.contains(profile) }.flatMap(\.keys)
     }
 
+    func qualified(_ profile: String) -> String {
+        namespace + "/" + profile
+    }
+
     func profile(matching given: String) throws -> String {
+        if let dot = given.firstIndex(of: ".") {
+            let space = String(given[..<dot])
+            guard space == namespace else { throw StoreFailure.namespaceMismatch(space, namespace, abbreviatingHome(path)) }
+            return try profile(matching: String(given[given.index(after: dot)...]))
+        }
         if profiles.contains(given) { return given }
         let candidates = profiles.filter { $0.hasPrefix(given) }
         switch candidates.count {
@@ -48,57 +58,90 @@ struct Project {
 }
 
 struct Scope {
+    let namespace: String?
     let profile: String?
     let project: Project?
 
-    func storedName(_ variable: String) -> String {
-        guard let profile else { return variable }
-        return profile + "/" + variable
+    static let global = Scope(namespace: nil, profile: nil, project: nil)
+
+    var qualifiedProfile: String? {
+        guard let namespace, let profile else { return nil }
+        return namespace + "/" + profile
+    }
+
+    var reference: String? {
+        guard let namespace, let profile else { return nil }
+        return namespace + "." + profile
+    }
+
+    func storedName(_ key: String) -> String {
+        guard let qualifiedProfile else { return key }
+        return qualifiedProfile + "/" + key
     }
 
     var profileArgument: String {
-        guard let profile else { return "" }
-        return "@" + profile + " "
+        guard let reference else { return "" }
+        return "@" + reference + " "
+    }
+
+    var shownProfile: String {
+        guard let profile else { return "@" }
+        guard projectKeys != nil else { return "@" + (reference ?? profile) }
+        return "@" + profile
     }
 
     var projectKeys: [String]? {
-        guard let project, let profile else { return nil }
+        guard let project, let profile, project.namespace == namespace else { return nil }
         return project.keys(for: profile)
     }
 }
 
 func isValidProfileName(_ name: String) -> Bool {
     guard !name.isEmpty else { return false }
-    return name.allSatisfy { ($0.isASCII && ($0.isLetter || $0.isNumber)) || "_-.".contains($0) }
+    return name.allSatisfy { ($0.isASCII && ($0.isLetter || $0.isNumber)) || "_-".contains($0) }
 }
 
 enum ProfileArgument {
     case none
     case global
     case named(String)
+    case qualified(namespace: String, profile: String)
+}
+
+func profileReference(_ argument: String) throws -> ProfileArgument {
+    guard argument != "@" else { return .global }
+    let parts = argument.dropFirst().split(separator: ".", omittingEmptySubsequences: false).map(String.init)
+    guard parts.count <= 2, parts.allSatisfy(isValidProfileName) else { throw StoreFailure.invalidProfileName(argument) }
+    guard parts.count == 2 else { return .named(parts[0]) }
+    return .qualified(namespace: parts[0], profile: parts[1])
 }
 
 func takeProfileArgument(_ arguments: [String]) throws -> (profile: ProfileArgument, rest: [String]) {
     guard let first = arguments.first, first.hasPrefix("@") else { return (.none, arguments) }
-    let rest = Array(arguments.dropFirst())
-    guard first != "@" else { return (.global, rest) }
-    let name = String(first.dropFirst())
-    guard isValidProfileName(name) else { throw StoreFailure.invalidProfileName(first) }
-    return (.named(name), rest)
+    return (try profileReference(first), Array(arguments.dropFirst()))
+}
+
+func scope(for chosen: ProfileArgument) throws -> Scope {
+    switch chosen {
+    case .global:
+        return .global
+    case .qualified(let namespace, let profile):
+        guard let project = try locateProject(), project.namespace == namespace else {
+            return Scope(namespace: namespace, profile: profile, project: nil)
+        }
+        return Scope(namespace: namespace, profile: try project.profile(matching: profile), project: project)
+    case .named(let name):
+        guard let project = try locateProject() else { throw StoreFailure.profileNeedsNamespace(name) }
+        return Scope(namespace: project.namespace, profile: try project.profile(matching: name), project: project)
+    case .none:
+        let project = try locateProject()
+        return Scope(namespace: project?.namespace, profile: project?.defaultProfile, project: project)
+    }
 }
 
 func resolveScope(_ arguments: [String]) throws -> (scope: Scope, rest: [String]) {
     let (chosen, rest) = try takeProfileArgument(arguments)
-    switch chosen {
-    case .global:
-        return (Scope(profile: nil, project: nil), rest)
-    case .named(let name):
-        guard let project = try locateProject() else { return (Scope(profile: name, project: nil), rest) }
-        return (Scope(profile: try project.profile(matching: name), project: project), rest)
-    case .none:
-        let project = try locateProject()
-        return (Scope(profile: project?.defaultProfile, project: project), rest)
-    }
+    return (try scope(for: chosen), rest)
 }
 
 func locateProject() throws -> Project? {
@@ -148,6 +191,7 @@ private func rejectingDuplicates(_ blocks: [Block], in shown: String) throws {
 func parseProject(at path: String, directory: String) throws -> Project {
     let contents = try String(contentsOfFile: path, encoding: .utf8)
     let shown = abbreviatingHome(path)
+    var namespace: String?
     var blocks: [Block] = []
     var profiles: [String]?
     var keys: [String] = []
@@ -158,6 +202,20 @@ func parseProject(at path: String, directory: String) throws -> Project {
     for rawLine in contents.split(separator: "\n", omittingEmptySubsequences: false) {
         let line = rawLine.trimmingCharacters(in: .whitespaces)
         if line.isEmpty || line.hasPrefix("#") { continue }
+        if line.hasPrefix("+") {
+            guard namespace == nil, profiles == nil else {
+                throw StoreFailure.badProjectFile(shown, "\(line): a file has one +namespace line, and it comes first")
+            }
+            let name = String(line.dropFirst()).trimmingCharacters(in: .whitespaces)
+            guard isValidProfileName(name) else {
+                throw StoreFailure.badProjectFile(shown, "\(line) is not a namespace line: +name, with letters, digits, _ -")
+            }
+            namespace = name
+            continue
+        }
+        guard namespace != nil else {
+            throw StoreFailure.badProjectFile(shown, "\(line) comes before the +namespace line; the first line names the project, +foo")
+        }
         if line.hasPrefix("@") {
             closeBlock()
             profiles = try parseProfileLine(line, in: shown)
@@ -172,17 +230,20 @@ func parseProject(at path: String, directory: String) throws -> Project {
         keys.append(line)
     }
     closeBlock()
+    guard let namespace else {
+        throw StoreFailure.badProjectFile(shown, "no +namespace line; the first line names the project, +foo")
+    }
     guard !blocks.isEmpty else {
         throw StoreFailure.badProjectFile(shown, "no @profile line; a project's keys live in a named profile")
     }
     try rejectingDuplicates(blocks, in: shown)
-    return Project(directory: directory, blocks: blocks)
+    return Project(directory: directory, namespace: namespace, blocks: blocks)
 }
 
 func storedKeysInScope(_ scope: Scope) throws -> [String] {
     let stored = try secretStore.storedKeys()
-    guard let profile = scope.profile else { return stored.filter { !$0.contains("/") } }
-    let prefix = profile + "/"
+    guard let qualifiedProfile = scope.qualifiedProfile else { return stored.filter { !$0.contains("/") } }
+    let prefix = qualifiedProfile + "/"
     return stored.filter { $0.hasPrefix(prefix) }.map { String($0.dropFirst(prefix.count)) }
 }
 

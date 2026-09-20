@@ -44,29 +44,31 @@ give it to a command with:
     -H "Authorization: Bearer ${'$'}OPENROUTER_API_KEY" \\
     https://openrouter.ai/api/v1/key
 '`;
-	const projectFile = `@foo
+	const projectFile = `+foo
+@test
 OPENROUTER_API_KEY`;
 	const helloScript = `#!/bin/sh
 curl -s -o /dev/null -w "%{http_code}\\n" \\
   -H "Authorization: Bearer ${'$'}OPENROUTER_API_KEY" \\
   https://openrouter.ai/api/v1/key`;
 	const runInProject = 'monkeys run ./hello.sh';
-	const profilesFile = `@test.foo,foo
+	const profilesFile = `+foo
+@test,production
 OPENROUTER_API_KEY
 STRIPE_SECRET_KEY
-@foo
+@production
 SENTRY_DSN`;
 	const doctorLine = 'monkeys doctor';
-	const doctorOutput = `@test.foo  default
+	const doctorOutput = `@test  default
   ✓ OPENROUTER_API_KEY
   ✓ STRIPE_SECRET_KEY
-@foo
+@production
   ✓ OPENROUTER_API_KEY
   ✗ STRIPE_SECRET_KEY
   ✗ SENTRY_DSN`;
-	const runStaging = 'monkeys run @foo ./deploy';
+	const runStaging = 'monkeys run @production ./deploy';
 	const packLine = 'monkeys pack';
-	const unpackLine = 'monkeys unpack ~/Downloads/a.monkeys';
+	const unpackLine = 'monkeys unpack ~/Downloads/a.monsecrets';
 
 	const stars = browser
 		? fetch(`https://api.github.com/repos/${repository.owner}/${repository.repo}`)
@@ -215,9 +217,9 @@ SENTRY_DSN`;
 	<section class="flex flex-col gap-4">
 		<h2 class="text-2xl font-bold tracking-tight">Let the project list the keys it needs</h2>
 		<p class="max-w-prose">
-			A <code>.monkeys</code> file next to the code lists the keys, under a profile. Commit it. In
-			that directory, <code>run</code> takes only the command, and the script reads the variable
-			the way any program does.
+			A <code>.monsecrets</code> file next to the code names the project on its first line and lists
+			the keys under a profile. Commit it. In that directory, <code>run</code> takes only the
+			command, and the script reads the variable the way any program does.
 		</p>
 		<div class="grid gap-3 sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)]">
 			<TreeView.Root class="rounded-lg border p-2">
@@ -242,7 +244,7 @@ SENTRY_DSN`;
 		<CodeFile code={runStaging} />
 		<p class="max-w-prose">
 			A secret missing in one profile stops that profile alone, and only when it is used.
-			<code>monkeys fill @foo --with @test.foo</code> fills the second profile with what the first
+			<code>monkeys fill @production --with @test</code> fills the second profile with what the first
 			has and it lacks, and <code>doctor</code> reads the whole file:
 		</p>
 		<CodeFile code={doctorLine} output={doctorOutput} />
@@ -251,13 +253,13 @@ SENTRY_DSN`;
 	<section class="flex flex-col gap-4">
 		<h2 class="text-2xl font-bold tracking-tight">Hand the profile to a teammate</h2>
 		<p class="max-w-prose">
-			<code>pack</code> asks for a passphrase and writes <code>/tmp/a.monkeys</code>, outside the repository: every profile the file declares, or the ones <code>--only @test.foo</code> names, with their
+			<code>pack</code> asks for a passphrase and writes <code>/tmp/a.monsecrets</code>, outside the repository: every profile the file declares, or the ones <code>--only @test</code> names, with their
 			keys and secrets, sealed. Send the file however you like, and the passphrase another way.
 		</p>
 		<CodeFile code={packLine} />
 		<p class="max-w-prose">
 			On the other machine, <code>unpack</code> asks for the passphrase, stores the secrets, writes
-			<code>.monkeys</code> at the root of the checkout, wherever inside it you run it, and deletes the bundle.
+			<code>.monsecrets</code> at the root of the checkout, wherever inside it you run it, and deletes the bundle.
 			That is the only way a secret leaves the vault.
 		</p>
 		<CodeFile code={unpackLine} />

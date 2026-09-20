@@ -56,11 +56,12 @@ run there takes only the command:
 
   monkeys run ./hello.sh
 
-The file's @ lines scope every key, and the first profile in the file is the
-one run uses unless @profile says otherwise, so set in that directory stores
-into the same profile the command reads from. The file is the list; read it
-before adding a key. Filling a profile from a shared .monkeys bundle is
-monkeys unpack, which asks for a passphrase, so that too is a human's job.
+The file's first line names the project, its @ lines scope every key, and
+the first profile in the file is the one run uses unless @profile says
+otherwise, so set in that directory stores into the same profile the command
+reads from. The file is the list; read it before adding a key. Filling a
+profile from a shared .monsecrets bundle is monkeys unpack, which asks for a
+passphrase, so that too is a human's job.
 
 Name the keys the command actually reads. Naming them is how a missing secret
 shows up, and it keeps the rest out of a process that has no business with

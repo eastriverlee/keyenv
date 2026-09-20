@@ -8,7 +8,7 @@ import Darwin
 import Glibc
 #endif
 
-let bundleSuffix = ".monkeys"
+let bundleSuffix = ".monsecrets"
 private let bundleFormat = "monkeys bundle 1"
 private let saltLength = 16
 
@@ -47,6 +47,7 @@ struct BundleBlock {
 }
 
 struct ProfileBundle {
+    let namespace: String
     let blocks: [BundleBlock]
 }
 
@@ -82,18 +83,33 @@ private func randomSalt() -> Data {
     Data((0..<saltLength).map { _ in UInt8.random(in: .min ... .max) })
 }
 
+private func encodedEntry(_ entry: (name: String, values: [String])) -> String {
+    let encoded = entry.values.map { Data($0.utf8).base64EncodedString() }
+    return entry.name + "=" + encoded.joined(separator: ",")
+}
+
+private func serializedBlock(_ block: BundleBlock) -> [String] {
+    ["@" + block.profiles.joined(separator: ",")] + block.entries.map(encodedEntry)
+}
+
 private func serialized(_ bundle: ProfileBundle) -> Data {
-    let lines = bundle.blocks.flatMap { block in
-        ["@" + block.profiles.joined(separator: ",")] + block.entries.map { entry in
-            entry.name + "=" + entry.values.map { Data($0.utf8).base64EncodedString() }.joined(separator: ",")
-        }
-    }
+    let lines = ["+" + bundle.namespace] + bundle.blocks.flatMap(serializedBlock)
     return Data(lines.joined(separator: "\n").utf8)
 }
 
 private func deserialized(_ plaintext: Data) throws -> ProfileBundle {
+    var namespace: String?
     var blocks: [BundleBlock] = []
     for line in String(decoding: plaintext, as: UTF8.self).split(separator: "\n") {
+        if line.hasPrefix("+") {
+            let name = String(line.dropFirst())
+            guard namespace == nil, blocks.isEmpty, isValidProfileName(name) else {
+                throw StoreFailure.bundleFailed("the bundle carries no project")
+            }
+            namespace = name
+            continue
+        }
+        guard namespace != nil else { throw StoreFailure.bundleFailed("the bundle carries no project") }
         if line.hasPrefix("@") {
             let profiles = line.dropFirst().split(separator: ",").map(String.init)
             guard !profiles.isEmpty, profiles.allSatisfy(isValidProfileName) else {
@@ -114,8 +130,8 @@ private func deserialized(_ plaintext: Data) throws -> ProfileBundle {
         let entry = (String(parts[0]), decoded.map { String(decoding: $0, as: UTF8.self) })
         blocks.append(BundleBlock(profiles: current.profiles, entries: current.entries + [entry]))
     }
-    guard !blocks.isEmpty else { throw StoreFailure.bundleFailed("the bundle carries no profile") }
-    return ProfileBundle(blocks: blocks)
+    guard let namespace, !blocks.isEmpty else { throw StoreFailure.bundleFailed("the bundle carries no profile") }
+    return ProfileBundle(namespace: namespace, blocks: blocks)
 }
 
 func writeBundle(_ bundle: ProfileBundle, to path: String) throws {
@@ -149,8 +165,12 @@ func readBundle(from path: String) throws -> ProfileBundle {
     }
 }
 
-func projectFileContents(_ blocks: [Block]) -> String {
+func blockText(_ blocks: [Block]) -> String {
     blocks.map { block in
         (["@" + block.profiles.joined(separator: ",")] + block.keys).joined(separator: "\n")
     }.joined(separator: "\n") + "\n"
+}
+
+func projectFileContents(namespace: String, _ blocks: [Block]) -> String {
+    "+" + namespace + "\n" + blockText(blocks)
 }

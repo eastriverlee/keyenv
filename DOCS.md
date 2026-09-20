@@ -45,7 +45,8 @@ command gets only what it names:
 
 ```sh
 $ cat .monkeys                      # keys under a profile, committed
-@foo
++foo
+@test
 OPENROUTER_API_KEY
 STRIPE_SECRET_KEY
 
@@ -54,7 +55,7 @@ Secret:
 
 $ monkeys run ./hello.sh            # the command gets them, and nothing else does
 $ monkeys pack                      # to share: one encrypted file
-$ monkeys unpack a.monkeys          # on their machine, into their vault
+$ monkeys unpack a.monsecrets       # on their machine, into their vault
 ```
 
 The `.monkeys` file replaces all three of `.env`, `.env.example` and the
@@ -78,21 +79,41 @@ and [Commands](/docs/commands) has one page per command.
 
 ## Profile
 
-A profile is a named set of secrets. Every secret `monkeys` stores sits under
-one, as `<profile>/<KEY>`, and a project's `.monkeys` file says which profile
-its keys belong to:
+A profile is a named set of secrets within a project. Every secret `monkeys`
+stores sits under one, as `<namespace>/<profile>/<KEY>`, and a project's
+`.monkeys` file names the project on its first line and the profile on the
+next:
 
 ```
-@foo
++foo
+@test
 DATABASE_URL
 STRIPE_SECRET_KEY
 OPENROUTER_API_KEY
 ```
 
-The profile's name is the project's and its secrets are yours. Everyone who
-clones the repository gets the same profile and the same keys, and each of
-them fills their own vault, so a `.monkeys` file can be committed and a vault
-never has to be.
+The names are the project's and the secrets are yours. Everyone who clones
+the repository gets the same namespace, the same profile and the same keys,
+and each of them fills their own vault, so a `.monkeys` file can be committed
+and a vault never has to be.
+
+### The namespace
+
+The `+` line is the project's name in the vault, and it is what keeps two
+projects' `test` apart: `foo/test/DATABASE_URL` and `bar/test/DATABASE_URL`
+are two secrets. It is written once, in the file, so it is the same in every
+clone and needs no git remote or directory name to agree with. A namespace
+takes letters, digits, `_` and `-`, one word, usually the repository's name.
+
+Inside the project the namespace is never typed. A profile is `@test` or
+`@production`, and the file supplies the rest. From outside, or to reach
+another project's profile, the reference is `@namespace.profile`:
+
+```sh
+monkeys run @production ./deploy          # inside foo
+monkeys preview @foo.production           # from anywhere
+monkeys fill @bar.test --with @foo.test   # across projects
+```
 
 ### The default profile
 
@@ -103,33 +124,34 @@ keys shows the file's keys:
 
 ```sh
 monkeys run ./hello.sh
-monkeys set STRIPE_SECRET_KEY        # stores foo/STRIPE_SECRET_KEY
+monkeys set STRIPE_SECRET_KEY        # stores foo/test/STRIPE_SECRET_KEY
 monkeys preview
 ```
 
-`list` stays global and shows the prefixes, so you can see which project each
-secret belongs to.
+`list` stays global and shows the prefixes, so you can see which project and
+profile each secret belongs to.
 
 ### Several profiles
 
 A profile line can name several profiles, and a file can hold several blocks:
 
 ```
-@test.foo,foo
++foo
+@test,production
 DATABASE_URL
 STRIPE_SECRET_KEY
-@foo
+@production
 SENTRY_DSN
 ```
 
 A profile's keys are those of every block that lists it: both profiles here
-need `DATABASE_URL` and `STRIPE_SECRET_KEY`, and `foo` also needs
-`SENTRY_DSN`. The default is still the first, `test.foo`, so production is
+need `DATABASE_URL` and `STRIPE_SECRET_KEY`, and `production` also needs
+`SENTRY_DSN`. The default is still the first, `test`, so production is
 something you say.
 
 A secret missing in one profile stops only that profile, and only when it is
-used: `foo` can be half filled while `test.foo` runs. `doctor` shows the whole
-picture.
+used: `production` can be half filled while `test` runs. `doctor` shows the
+whole picture.
 
 ### Choosing a profile
 
@@ -137,22 +159,15 @@ Any command takes a leading `@profile`, which picks another declared one. A
 prefix that fits only one of them is enough, the way a short git hash is:
 
 ```sh
-monkeys run @foo ./deploy
-monkeys set @foo SENTRY_DSN
-monkeys run @test ./hello.sh        # test.foo, by its prefix
+monkeys run @production ./deploy
+monkeys set @production SENTRY_DSN
+monkeys run @prod ./deploy           # production, by its prefix
 ```
 
 A profile the file does not declare is refused with the declared ones listed,
 and a prefix that fits several is refused with those, so a typo never becomes
-a new profile.
-
-### Naming profiles
-
-Profile names take letters, digits, `_`, `-` and `.`. A dotted name in the
-style of a bundle identifier keeps two projects' test apart in one vault. Two
-parts, `test.foo`, is enough for most; a third, `test.foo.lee`, is for a vault
-that holds many projects and collides at two. A single word does for a profile
-nothing else will collide with.
+a new profile. Profile names take letters, digits, `_` and `-`; `test`,
+`staging` and `production` are the usual three.
 
 ### No profile
 
@@ -165,13 +180,13 @@ monkeys set TYPESAFE_API_KEY
 monkeys run TYPESAFE_API_KEY claude
 ```
 
-A project profile never reads from the global keys. A key missing in `@foo`
-is missing there even when a global copy exists, so a project cannot quietly
-pick up a secret meant for another.
+A project profile never reads from the global keys. A key missing in
+`@production` is missing there even when a global copy exists, so a project
+cannot quietly pick up a secret meant for another.
 
 Inside a project every command is scoped to that project's profile, so the
-global keys are out of reach there: `monkeys run` reads `foo/`, and `monkeys
-set TYPESAFE_API_KEY` would write `foo/TYPESAFE_API_KEY`. A bare `@` means no
+global keys are out of reach there: `monkeys run` reads `foo/test/`, and
+`monkeys set TYPESAFE_API_KEY` would write `foo/test/TYPESAFE_API_KEY`. A bare `@` means no
 profile. It sets the project file aside, so keys are given again, and reaches
 the global ones without leaving the directory:
 
@@ -232,7 +247,8 @@ or forget, and the desktop's own tools see everything `monkeys` stores.
 ### What an item looks like
 
 Each secret is one item carrying two attributes: `service` is `monkeys`, and
-`account` is `<profile>/<KEY>`, or `<KEY>` alone for a global key. The label
+`account` is `<namespace>/<profile>/<KEY>`, or `<KEY>` alone for a global
+key. The label
 is `monkeys: ` followed by the account. Deleting an item in the desktop's
 tools deletes it for `monkeys`.
 
@@ -241,7 +257,7 @@ Access for `monkeys`, or ask for one by account:
 
 ```sh
 security find-generic-password -s monkeys -a OPENROUTER_API_KEY
-security find-generic-password -s monkeys -a foo/OPENROUTER_API_KEY
+security find-generic-password -s monkeys -a foo/test/OPENROUTER_API_KEY
 ```
 
 Items are created with `kSecAttrAccessibleAfterFirstUnlock`, so a shell that
@@ -250,7 +266,7 @@ starts while the screen is locked can still read them.
 On Linux the same attributes go through `secret-tool`:
 
 ```sh
-secret-tool lookup service monkeys account foo/OPENROUTER_API_KEY
+secret-tool lookup service monkeys account foo/test/OPENROUTER_API_KEY
 ```
 
 ### The keychain prompt on macOS
@@ -273,15 +289,17 @@ A project lists the keys it needs once, in a `.monkeys` file next to the
 code:
 
 ```
-@test.foo,foo
++foo
+@test,production
 DATABASE_URL
 STRIPE_SECRET_KEY
-@foo
+@production
 SENTRY_DSN
 ```
 
-A `@` line names one profile or several, the keys below it belong to those
-profiles, and `#` starts a comment. Commit it. It is the secret half of
+The first line, `+foo`, names the project. A `@` line names one profile or
+several, the keys below it belong to those profiles, and `#` starts a
+comment. Commit it. It is the secret half of
 `.env.example`, and a project keeps one or the other, since two lists of the
 same keys drift. The file holds keys and never secrets, which is what makes it
 safe to commit.
@@ -294,9 +312,9 @@ no file is found the commands take keys on the line, as they do anywhere else.
 `unpack` writes the file at the root of the checkout, and `doctor` reads it
 whole.
 
-## *.monkeys
+## *.monsecrets
 
-A bundle, `a.monkeys` unless you name it, is one or more profiles with
+A bundle, `a.monsecrets` unless you name it, is one or more profiles with
 their keys and secrets, sealed with ChaCha20-Poly1305 under a
 key scrypt derives from a passphrase. `pack` writes one and `unpack` reads
 it, and that is the only way a secret leaves the vault.
@@ -308,8 +326,9 @@ the key costs 128 MiB of memory and a fraction of a second, once for `pack`
 and once for `unpack`, which is what makes guessing the passphrase
 expensive.
 
-The bundle keeps the shape of the `.monkeys` file, block for block, so
-`unpack` can write the file back and store each secret under its profile. It
+The bundle keeps the shape of the `.monkeys` file, project line and blocks,
+so `unpack` can write the file back and store each secret under its
+namespace and profile. It
 is safe to send over whatever you already use; the passphrase goes another
 way, and `unpack` deletes the bundle once it has done its job.
 
@@ -329,15 +348,16 @@ the fix is to delete it and change the passphrase you would have sent.
 | `monkeys run <KEY[,KEY...]> <command>` | run a command with those secrets in its environment |
 | `monkeys run <command>` | the same, with the keys a `.monkeys` file lists |
 | `monkeys export [KEY[,KEY...]]` | vault lookup lines, to paste into a startup file |
-| `monkeys pack [path] [--open] [--only ...]` | the profiles as one encrypted `a.monkeys` |
+| `monkeys pack [path] [--open] [--only ...]` | the profiles as one encrypted `a.monsecrets` |
 | `monkeys unpack <name> [directory]` | store its secrets, write its `.monkeys` |
 | `monkeys fill @a --with @b` | give `@a` the keys it lacks, from `@b` |
 | `monkeys doctor [--short]` | what each profile has and lacks |
 
-Every command takes a leading `@profile`; a bare `@` means no profile, the
-global keys. Where several keys or profiles go, they are joined with commas,
-`DATABASE_URL,STRIPE_SECRET_KEY` and `@test.foo,foo`, so one word is one
-list. Giving no key means every key for `preview` and `export`, or the
+Every command takes a leading `@profile`, one the file declares;
+`@namespace.profile` reaches a profile from anywhere, and a bare `@` means no
+profile, the global keys. Where several keys or profiles go, they are joined
+with commas, `DATABASE_URL,STRIPE_SECRET_KEY` and `@test,production`, so one
+word is one list. Giving no key means every key for `preview` and `export`, or the
 project's keys inside a project. `run` asks to be told, since the keys are how
 it knows what to check for and what to leave out.
 
@@ -387,8 +407,9 @@ cat token.txt | monkeys set GITHUB_TOKEN
 ```
 
 Inside a project the key is stored under the project's profile, so `monkeys
-set STRIPE_SECRET_KEY` there writes `foo/STRIPE_SECRET_KEY`. A leading
-`@profile` picks another, and a bare `@` the global keys.
+set STRIPE_SECRET_KEY` there writes `foo/test/STRIPE_SECRET_KEY`. A leading
+`@profile` picks another, `@namespace.profile` one of another project, and a
+bare `@` the global keys.
 
 A key you already stored is replaced, and nothing says so.
 
@@ -409,12 +430,13 @@ monkeys list
 
 > ```
 > TYPESAFE_API_KEY
-> foo/DATABASE_URL
-> foo/STRIPE_SECRET_KEY
-> test.foo/DATABASE_URL
+> foo/test/DATABASE_URL
+> foo/test/STRIPE_SECRET_KEY
+> foo/production/DATABASE_URL
 > ```
 
-`list` is global, so it shows which project each secret belongs to. Its
+`list` is global, so it shows which project and profile each secret belongs
+to. Its
 output is never coloured, since a script reads it.
 
 ## preview
@@ -499,7 +521,7 @@ profile. A leading `@profile` picks another declared one:
 ```sh
 monkeys run ./hello.sh
 monkeys run npm run dev
-monkeys run @foo ./deploy
+monkeys run @production ./deploy
 ```
 
 A key the file already lists is refused rather than run as a program:
@@ -509,7 +531,7 @@ monkeys run STRIPE_SECRET_KEY ./hello.sh
 ```
 
 > ```
-> monkeys: ~/foo/.monkeys already lists STRIPE_SECRET_KEY for @foo
+> monkeys: ~/foo/.monkeys already lists STRIPE_SECRET_KEY for @test
 > inside a project, run takes only the command: monkeys run <command>
 > ```
 
@@ -544,9 +566,9 @@ Inside a project the message names the profile, and the `set` it asks for
 works from any directory:
 
 > ```
-> monkeys: STRIPE_SECRET_KEY is not stored yet in @foo
+> monkeys: STRIPE_SECRET_KEY is not stored yet in @foo.test
 > nothing ran. a human has to store it, then try again:
->   monkeys set @foo STRIPE_SECRET_KEY
+>   monkeys set @foo.test STRIPE_SECRET_KEY
 > ```
 
 That message is written to be passed on. An agent that meets it knows which
@@ -612,7 +634,7 @@ monkeys run --no-redact OPENROUTER_API_KEY envsubst < template > config
 
 ### A shell with a profile
 
-`monkeys run @foo zsh` hands a whole profile to one shell, which forgets it on
+`monkeys run @production zsh` hands a whole profile to one shell, which forgets it on
 exit. That is the way to work with a profile for a while without putting it
 into every shell you open.
 
@@ -669,11 +691,11 @@ monkeys pack
 > ```
 > Passphrase:
 > Again:
-> wrote /tmp/a.monkeys: @test.foo,foo @foo, 5 secrets
+> wrote /tmp/a.monsecrets: +foo @test,production @production, 5 secrets
 > ```
 
 The file goes to `/tmp`, which is never inside a repository, and the
-message shows the path. A path before `--only` puts it elsewhere: a directory gets `a.monkeys` inside it, and a file path is used as
+message shows the path. A path before `--only` puts it elsewhere: a directory gets `a.monsecrets` inside it, and a file path is used as
 given, with `.monkeys` added when missing.
 
 ```sh
@@ -682,13 +704,13 @@ monkeys pack ~/Desktop/for-sam
 ```
 
 > ```
-> wrote ~/Desktop/a.monkeys: @test.foo,foo @foo, 5 secrets
-> wrote ~/Desktop/for-sam.monkeys: @test.foo,foo @foo, 5 secrets
+> wrote ~/Desktop/a.monsecrets: +foo @test,production @production, 5 secrets
+> wrote ~/Desktop/for-sam.monsecrets: +foo @test,production @production, 5 secrets
 > ```
 
-It carries each profile's name, the keys the project lists for it, and their
-secrets, sealed with ChaCha20-Poly1305 under a key scrypt derives from the
-passphrase. The file is safe to send over whatever you already use; the
+It carries the project's namespace, each profile's name, the keys the project
+lists for it, and their secrets, sealed with ChaCha20-Poly1305 under a key
+scrypt derives from the passphrase. One bundle carries one project. The file is safe to send over whatever you already use; the
 passphrase goes another way.
 
 `--open` then reveals the file, in Finder with the file selected, or its
@@ -708,25 +730,28 @@ first the file mentions. That is how a teammate gets test and never
 production, or one key on its own:
 
 ```sh
-monkeys pack --only @test.foo
-monkeys pack shared --only @test.foo @foo
+monkeys pack --only @test
+monkeys pack shared --only @test @production
 monkeys pack --only DATABASE_URL
-monkeys pack --only @test.foo,foo DATABASE_URL
-monkeys pack --only @test.foo DATABASE_URL @foo SENTRY_DSN
+monkeys pack --only @test,production DATABASE_URL
+monkeys pack --only @test DATABASE_URL @production SENTRY_DSN
 ```
 
 > ```
-> wrote /tmp/a.monkeys: @test.foo, 2 secrets
-> wrote shared.monkeys: @test.foo @foo, 5 secrets
-> wrote /tmp/a.monkeys: @test.foo, 1 secret
-> wrote /tmp/a.monkeys: @test.foo,foo, 2 secrets
-> wrote /tmp/a.monkeys: @test.foo @foo, 2 secrets
+> wrote /tmp/a.monsecrets: +foo @test, 2 secrets
+> wrote shared.monsecrets: +foo @test @production, 5 secrets
+> wrote /tmp/a.monsecrets: +foo @test, 1 secret
+> wrote /tmp/a.monsecrets: +foo @test,production, 2 secrets
+> wrote /tmp/a.monsecrets: +foo @test @production, 2 secrets
 > ```
 
 The bundle keeps that shape, block for block, and `unpack` writes it back as
 the project file. The path goes before `--only`, which takes the rest of
 the line. A key a profile does not list is refused rather than left
 out.
+
+Outside a project, `--only @foo.test` names the project as well as the
+profile, and every profile on the line has to belong to the same one.
 
 The passphrase is read from standard input when it is not a terminal, for the
 rare script that needs to.
@@ -746,10 +771,10 @@ monkeys unpack a
 
 > ```
 > Passphrase:
-> wrote .monkeys: @test.foo,foo @foo, 3 keys
-> stored test.foo/DATABASE_URL, foo/DATABASE_URL, test.foo/STRIPE_SECRET_KEY, foo/STRIPE_SECRET_KEY
-> stored foo/SENTRY_DSN
-> removed a.monkeys
+> wrote .monkeys: +foo @test,production @production, 3 keys
+> stored foo/test/DATABASE_URL, foo/production/DATABASE_URL, foo/test/STRIPE_SECRET_KEY, foo/production/STRIPE_SECRET_KEY
+> stored foo/production/SENTRY_DSN
+> removed a.monsecrets
 > ```
 
 `<name>` is the bundle, with or without its `.monkeys` suffix; a path works
@@ -763,7 +788,8 @@ the root, so `monkeys run` works from any directory in it. Outside a checkout
 it goes in the current directory, and a second argument names the directory
 outright. When a `.monkeys` file is already there, `unpack` adds a block at
 the end for the keys the file does not yet list, grouped the way the bundle
-groups them, and leaves the rest of the file alone.
+groups them, and leaves the rest of the file alone. A file that names another
+project on its `+` line refuses the bundle, and the bundle stays.
 
 The passphrase is read from standard input when it is not a terminal.
 
@@ -778,13 +804,13 @@ Two profiles of one project usually share most of their secrets, and the
 second is filled from the first:
 
 ```sh
-monkeys fill @foo --with @test.foo
+monkeys fill @production --with @test
 ```
 
 > ```
-> filled @foo from @test.foo: STRIPE_SECRET_KEY
-> kept 1 @foo already had
-> still missing in @foo: SENTRY_DSN
+> filled @production from @test: STRIPE_SECRET_KEY
+> kept 1 @production already had
+> still missing in @production: SENTRY_DSN
 > ```
 
 `fill` moves only the keys the target lacks and never touches a secret it
@@ -793,7 +819,9 @@ a production profile filled from test is a decision to see written down, and
 it exits non-zero while anything is still missing. No secret is printed.
 
 Inside a project the keys are the ones the file lists for the target;
-elsewhere they are whatever the source holds.
+elsewhere they are whatever the source holds. Either side may be another
+project's profile, `@bar.test`, which is how a secret shared by two projects
+is stored once and copied.
 
 ## doctor
 
@@ -809,10 +837,10 @@ monkeys doctor
 ```
 
 > ```
-> @test.foo  default
+> @test  default
 >   ✓ DATABASE_URL
 >   ✓ STRIPE_SECRET_KEY
-> @foo
+> @production
 >   ✓ DATABASE_URL
 >   ✗ STRIPE_SECRET_KEY
 >   ✗ SENTRY_DSN
@@ -829,7 +857,7 @@ monkeys doctor --short
 ```
 
 > ```
-> missing @foo: STRIPE_SECRET_KEY,SENTRY_DSN
+> missing @production: STRIPE_SECRET_KEY,SENTRY_DSN
 > ```
 
 # Sharing a profile
@@ -841,27 +869,27 @@ use; the passphrase goes another way.
 On the machine that has the secrets, inside the checkout:
 
 ```sh
-monkeys pack --only @test.foo
+monkeys pack --only @test
 ```
 
 > ```
 > Passphrase:
 > Again:
-> wrote /tmp/a.monkeys: @test.foo, 2 secrets
+> wrote /tmp/a.monsecrets: +foo @test, 2 secrets
 > ```
 
 Send that file. On the other machine, anywhere inside their
 checkout:
 
 ```sh
-monkeys unpack ~/Downloads/a.monkeys
+monkeys unpack ~/Downloads/a.monsecrets
 ```
 
 > ```
 > Passphrase:
-> wrote .monkeys: @test.foo, 2 keys
-> stored test.foo/DATABASE_URL, test.foo/STRIPE_SECRET_KEY
-> removed /Users/them/Downloads/a.monkeys
+> wrote .monkeys: +foo @test, 2 keys
+> stored foo/test/DATABASE_URL, foo/test/STRIPE_SECRET_KEY
+> removed /Users/them/Downloads/a.monsecrets
 > ```
 
 Their vault now holds the secrets under the same profile, and `monkeys run
