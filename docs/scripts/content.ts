@@ -164,7 +164,13 @@ function asSteps(text: string) {
 
 for (const section of readmeSections.filter(({ title }) => title === 'Quickstart' || title === 'Install')) {
 	const slug = slugOf(section.title);
-	writePage(slug, section.title, section.title === 'Quickstart' ? asSteps(section.text) : section.text);
+	const isQuickstart = section.title === 'Quickstart';
+	writePage(
+		slug,
+		section.title,
+		isQuickstart ? asSteps(section.text) : section.text,
+		isQuickstart ? 'Install, store a secret and spend it on one command, in five steps.' : undefined
+	);
 	order.push(slug);
 }
 
