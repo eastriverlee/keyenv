@@ -13,8 +13,13 @@ import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-COPIES = [ROOT / "plugins" / "monkeys" / "skills" / "monkeys" / "SKILL.md", ROOT / "site" / "src" / "routes" / "+page.svelte"]
-MENTION = re.compile(r"\bmonkeys ([a-z][a-z-]*)")
+COPIES = [
+    ROOT / "plugins" / "monkeys" / "skills" / "monkeys" / "SKILL.md",
+    ROOT / "site" / "src" / "routes" / "+page.svelte",
+    ROOT / "README.md",
+    ROOT / "DOCS.md",
+]
+MENTION = re.compile(r"(?:^[ \t]*|\$ |[`(;|&] ?)monkeys (\w[\w-]*)", re.M)
 CODE_IN_MARKUP = re.compile(r"<code[^>]*>.*?</code>", re.S)
 SCRIPT_BLOCK = re.compile(r"<script[^>]*>(.*?)</script>", re.S)
 STRING_LITERAL = re.compile(r"'[^']*'|`[^`]*`|\"[^\"]*\"", re.S)
