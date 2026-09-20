@@ -205,7 +205,7 @@ SENTRY_DSN`;
 
 	<img
 		src="/terminal.svg"
-		alt="monkeys run refusing a missing secret, then running the command, then preview"
+		alt="monkeys remembering a secret, running a command with it, forgetting it, and then refusing the same command"
 		class="w-full rounded-xl"
 	/>
 

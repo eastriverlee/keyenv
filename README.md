@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <img src="terminal.svg" alt="monkeys run refusing a missing secret, then running the command, then preview" width="640">
+  <img src="terminal.svg" alt="monkeys remembering a secret, running a command with it, forgetting it, and then refusing the same command" width="640">
 </p>
 
 ## Overview
