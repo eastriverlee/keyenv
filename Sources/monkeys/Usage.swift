@@ -5,8 +5,8 @@ struct CommandSummary {
 }
 
 let commandSummaries = [
-    CommandSummary(verb: "set", arguments: "<KEY>",
-                   summary: "store a secret typed or piped in"),
+    CommandSummary(verb: "set", arguments: "<KEY> [--clipboard]",
+                   summary: "store a secret typed, piped or pasted"),
     CommandSummary(verb: "list", arguments: "",
                    summary: "print every stored key"),
     CommandSummary(verb: "preview", arguments: "[KEY[,KEY]]",

@@ -39,6 +39,35 @@ func readSecretFromInput() -> String {
     return String(cString: entered)
 }
 
+private let clipboardReaders: [[String]] = [
+    ["pbpaste"],
+    ["wl-paste", "--no-newline"],
+    ["xclip", "-selection", "clipboard", "-o"],
+    ["xsel", "--clipboard", "--output"],
+]
+
+private func executable(named name: String) -> String? {
+    let directories = (ProcessInfo.processInfo.environment["PATH"] ?? "").split(separator: ":")
+    return directories.lazy.map { $0 + "/" + name }.first { FileManager.default.isExecutableFile(atPath: $0) }
+}
+
+func readSecretFromClipboard() throws -> String {
+    guard let reader = clipboardReaders.first(where: { executable(named: $0[0]) != nil }),
+          let tool = executable(named: reader[0]) else {
+        throw StoreFailure.bundleFailed("no clipboard tool found; install wl-clipboard, xclip or xsel")
+    }
+    let process = Process()
+    let output = Pipe()
+    process.executableURL = URL(fileURLWithPath: tool)
+    process.arguments = Array(reader.dropFirst())
+    process.standardOutput = output
+    process.standardError = FileHandle.nullDevice
+    try process.run()
+    let pasted = output.fileHandleForReading.readDataToEndOfFile()
+    process.waitUntilExit()
+    return String(decoding: pasted, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+}
+
 func requireKey(_ arguments: [String]) throws -> String {
     guard let name = arguments.first else { throw StoreFailure.invalidKey("") }
     guard isValidKey(name) else { throw StoreFailure.invalidKey(name) }
@@ -51,9 +80,10 @@ func spendHint(_ scope: Scope, _ name: String) -> String {
 }
 
 func runSet(_ arguments: [String]) throws {
-    let (scope, rest) = try resolveScope(arguments)
+    let readsClipboard = arguments.contains("--clipboard")
+    let (scope, rest) = try resolveScope(arguments.filter { $0 != "--clipboard" })
     let name = try requireKey(rest)
-    let value = readSecretFromInput()
+    let value = readsClipboard ? try readSecretFromClipboard() : readSecretFromInput()
     guard !value.isEmpty else { throw StoreFailure.emptySecret }
     try secretStore.store(value, forName: scope.storedName(name))
     printToStandardError(messageStyle("stored", .good) + " " + messageStyle(scope.storedName(name), .bold))

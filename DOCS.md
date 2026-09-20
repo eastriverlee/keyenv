@@ -322,7 +322,7 @@ the fix is to delete it and change the passphrase you would have sent.
 
 | command | what it does |
 | --- | --- |
-| `monkeys set <KEY>` | read a secret and store it |
+| `monkeys set <KEY> [--clipboard]` | read a secret and store it |
 | `monkeys list` | print every stored key |
 | `monkeys preview [KEY[,KEY]]` | print each secret masked, with its length |
 | `monkeys remove <KEY>` | delete one secret |
@@ -354,7 +354,7 @@ and a bundle cannot carry half of a profile.
 ## set
 
 ```sh
-monkeys set [@profile] <KEY>
+monkeys set [@profile] <KEY> [--clipboard]
 ```
 
 Reads a secret and stores it under the key. On a terminal it prompts, and what
@@ -371,11 +371,19 @@ monkeys set OPENROUTER_API_KEY
 >   monkeys run OPENROUTER_API_KEY <command>
 > ```
 
-When standard input is not a terminal, the secret is read from there:
+`--clipboard` takes the secret from the clipboard instead, through whichever
+tool the desktop has, `pbpaste`, `wl-paste`, `xclip` or `xsel`, so a key
+copied from a provider's console goes straight in:
 
 ```sh
-pbpaste | monkeys set GITHUB_TOKEN        # macOS
-wl-paste | monkeys set GITHUB_TOKEN       # Linux, Wayland
+monkeys set GITHUB_TOKEN --clipboard
+```
+
+When standard input is not a terminal, the secret is read from there, which
+is how a script stores one:
+
+```sh
+cat token.txt | monkeys set GITHUB_TOKEN
 ```
 
 Inside a project the key is stored under the project's profile, so `monkeys
