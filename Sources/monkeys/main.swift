@@ -71,6 +71,9 @@ func readSecretFromClipboard() throws -> String {
 func requireKey(_ arguments: [String]) throws -> String {
     guard let name = arguments.first else { throw StoreFailure.invalidKey("") }
     guard isValidKey(name) else { throw StoreFailure.invalidKey(name) }
+    guard arguments.count == 1 else {
+        throw StoreFailure.bundleFailed("one key at a time, and no secret on the line")
+    }
     return name
 }
 
