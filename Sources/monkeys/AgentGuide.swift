@@ -83,7 +83,7 @@ ask for:
     monkeys remember SUPER_SECRET
   then try again.
 
-An agent passes that on. Storing a secret is a human's job: an agent that
+An agent passes that on. Remembering a secret is a human's job: an agent that
 types one puts it in its own context before it reaches the vault.
 
 To see what exists, read the keys with monkeys list, and their secrets' shape

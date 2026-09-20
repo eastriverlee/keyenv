@@ -282,7 +282,7 @@ for (const section of readmeSections.filter(({ title }) => ['Install', 'Quicksta
 			slug,
 			section.title,
 			asSteps(section.text),
-			{ description: 'Store a secret, run with it and without it, then forget it, in four steps.' }
+			{ description: 'Remember a secret, run with it and without it, then forget it, in four steps.' }
 		);
 	else writePage(slug, section.title, section.text);
 	(slug === 'plugin' ? agent : gettingStarted).push(slug);
