@@ -1,0 +1,113 @@
+#!/bin/bash
+# Put a Developer ID identity into this repository's GitHub secrets, so the
+# release workflow can sign the macOS binary.
+#
+#   tools/setup-macos-signing [path/to/DeveloperID.p12]
+#
+# A signed binary keeps one keychain identity across versions. An ad-hoc one,
+# which is what an unsigned build gets, is identified by its own hash, so every
+# release is a new program to the keychain and every upgrade asks the user to
+# allow access to their secrets again.
+
+set -euo pipefail
+
+fail() {
+    echo "setup-macos-signing: $1" >&2
+    exit 1
+}
+
+command -v gh >/dev/null || fail "the GitHub CLI is not installed: brew install gh"
+gh auth status >/dev/null 2>&1 || fail "not signed in: gh auth login"
+repository=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
+
+identity=$(security find-identity -v -p codesigning |
+    sed -n 's/.*"\(Developer ID Application: .*\)"/\1/p' | head -1)
+
+if [ -z "$identity" ]; then
+    cat >&2 <<'TEXT'
+No "Developer ID Application" certificate is in your keychain. That is the one
+that signs software distributed outside the App Store; "Apple Development" does
+not. Make one, then run this again:
+
+  Xcode > Settings > Accounts > your Apple ID > Manage Certificates
+  the + at the bottom left > Developer ID Application
+
+It needs the Account Holder or Admin role in the team, which an individual
+account always has.
+TEXT
+    exit 1
+fi
+
+team=$(printf '%s' "$identity" | sed -n 's/.*(\([A-Z0-9]*\))$/\1/p')
+[ -n "$team" ] || fail "no team id in the identity name: $identity"
+echo "identity: $identity"
+echo "team:     $team"
+echo "repo:     $repository"
+echo
+
+workspace=$(mktemp -d)
+trap 'rm -rf "$workspace"' EXIT
+
+certificate=${1:-}
+if [ -z "$certificate" ]; then
+    identities=$(security find-identity -v | grep -c '^ *[0-9])' || true)
+    if [ "$identities" -ne 1 ]; then
+        cat >&2 <<'TEXT'
+Your login keychain holds more than one identity, and security(1) can only
+export all of them at once, which would put your other private keys into a
+GitHub secret. Export the one certificate by hand and pass the file:
+
+  Keychain Access > login > My Certificates
+  right-click "Developer ID Application: ..." > Export
+  save it as a .p12, then
+
+  tools/setup-macos-signing ~/Downloads/Certificates.p12
+
+TEXT
+        exit 1
+    fi
+    certificate="$workspace/identity.p12"
+    read -rsp "A passphrase for the exported certificate: " passphrase && echo
+    read -rsp "Again: " again && echo
+    [ "$passphrase" = "$again" ] || fail "the two passphrases differ"
+    security export -t identities -f pkcs12 -P "$passphrase" -o "$certificate"
+else
+    [ -f "$certificate" ] || fail "no such file: $certificate"
+    read -rsp "The passphrase the .p12 was exported with: " passphrase && echo
+fi
+
+# Keychain Access writes a .p12 with the algorithms OpenSSL 3 calls legacy and
+# refuses until asked twice; LibreSSL, which macOS ships at /usr/bin, reads it.
+opens() {
+    openssl pkcs12 -in "$certificate" -nokeys -passin pass:"$passphrase" ||
+        openssl pkcs12 -legacy -in "$certificate" -nokeys -passin pass:"$passphrase" ||
+        /usr/bin/openssl pkcs12 -in "$certificate" -nokeys -passin pass:"$passphrase"
+}
+opens > /dev/null 2>&1 || fail "the passphrase does not open $certificate"
+
+printf '%s' "$passphrase" | gh secret set MACOS_CERTIFICATE_PASSWORD
+base64 < "$certificate" | gh secret set MACOS_CERTIFICATE
+printf '%s' "$identity" | gh secret set MACOS_SIGNING_IDENTITY
+printf '%s' "$team" | gh secret set MACOS_TEAM_ID
+echo "set MACOS_CERTIFICATE, MACOS_CERTIFICATE_PASSWORD, MACOS_SIGNING_IDENTITY, MACOS_TEAM_ID"
+
+cat <<'TEXT'
+
+Notarization is separate, and optional. It stops the "unidentified developer"
+wall for someone who downloads the tarball in a browser; brew strips the
+quarantine attribute itself, so its users never meet that wall either way.
+
+It wants an App Store Connect API key, which is a .p8 file downloadable once:
+
+  appstoreconnect.apple.com > Users and Access > Integrations > App Store Connect API
+  the + > Developer access > download the key
+
+Then, with the key id and issuer id shown on that page:
+
+  gh secret set NOTARY_KEY < AuthKey_XXXXXXXX.p8
+  gh secret set NOTARY_KEY_ID
+  gh secret set NOTARY_ISSUER_ID
+
+The release workflow signs when the certificate secrets are set and notarizes
+when these three are too. Without them it builds exactly as it does today.
+TEXT
