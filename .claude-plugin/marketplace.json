@@ -9,7 +9,7 @@
       "name": "monkeys",
       "source": "./plugins/monkeys",
       "description": ".env you can hand to an LLM, or git add: secrets in your vault, keys in your repo, used one command at a time, never printed.",
-      "version": "0.12.0",
+      "version": "0.13.0",
       "license": "MIT"
     }
   ],
