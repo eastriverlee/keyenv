@@ -9,6 +9,10 @@ let commandSummaries = [
                    summary: "store a secret typed, piped or pasted"),
     CommandSummary(verb: "remove", arguments: "<KEY>",
                    summary: "delete one stored secret"),
+    CommandSummary(verb: "rename", arguments: "@old @new",
+                   summary: "a profile's new name, vault and file"),
+    CommandSummary(verb: "rename", arguments: "+old +new",
+                   summary: "the same for every profile of +old"),
     CommandSummary(verb: "run", arguments: "<KEY[,KEY...]> <command>",
                    summary: "run a command with those secrets set"),
     CommandSummary(verb: "run", arguments: "--all <command>",
@@ -90,6 +94,13 @@ var usage: String {
     holds, and says which keys moved:
 
       \(outputStyle("monkeys fill @production --with @test", .argument))
+
+    A profile's name changes in the vault and in the file at once, and a
+    namespace's for every profile under it. rename refuses a target that
+    already holds a key, so two profiles never merge by accident:
+
+      \(outputStyle("monkeys rename @staging @preview", .argument))
+      \(outputStyle("monkeys rename +foo +bar", .argument))
 
     A leading @profile picks another declared profile, and a prefix that fits
     only one of them is enough. From outside the project, or for another

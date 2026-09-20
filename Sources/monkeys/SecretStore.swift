@@ -13,6 +13,7 @@ enum StoreFailure: Error {
     case profileAmbiguous(String, [String])
     case keysNotStored([String], String)
     case namesAlreadyListed([String], String, String)
+    case renameRefused(String)
     case bundleFailed(String)
     case backendUnavailable(String)
     case backendFailed(String)
@@ -53,6 +54,8 @@ extension StoreFailure: CustomStringConvertible {
             \(path) already lists \(keys.joined(separator: ", ")) for @\(profile)
             inside a project, run takes only the command: monkeys run <command>
             """
+        case .renameRefused(let reason):
+            return reason
         case .bundleFailed(let reason):
             return reason
         case .backendUnavailable(let reason):

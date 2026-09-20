@@ -471,6 +471,7 @@ do {
     case "export": try runExport(rest)
     case "doctor": try runDoctor(rest)
     case "fill": try runFill(rest)
+    case "rename": try runRename(rest)
     case "help", "-h", "--help": print(usage)
     default:
         printToStandardError(messageStyle("unknown command:", .bad) + " \(command)")
