@@ -410,10 +410,6 @@ PORT=80
 For one profile a key is a secret or a value, never both; the second line is
 a duplicate and is refused.
 
-A `.monvalues` file from 0.8 or 0.9 is no longer read: every command refuses
-until its lines are moved into `.monkeys` under the same `@` block and the file
-is deleted.
-
 ### Where it is looked for
 
 From the current directory upward, nearest first, stopping at the root of the
@@ -457,8 +453,7 @@ shape of the `.monkeys` file, namespace line and blocks, so `unpack` can write
 the file back and store each secret under its profile. The `KEY=value` lines of the
 packed profiles follow, after a line that says `values`, so `unpack` writes
 them back as lines; a bundle without that line was written before values
-existed, and a bundle from 0.8 or 0.9, whose marker was the old file's name,
-opens too.
+existed and opens too.
 
 ### Security
 

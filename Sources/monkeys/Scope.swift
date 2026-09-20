@@ -150,7 +150,6 @@ func locateProject() throws -> Project? {
     for directory in directoriesOfThisCheckout() {
         let path = directory + "/" + projectFileName
         if FileManager.default.fileExists(atPath: path) {
-            try rejectingRetiredValuesFile(in: directory)
             return try parseProject(at: path, directory: directory)
         }
     }
@@ -262,8 +261,3 @@ func splitValueLine(_ line: String) -> ValueEntry? {
     return ValueEntry(key: key, value: String(line[line.index(after: equals)...]))
 }
 
-private func rejectingRetiredValuesFile(in directory: String) throws {
-    let path = directory + "/" + retiredValuesFileName
-    guard FileManager.default.fileExists(atPath: path) else { return }
-    throw StoreFailure.retiredValuesFile(abbreviatingHome(path))
-}

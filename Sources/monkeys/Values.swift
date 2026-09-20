@@ -1,6 +1,5 @@
 import Foundation
 
-let retiredValuesFileName = ".mon" + "values"
 
 struct ValueEntry {
     let key: String

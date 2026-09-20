@@ -13,7 +13,6 @@ enum StoreFailure: Error {
     case profileAmbiguous(String, [String])
     case keysNotStored([String], String)
     case namesAlreadyListed([String], String, String)
-    case retiredValuesFile(String)
     case emptyValue
     case keyIsValue(String, String)
     case keyIsSecret(String, String)
@@ -60,11 +59,6 @@ extension StoreFailure: CustomStringConvertible {
             return """
             \(path) already lists \(keys.joined(separator: ", ")) for @\(profile)
             inside a project, run takes only the command: monkeys run <command>
-            """
-        case .retiredValuesFile(let path):
-            return """
-            \(path) is no longer read
-            move each of its lines into \(projectFileName) under the same @ block, as KEY=value, then delete it
             """
         case .emptyValue:
             return "no value was given"

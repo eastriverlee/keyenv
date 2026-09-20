@@ -135,7 +135,7 @@ private func deserialized(_ plaintext: Data) throws -> ProfileBundle {
     var blocks: [BundleBlock] = []
     var lines = String(decoding: plaintext, as: UTF8.self).split(separator: "\n")[...]
     var valueLines: [Substring] = []
-    if let marker = lines.firstIndex(where: { $0 == valuesMarker || $0 == retiredValuesFileName }) {
+    if let marker = lines.firstIndex(where: { $0 == valuesMarker }) {
         valueLines = Array(lines[(marker + 1)...])
         lines = lines[..<marker]
     }
