@@ -17,6 +17,8 @@ let commandSummaries = [
                    summary: "delete every secret of those profiles"),
     CommandSummary(verb: "forget", arguments: "+namespace",
                    summary: "the same for every profile under it"),
+    CommandSummary(verb: "drop", arguments: "<KEY>",
+                   summary: "forget it and unlist it from .monkeys"),
     CommandSummary(verb: "rename", arguments: "@old @new",
                    summary: "a profile's new name, vault and file"),
     CommandSummary(verb: "rename", arguments: "+old +new",
@@ -91,6 +93,15 @@ var usage: String {
       \(outputStyle("monkeys run ./hello.sh", .argument))
       \(outputStyle("monkeys remember STRIPE_SECRET_KEY", .argument))      remembered as foo.test/STRIPE_SECRET_KEY
       \(outputStyle("monkeys remember", .argument))                        each key it lacks, one prompt each
+
+    remember writes that file as it goes. A key it does not list is added
+    under the profile, and in a checkout with no file at all the first
+    remember makes one, named after the directory. forget takes the secret
+    and leaves the key listed, which doctor then reports as missing; drop
+    takes the key with it, and the project stops asking for it:
+
+      \(outputStyle("monkeys forget STRIPE_SECRET_KEY", .argument))        the key stays in \(projectFileName)
+      \(outputStyle("monkeys drop STRIPE_SECRET_KEY", .argument))          both go
 
     A value that is not secret, PORT=3000 and the like, is a KEY=value line in
     the same file, under the same @ block. run puts it in the environment

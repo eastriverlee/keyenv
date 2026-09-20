@@ -749,7 +749,8 @@ monkeys forget @ ANTHROPIC_API_KEY
 ```
 
 The `.monkeys` file is not touched: a project still lists the key, and
-`doctor` reports it missing until someone remembers it again.
+`doctor` reports it missing until someone remembers it again. To take the key
+out of the file as well, see [drop](#drop).
 
 A key that `.monkeys` holds as a value for the profile has its line deleted
 instead, since the file says which of the two it is:
@@ -792,6 +793,54 @@ monkeys forget +foo
 Neither form touches `.monkeys`: a project still declares the
 profile, and `doctor` reports every key of it missing. A bare `@` is no profile
 and is refused, so the secrets with no profile go one key at a time.
+
+## drop
+
+Stop a project from needing a key at all.
+
+```sh
+monkeys drop [@profile] <KEY>
+```
+
+Forgets the secret and takes the key out of `.monkeys`, which is `forget`
+followed by the edit you would otherwise make by hand:
+
+```sh
+monkeys drop STRIPE_SECRET_KEY
+```
+
+> ```
+> forgot foo.test/STRIPE_SECRET_KEY
+> unlisted STRIPE_SECRET_KEY from .monkeys for @test
+> ```
+
+Where the vault has nothing under that key, the key is still unlisted, which
+is how the `✗` that `doctor` shows for a key nobody has is cleared:
+
+```sh
+monkeys drop DATABASE_URL
+```
+
+> ```
+> unlisted DATABASE_URL from .monkeys for @test
+> ```
+
+A key the file holds as a value is deleted from the file, the same as
+`forget`, since for a value the line is the whole of it.
+
+A profile with no key is refused. Emptying a profile's vault is `forget`,
+which leaves the file alone, because one person clearing their own machine
+does not decide what the project needs:
+
+```sh
+monkeys drop @test
+```
+
+> ```
+> monkeys: drop takes one key: monkeys drop @test <KEY>. to empty a profile's vault, monkeys forget @test
+> ```
+
+Outside a project, with no file to edit, `drop` is `forget`.
 
 ## rename
 

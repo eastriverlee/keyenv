@@ -158,6 +158,10 @@ monkeys run SUPER_SECRET sh -c '
 Nothing ran at all: a missing secret stops `run` before the command starts,
 and the message says what to do, which is what an agent passes on.
 
+Inside a git checkout the first step also started a `.monkeys` and listed
+`SUPER_SECRET` in it, since that file is how a project says which keys it
+needs. `monkeys drop SUPER_SECRET` takes the key back out of it.
+
 ## Plugin
 
 The binary is the whole tool, and an agent that can run a shell can already

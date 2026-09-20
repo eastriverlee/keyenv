@@ -177,6 +177,35 @@ func runForget(_ arguments: [String]) throws {
     printHintToTerminal("  " + messageStyle("unset \(name)", .argument))
 }
 
+func runDrop(_ arguments: [String]) throws {
+    if let only = arguments.first, only.hasPrefix("@") || only.hasPrefix("+"), arguments.count == 1 {
+        throw StoreFailure.forgetRefused(
+            "drop takes one key: monkeys drop \(only) <KEY>. to empty a profile's vault, monkeys forget \(only)")
+    }
+    let (scope, rest) = try resolveScope(arguments)
+    let name = try requireKey(rest)
+    guard let project = scope.project, let profile = scope.profile, project.profiles.contains(profile) else {
+        return try runForget(arguments)
+    }
+    if project.value(of: name, for: profile) != nil { return try runForget(arguments) }
+    let listed = project.keys(for: profile).contains(name)
+    var forgotten = true
+    do {
+        try secretStore.remove(forName: scope.storedName(name))
+    } catch {
+        guard listed else { throw error }
+        forgotten = false
+    }
+    if forgotten {
+        printToStandardError(messageStyle("forgot", .good) + " " + messageStyle(scope.storedName(name), .bold))
+    }
+    guard try removeKey(name, profile: profile, in: project) else {
+        throw StoreFailure.forgetRefused("\(name) is not listed in \(projectFileName) for @\(project.shortName(profile))")
+    }
+    printToStandardError(messageStyle("unlisted", .good) + " " + messageStyle(name, .bold)
+        + " from \(projectFileName) for @\(project.shortName(profile))")
+}
+
 func runList() throws {
     let stored = try secretStore.storedKeys()
     guard !stored.isEmpty else {
@@ -598,6 +627,7 @@ let rest = Array(arguments.dropFirst())
 do {
     switch command {
     case "remember": try runSet(rest)
+    case "drop": try runDrop(rest)
     case "list": try runList()
     case "preview": try runPreview(rest)
     case "forget": try runForget(rest)

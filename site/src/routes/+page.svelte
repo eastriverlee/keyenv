@@ -245,7 +245,9 @@ SENTRY_DSN`;
 		<p class="max-w-prose">
 			A <code>.monkeys</code> file names its namespace on the first line and lists the keys under a
 			profile. Commit it. In that directory <code>run</code> takes only the command. A value that
-			was never secret sits in the same file as <code>KEY=value</code>.
+			was never secret sits in the same file as <code>KEY=value</code>. <code>remember</code> keeps
+			that list: a key it does not name is added, a checkout with no file gets one, and
+			<code>drop</code> takes a key back out.
 		</p>
 		<div class="grid gap-3 sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)]">
 			<TreeView.Root class="rounded-lg border p-2">

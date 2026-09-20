@@ -88,6 +88,18 @@ inside a project is a bare `@`, with the key named again:
 monkeys run @ ANTHROPIC_API_KEY claude
 ```
 
+When the code you write starts reading a new variable, the key belongs in
+that file. `remember` puts it there itself, under the profile the secret went
+to, so ask a human to run it rather than editing the file around them:
+
+```sh
+monkeys remember STRIPE_SECRET_KEY
+```
+
+When the code stops reading one, `monkeys drop STRIPE_SECRET_KEY` forgets the
+secret and takes the key out of the file. `forget` on its own leaves the key
+listed, and every teammate's `run` keeps asking for it.
+
 The rest of the file's grammar, namespaces and several profiles among it, is
 in `monkeys help`. Reach for it when a file surprises you; the file is
 usually written already, and reading it is enough.
