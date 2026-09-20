@@ -324,11 +324,11 @@ the fix is to delete it and change the passphrase you would have sent.
 | --- | --- |
 | `monkeys set <KEY> [--clipboard]` | read a secret and store it |
 | `monkeys list` | print every stored key |
-| `monkeys preview [KEY[,KEY]]` | print each secret masked, with its length |
+| `monkeys preview [KEY[,KEY...]]` | print each secret masked, with its length |
 | `monkeys remove <KEY>` | delete one secret |
-| `monkeys run <KEY>[,<KEY>] <command>` | run a command with those secrets in its environment |
+| `monkeys run <KEY[,KEY...]> <command>` | run a command with those secrets in its environment |
 | `monkeys run <command>` | the same, with the keys a `.monkeys` file lists |
-| `monkeys export [KEY[,KEY]]` | vault lookup lines, to paste into a startup file |
+| `monkeys export [KEY[,KEY...]]` | vault lookup lines, to paste into a startup file |
 | `monkeys pack [path] [--open] [--only ...]` | the profiles as one encrypted `a.monkeys` |
 | `monkeys unpack <name> [directory]` | store its secrets, write its `.monkeys` |
 | `monkeys fill @a --with @b` | give `@a` the keys it lacks, from `@b` |
@@ -420,7 +420,7 @@ output is never coloured, since a script reads it.
 ## preview
 
 ```sh
-monkeys preview [@profile] [KEY[,KEY]]
+monkeys preview [@profile] [KEY[,KEY...]]
 ```
 
 Answers the question you usually have, which is whether the right secret is in
@@ -473,7 +473,7 @@ The `.monkeys` file is not touched: a project still lists the key, and
 ## run
 
 ```sh
-monkeys run [@profile] <KEY>[,<KEY>...] <command> [argument...]
+monkeys run [@profile] <KEY[,KEY...]> <command> [argument...]
 monkeys run [@profile] --all <command> [argument...]
 monkeys run <command> [argument...]                    # inside a project
 ```
@@ -619,7 +619,7 @@ into every shell you open.
 ## export
 
 ```sh
-monkeys export [@profile] [KEY[,KEY]]
+monkeys export [@profile] [KEY[,KEY...]]
 ```
 
 For a secret that every shell should carry from startup, `export` writes the
@@ -656,7 +656,7 @@ quiet.
 ## pack
 
 ```sh
-monkeys pack [path] [--open] [--only [KEY[,KEY]] [@profile[,profile] [KEY[,KEY]]]...]
+monkeys pack [path] [--open] [--only [KEY[,KEY...]] [@profile[,profile...] [KEY[,KEY...]]]...]
 ```
 
 Writes a project's secrets as one encrypted file, the only way they leave the

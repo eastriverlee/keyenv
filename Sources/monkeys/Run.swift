@@ -6,7 +6,7 @@ import Darwin
 import Glibc
 #endif
 
-let runInvocation = "monkeys run [--no-redact] [@profile] <KEY>[,<KEY>...] <command>, monkeys run [--no-redact] [@profile] --all <command>, or monkeys run [--no-redact] [@profile] <command> next to a \(projectFileName) file"
+let runInvocation = "monkeys run [--no-redact] [@profile] <KEY[,KEY...]> <command>, monkeys run [--no-redact] [@profile] --all <command>, or monkeys run [--no-redact] [@profile] <command> next to a \(projectFileName) file"
 let noRedactFlag = "--no-redact"
 
 private func namesToSpend(_ scope: Scope, _ arguments: [String]) throws -> (keys: [String], command: [String]) {

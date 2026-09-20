@@ -122,7 +122,7 @@ func runPreview(_ arguments: [String]) throws {
     }
 }
 
-private let packForm = "monkeys pack [path] [--open] [--only [KEY[,KEY]] [@profile[,profile] [KEY[,KEY]]]...]"
+private let packForm = "monkeys pack [path] [--open] [--only [KEY[,KEY...]] [@profile[,profile...] [KEY[,KEY...]]]...]"
 
 private let profileNeeded = "a bundle carries a profile: run this in a project with a \(projectFileName) file, or name one with @profile"
 
