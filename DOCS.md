@@ -646,7 +646,7 @@ quiet.
 ## pack
 
 ```sh
-monkeys pack [@profile] [name] [--only ...]
+monkeys pack [name] [--only [KEY...] [@profile[,profile] [KEY...]]...]
 ```
 
 Writes a project's secrets as one encrypted file, the only way they leave the
@@ -697,9 +697,8 @@ monkeys pack --only @test.foo DATABASE_URL @foo SENTRY_DSN
 > ```
 
 The bundle keeps that shape, block for block, and `unpack` writes it back as
-the project file. A leading `@profile` before `--only` means that one profile,
-with the keys that follow. The file name goes before `--only`, which takes the
-rest of the line. A key a profile does not list is refused rather than left
+the project file. The file name goes before `--only`, which takes the rest of
+the line. A key a profile does not list is refused rather than left
 out.
 
 The passphrase is read from standard input when it is not a terminal, for the

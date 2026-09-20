@@ -91,7 +91,7 @@ func runPreview(_ arguments: [String]) throws {
     }
 }
 
-private let packForm = "monkeys pack [@profile] [name] [--only @a,b KEY,KEY @c ...]"
+private let packForm = "monkeys pack [name] [--only [KEY...] [@profile[,profile] [KEY...]]...]"
 
 private let profileNeeded = "a bundle carries a profile: run this in a project with a \(projectFileName) file, or name one with @profile"
 
@@ -196,10 +196,7 @@ private func packedBlocks(_ arguments: [String]) throws -> (blocks: [Block], pro
     case .global:
         throw StoreFailure.bundleFailed(profileNeeded)
     case .named(let name):
-        guard !selection.contains(where: { $0.hasPrefix("@") }) else { throw StoreFailure.badInvocation(packForm) }
-        let profiles = try resolvedProfiles("@" + name, in: project)
-        let written = try project.map { restricted($0.blocks, toProfiles: profiles) } ?? storedBlocks(for: profiles)
-        return (try selectedBlocks(selection, from: written, defaultingTo: profiles, project: project), project, rest.first)
+        throw StoreFailure.bundleFailed("pack picks profiles after --only: monkeys pack --only @\(name)")
     case .none:
         guard let project else {
             guard selection.contains(where: { $0.hasPrefix("@") }) else { throw StoreFailure.bundleFailed(profileNeeded) }
