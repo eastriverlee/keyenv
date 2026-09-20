@@ -36,7 +36,7 @@ function Content({ path, url, markdownUrl }: { path: string; url: string; markdo
   const { toc } = use(page.load());
   const Mdx = page.body;
   const title = `${page.title} · ${appName}`;
-  const canonical = `${docsOrigin}${url}`;
+  const canonical = `${docsOrigin}${url}/`;
 
   return (
     <DocsPage toc={toc}>
