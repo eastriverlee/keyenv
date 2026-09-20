@@ -104,7 +104,10 @@ SENTRY_DSN`;
 			<img src="/favicon.svg" alt="" class="size-9" />
 			monkeys
 		</a>
-		<GitHubButton repo={repository} {stars} size="sm" />
+		<nav class="flex items-center gap-4 text-sm">
+			<a href="https://docs.monk3ys.dev" class="underline underline-offset-4">Docs</a>
+			<GitHubButton repo={repository} {stars} size="sm" />
+		</nav>
 	</header>
 
 	<img src="/monkeys.svg" alt="" class="mx-auto h-36 w-72 object-cover sm:h-48 sm:w-96" />
@@ -261,6 +264,8 @@ SENTRY_DSN`;
 	</section>
 
 	<footer class="text-muted-foreground flex flex-wrap items-center gap-x-2 text-sm">
+		<a href="https://docs.monk3ys.dev" class="underline underline-offset-4">Docs</a>
+		<span>·</span>
 		<a href="https://github.com/eastriverlee/monkeys" class="underline underline-offset-4">GitHub</a>
 		<span>·</span>
 		<span>MIT</span>

@@ -672,13 +672,10 @@ fails saying so. Machines like that want a different mechanism, not this one.
 
 ## Sponsoring
 
-If this has already saved you a key, you know what that is worth: a rotated
-key costs an afternoon, and a leaked one that nobody noticed costs more.
-[Sponsoring](https://github.com/sponsors/onethreeeseven) costs less than either
-and is what keeps the builds current, the plugin working in each new agent,
-and the redaction ahead of the ways output leaks. The first goal is an Apple
-Developer ID, so the macOS build is signed once and the keychain stops asking
-after every rebuild. One-time is fine.
+If it has saved you a key once, you know what it is worth.
+[Sponsoring](https://github.com/sponsors/onethreeeseven) keeps the builds
+current, the plugin working in each new agent, and the redaction ahead of new
+ways output leaks. One-time is fine.
 
 ## License
 

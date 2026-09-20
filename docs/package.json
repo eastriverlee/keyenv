@@ -1,0 +1,37 @@
+{
+  "name": "docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun scripts/content.ts && react-router build",
+    "dev": "react-router dev",
+    "start": "serve ./build/client --config ../../serve.json",
+    "types:check": "react-router typegen && tsc --noEmit",
+    "content": "bun scripts/content.ts"
+  },
+  "dependencies": {
+    "@react-router/node": "^8.4.0",
+    "cn": "^0.3.0",
+    "fumadocs-core": "16.15.12",
+    "fumadocs-mdx": "15.4.2",
+    "fumadocs-ui": "npm:@fumadocs/base-ui@16.15.12",
+    "isbot": "^5.2.2",
+    "lucide-react": "^1.47.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-router": "^8.4.0"
+  },
+  "devDependencies": {
+    "@react-router/dev": "^8.4.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/mdx": "^2.0.14",
+    "@types/node": "^26.6.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "react-router-devtools": "^6.2.3",
+    "serve": "^14.2.6",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0"
+  }
+}
