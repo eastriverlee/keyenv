@@ -336,11 +336,14 @@ func runDoctor(_ arguments: [String]) throws {
 }
 
 func runUnpack(_ arguments: [String]) throws {
-    guard let name = arguments.first, arguments.count <= 2 else {
-        throw StoreFailure.badInvocation("monkeys unpack <name> [directory]")
+    let keepsBundle = arguments.contains("--keep")
+    let positional = arguments.filter { $0 != "--keep" }
+    guard let name = positional.first, positional.count <= 2 else {
+        throw StoreFailure.badInvocation("monkeys unpack <name> [directory] [--keep]")
     }
-    let destination = try unpackDestination(arguments.dropFirst().first)
-    let bundle = try readBundle(from: bundlePath(name))
+    let destination = try unpackDestination(positional.dropFirst().first)
+    let path = bundlePath(name)
+    let bundle = try readBundle(from: path)
     try reconcileProjectFile(bundle.blocks.map { Block(profiles: $0.profiles, keys: $0.entries.map(\.name)) }, in: destination)
     for block in bundle.blocks {
         var stored: [String] = []
@@ -352,6 +355,12 @@ func runUnpack(_ arguments: [String]) throws {
         }
         printToStandardError(messageStyle("stored", .good) + " " + stored.map { messageStyle($0, .bold) }.joined(separator: ", "))
     }
+    guard !keepsBundle else { return }
+    guard unlink(path) == 0 else {
+        printToStandardError(messageStyle("kept", .bad) + " \(abbreviatingHome(path)): \(String(cString: strerror(errno)))")
+        return
+    }
+    printToStandardError(messageStyle("removed", .good) + " " + messageStyle(abbreviatingHome(path), .bold))
 }
 
 let arguments = Array(CommandLine.arguments.dropFirst())

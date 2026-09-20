@@ -65,7 +65,7 @@ project a bare `@` means no profile and reaches it, with the key given again:
 `monkeys run @ TYPESAFE_API_KEY claude`.
 
 A shared `<name>.monkeys` bundle fills a profile with `monkeys unpack`, which
-writes `.monkeys` at the git root and asks for a passphrase. A human runs it;
+writes `.monkeys` at the git root, asks for a passphrase and deletes the bundle. A human runs it;
 do not run it yourself.
 
 The command you start is what expands the variable, since that is where it

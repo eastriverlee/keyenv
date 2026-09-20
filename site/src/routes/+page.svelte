@@ -256,8 +256,8 @@ SENTRY_DSN`;
 		</p>
 		<CodeFile code={packLine} />
 		<p class="max-w-prose">
-			On the other machine, <code>unpack</code> asks for the passphrase, stores the secrets, and
-			writes <code>.monkeys</code> at the root of the checkout, wherever inside it you run it.
+			On the other machine, <code>unpack</code> asks for the passphrase, stores the secrets, writes
+			<code>.monkeys</code> at the root of the checkout, wherever inside it you run it, and deletes the bundle.
 			That is the only way a secret leaves the vault.
 		</p>
 		<CodeFile code={unpackLine} />

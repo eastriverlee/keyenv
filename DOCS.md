@@ -140,21 +140,25 @@ A secret you store under a key you already stored replaces the old one, and
 nothing says so. The previous secret is gone, and the vault keeps no history
 to recover it from.
 
-To read a secret in full, open Keychain Access or your desktop's own secret
-browser, where the decision to look at one is yours and deliberate. No
-`monkeys` command prints one.
+To read a secret in full, open the vault itself, Keychain Access or your
+desktop's secret browser, where the decision to look at one is yours and
+deliberate. No `monkeys` command prints one.
 
-### Where secrets are stored
+## Vault
 
-The vault is the operating system's own secret store: on macOS the login
-keychain, reached through Security.framework; on Linux whatever answers the
-Secret Service D-Bus API, which is gnome-keyring on most desktops and KWallet
-on KDE, reached through `secret-tool`.
+The vault is the operating system's own secret store, and `monkeys` keeps
+nothing anywhere else. On macOS it is the login keychain, reached through
+Security.framework; on Linux it is whatever answers the Secret Service D-Bus
+API, which is gnome-keyring on most desktops and KWallet on KDE, reached
+through `secret-tool`. There is no file of `monkeys`'s own to back up, leak
+or forget, and the desktop's own tools see everything `monkeys` stores.
+
+### What an item looks like
 
 Each secret is one item carrying two attributes: `service` is `monkeys`, and
 `account` is `<profile>/<KEY>`, or `<KEY>` alone for a global key. The label
-is `monkeys: ` followed by the account. Your desktop's own tools see the same
-items, and deleting one there deletes it for `monkeys`.
+is `monkeys: ` followed by the account. Deleting an item in the desktop's
+tools deletes it for `monkeys`.
 
 On macOS that is a generic password in the login keychain. Search Keychain
 Access for `monkeys`, or ask for one by account:
@@ -172,6 +176,20 @@ On Linux the same attributes go through `secret-tool`:
 ```sh
 secret-tool lookup service monkeys account foo/OPENROUTER_API_KEY
 ```
+
+### The keychain prompt on macOS
+
+A binary built from source carries an ad-hoc signature, whose identity is a
+hash of the binary itself. A rebuild changes that identity, so the keychain
+may ask you to allow access once when the new build first reads an item the
+old one stored. The release builds are what `brew` and the install script
+give you.
+
+### The Secret Service on Linux
+
+The Secret Service is a desktop session service. Over SSH or in a container
+there is usually no session bus and no secret daemon, and `monkeys` fails
+saying so. Machines like that want a different mechanism, not this one.
 
 ## .monkeys
 
@@ -210,15 +228,12 @@ it, and that is the only way a secret leaves the vault.
 The bundle keeps the shape of the `.monkeys` file, block for block, so
 `unpack` can write the file back and store each secret under its profile. It
 is safe to send over whatever you already use; the passphrase goes another
-way.
+way, and `unpack` deletes the bundle once it has done its job.
 
-A bundle has no place in a repository, and the ignore rule needs two lines,
-because `*.monkeys` alone also matches the `.monkeys` file you do commit:
-
-```
-*.monkeys
-!.monkeys
-```
+A bundle has no reason to be in a repository, and `.monkeys` needs no ignore
+rule, since it is meant to be committed. If a bundle is committed by mistake
+anyway, what leaked is a sealed file: without the passphrase it is noise, and
+the fix is to delete it and change the passphrase you would have sent.
 
 # Commands
 
@@ -521,13 +536,22 @@ lines and you paste them into your startup file:
 monkeys export TYPESAFE_API_KEY
 ```
 
+On macOS:
+
 > ```
 > export TYPESAFE_API_KEY="$(security find-generic-password -s monkeys -a TYPESAFE_API_KEY -w)"
 > ```
 
-No secret is in that line. It asks the keychain when the shell starts, the way
-you would have written it by hand, and on Linux it asks `secret-tool` instead.
-With no keys, inside a project, it writes one line per key the file lists.
+On Linux:
+
+> ```
+> export TYPESAFE_API_KEY="$(secret-tool lookup service monkeys account TYPESAFE_API_KEY)"
+> ```
+
+No secret is in either line. Each asks the vault when the shell starts, the
+way you would have written it by hand, so a startup file written on one
+machine is for that machine's vault. With no keys, inside a project, it writes
+one line per key the file lists.
 
 `monkeys` writes nothing into your startup file for you: a secret that every
 process on the machine inherits is a decision to make with the file open.
@@ -601,11 +625,11 @@ rare script that needs to.
 ## unpack
 
 ```sh
-monkeys unpack <name> [directory]
+monkeys unpack <name> [directory] [--keep]
 ```
 
-Reads a bundle, stores its secrets in your vault under each profile, and
-writes the profiles and keys as a `.monkeys` file:
+Reads a bundle, stores its secrets in your vault under each profile, writes
+the profiles and keys as a `.monkeys` file, and deletes the bundle:
 
 ```sh
 monkeys unpack test.foo
@@ -616,10 +640,14 @@ monkeys unpack test.foo
 > wrote .monkeys: @test.foo,foo @foo, 3 keys
 > stored test.foo/DATABASE_URL, foo/DATABASE_URL, test.foo/STRIPE_SECRET_KEY, foo/STRIPE_SECRET_KEY
 > stored foo/SENTRY_DSN
+> removed test.foo.monkeys
 > ```
 
 `<name>` is the bundle, with or without its `.monkeys` suffix; a path works
-too.
+too. The bundle is deleted only once every secret is stored and the file is
+written, since by then it has done its job and a copy left behind is one more
+thing to lose. `--keep` leaves it where it was, for a bundle you are handing
+on to someone else.
 
 The file goes at the root of the git checkout, the way `.gitignore` sits at
 the root, so `monkeys run` works from any directory in it. Outside a checkout
@@ -724,6 +752,7 @@ monkeys unpack ~/Downloads/test.foo.monkeys
 > Passphrase:
 > wrote .monkeys: @test.foo, 2 keys
 > stored test.foo/DATABASE_URL, test.foo/STRIPE_SECRET_KEY
+> removed /Users/them/Downloads/test.foo.monkeys
 > ```
 
 Their vault now holds the secrets under the same profile, and `monkeys run
@@ -756,17 +785,3 @@ that person's vault. And the bookkeeping a project keeps about its secrets, a
 `.env` nobody commits, a `.env.example` that drifts from it, a `.gitignore` line
 to keep the two apart, collapses into one committed `.monkeys` file that says
 what is needed and holds nothing.
-
-### The keychain prompt on macOS
-
-A binary built from source carries an ad-hoc signature, whose identity is a
-hash of the binary itself. A rebuild changes that identity, so the keychain
-may ask you to allow access once when the new build first reads an item the
-old one stored. The release builds are what `brew` and the install script
-give you.
-
-### The Secret Service on Linux
-
-The Secret Service is a desktop session service. Over SSH or in a container
-there is usually no session bus and no secret daemon, and `monkeys` fails
-saying so. Machines like that want a different mechanism, not this one.

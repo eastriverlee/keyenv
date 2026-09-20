@@ -25,7 +25,7 @@ let commandSummaries = [
                    summary: "vault lookups for a startup file"),
     CommandSummary(verb: "pack", arguments: "[name] [--only ...]",
                    summary: "one encrypted file of the profiles"),
-    CommandSummary(verb: "unpack", arguments: "<name> [directory]",
+    CommandSummary(verb: "unpack", arguments: "<name> [dir] [--keep]",
                    summary: "store its secrets, write its .monkeys"),
     CommandSummary(verb: "fill", arguments: "@a --with @b",
                    summary: "give @a the keys it lacks, from @b"),
@@ -109,8 +109,8 @@ var usage: String {
       \(outputStyle("monkeys run @ TYPESAFE_API_KEY claude", .argument))   inside one, the same secret
 
     For a shell that should carry secrets from startup, export writes the lines
-    to paste into your startup file yourself. Each asks the vault for one
-    secret when the shell starts; none of them holds one:
+    to paste into your startup file yourself. Each asks this machine's vault
+    for one secret when the shell starts; none of them holds one:
 
       \(outputStyle("monkeys export TYPESAFE_API_KEY", .argument))
       \(outputStyle("monkeys export", .argument))                the project's keys
@@ -123,9 +123,10 @@ var usage: String {
     the file mentions. The bundle keeps that shape, and unpack writes it
     back as the project file. The file is named after the first profile it
     carries unless you name it, before --only.
-    pack asks for a passphrase; unpack asks again, stores the secrets, and
+    pack asks for a passphrase; unpack asks again, stores the secrets,
     writes the keys into .monkeys at the root of the git checkout you are
-    in, here when there is none, or in the directory you name:
+    in, here when there is none, or in the directory you name, and deletes
+    the bundle, since it has done its job; --keep leaves it:
 
       \(outputStyle("monkeys pack", .argument))                   writes test.foo.monkeys
       \(outputStyle("monkeys pack --only @foo", .argument))       writes foo.monkeys
