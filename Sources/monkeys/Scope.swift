@@ -69,7 +69,7 @@ struct Scope {
     let profile: String?
     let project: Project?
 
-    static let global = Scope(profile: nil, project: nil)
+    static let noProfile = Scope(profile: nil, project: nil)
 
     func storedName(_ key: String) -> String {
         guard let profile else { return key }
@@ -102,14 +102,14 @@ func isValidProfileName(_ name: String) -> Bool {
 
 enum ProfileArgument {
     case none
-    case global
+    case noProfile
     case named(String)
 }
 
 func takeProfileArgument(_ arguments: [String]) throws -> (profile: ProfileArgument, rest: [String]) {
     guard let first = arguments.first, first.hasPrefix("@") else { return (.none, arguments) }
     let rest = Array(arguments.dropFirst())
-    guard first != "@" else { return (.global, rest) }
+    guard first != "@" else { return (.noProfile, rest) }
     let name = String(first.dropFirst())
     guard isValidProfileName(name) else { throw StoreFailure.invalidProfileName(first) }
     return (.named(name), rest)
@@ -117,8 +117,8 @@ func takeProfileArgument(_ arguments: [String]) throws -> (profile: ProfileArgum
 
 func scope(for chosen: ProfileArgument) throws -> Scope {
     switch chosen {
-    case .global:
-        return .global
+    case .noProfile:
+        return .noProfile
     case .named(let name):
         guard let project = try locateProject() else { return Scope(profile: name, project: nil) }
         do {

@@ -146,7 +146,7 @@ or forget, and the desktop's own tools see everything `monkeys` stores.
 ### What an item looks like
 
 Each secret is one item carrying two attributes: `service` is `monkeys`, and
-`account` is `<profile>/<KEY>`, or `<KEY>` alone for a global key, so a
+`account` is `<profile>/<KEY>`, or `<KEY>` alone for a key with no profile, so a
 project's item reads `foo.test/OPENROUTER_API_KEY`. The label is `monkeys: `
 followed by the account. Deleting an item in the desktop's tools deletes it
 for `monkeys`.
@@ -217,8 +217,8 @@ monkeys set STRIPE_SECRET_KEY        # stores foo.test/STRIPE_SECRET_KEY
 monkeys preview
 ```
 
-`list` stays global and shows the whole vault as blocks by profile, so you can
-see what each one holds.
+`list` shows the whole vault as blocks by profile, so you can see what each
+one holds.
 
 ### Several profiles
 
@@ -261,24 +261,24 @@ namespace supplies the part before the dot.
 
 ### No profile
 
-A key stored outside any project has no profile and needs no `@`. Those are
-the global keys, where a secret that belongs to you rather than to a project
-lives, such as the one a tool you start from anywhere reads:
+A key stored outside any project has no profile and needs no `@`. That is
+where a secret that belongs to you rather than to a project lives, such as
+the one a tool you start from anywhere reads:
 
 ```sh
 monkeys set TYPESAFE_API_KEY
 monkeys run TYPESAFE_API_KEY claude
 ```
 
-A project profile never reads from the global keys. A key missing in
-`@production` is missing there even when a global copy exists, so a project
-cannot quietly pick up a secret meant for another.
+A project profile never reads from the keys with no profile. A key missing
+in `@production` is missing there even when a copy with no profile exists,
+so a project cannot quietly pick up a secret meant for another.
 
 Inside a project every command is scoped to that project's profile, so the
-global keys are out of reach there: `monkeys run` reads `foo.test/`, and
-`monkeys set TYPESAFE_API_KEY` would write `foo.test/TYPESAFE_API_KEY`. A
-bare `@` means no profile. It sets the project file aside, so keys are given
-again, and reaches the global ones without leaving the directory:
+keys with no profile are out of reach there: `monkeys run` reads `foo.test/`,
+and `monkeys set TYPESAFE_API_KEY` would write `foo.test/TYPESAFE_API_KEY`.
+A bare `@` means no profile. It sets the project file aside, so keys are
+given again, and reaches those keys without leaving the directory:
 
 ```sh
 monkeys run @ TYPESAFE_API_KEY claude
@@ -449,7 +449,7 @@ the fix is to delete it and change the passphrase you would have sent.
 
 Every command takes a leading `@profile`, one the file declares;
 `@namespace.profile` reaches a profile from anywhere, and a bare `@` means no
-profile, the global keys. Where several keys or profiles go, they are joined
+profile. Where several keys or profiles go, they are joined
 with commas, `DATABASE_URL,STRIPE_SECRET_KEY` and `@test,production`, so one
 word is one list. Giving no key means every key for `preview` and `export`, or the
 project's keys inside a project. `run` asks to be told, since the keys are how
@@ -503,7 +503,7 @@ cat token.txt | monkeys set GITHUB_TOKEN
 Inside a project the key is stored under the project's profile, so `monkeys
 set STRIPE_SECRET_KEY` there writes `foo.test/STRIPE_SECRET_KEY`. A leading
 `@profile` picks another, `@namespace.profile` one of another project, and a
-bare `@` the global keys.
+bare `@` no profile.
 
 A key you already stored is replaced, and nothing says so.
 
@@ -517,8 +517,8 @@ monkeys list
 ```
 
 Prints the whole vault in the shape of a `.monkeys` file, one block per
-profile, with every profile under its full name and the global keys first
-under a bare `@`:
+profile, with every profile under its full name and the keys with no profile
+first, under a bare `@`:
 
 ```sh
 monkeys list
@@ -538,8 +538,9 @@ monkeys list
 > ```
 
 Two profiles that share a block in a project's file appear here as two
-blocks, since the vault holds a secret per profile. `list` is global, so it
-shows every project at once, and it prints nothing when the vault is empty.
+blocks, since the vault holds a secret per profile. `list` reads the whole
+vault, so it shows every project at once, and prints nothing when the vault
+is empty.
 
 ## preview
 
@@ -574,7 +575,7 @@ monkeys preview SHORT_ONE
 A length and a two-character prefix are enough to tell a secret pasted whole
 from one that lost a character on the way, or one provider's from another's.
 
-With no keys, `preview` shows every key in the profile: the global ones
+With no keys, `preview` shows every key in the profile: those with no profile
 outside a project, the file's keys inside one.
 
 ## remove
@@ -584,7 +585,7 @@ monkeys remove [@profile] <KEY>
 ```
 
 Deletes one secret from the vault. Inside a project the key is the project's;
-`@` reaches a global one from there:
+`@` reaches one with no profile from there:
 
 ```sh
 monkeys remove OPENROUTER_API_KEY
@@ -646,8 +647,8 @@ would rather not say which:
 monkeys run --all ./bench
 ```
 
-Outside a project that is every global key, which is the wide end of the
-tool. Name the keys the command reads when you can.
+Outside a project that is every key with no profile, which is the wide end
+of the tool. Name the keys the command reads when you can.
 
 ### When a secret is missing
 

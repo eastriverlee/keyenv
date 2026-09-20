@@ -63,8 +63,9 @@ the gap without printing a secret; a human decides that, since it may put a
 test secret into production.
 
 Read the file before adding a key; it is the list. A profile never falls back
-to the global keys: a key missing in `@production` is missing there even when
-a global copy exists. A key stored outside any project has no profile; inside
+to the keys with no profile: a key missing in `@production` is missing there
+even when a copy with no profile exists. A key stored outside any project has
+no profile; inside
 a project a bare `@` means no profile and reaches it, with the key given
 again: `monkeys run @ TYPESAFE_API_KEY claude`.
 

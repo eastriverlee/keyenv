@@ -59,13 +59,13 @@ DEMO_VALUES = {**SHOWN_VALUES, **SPENT_VALUES}
 
 
 def stored_names():
-    """The global keys, read from the first block that list prints."""
+    """The keys with no profile, read from the first block that list prints."""
     listing = subprocess.run(["monkeys", "list"], capture_output=True, text=True).stdout
-    names, in_global = set(), False
+    names, in_first_block = set(), False
     for line in listing.splitlines():
         if line.startswith("@"):
-            in_global = line == "@"
-        elif in_global and line:
+            in_first_block = line == "@"
+        elif in_first_block and line:
             names.add(line)
     return names
 

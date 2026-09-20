@@ -98,11 +98,10 @@ var usage: String {
       \(outputStyle("monkeys set @production SENTRY_DSN", .argument))   stored as foo.production/SENTRY_DSN
       \(outputStyle("monkeys set @foo.production SENTRY_DSN", .argument))    the same, from anywhere
 
-    A key stored outside any project has no profile and needs no @; those
-    are the global keys. Inside a project every command is scoped to its
-    profile, so a bare @ says no profile: it sets the file aside, keys are
-    given again, and the global keys are reached without leaving the
-    directory:
+    A key stored outside any project has no profile and needs no @. Inside
+    a project every command is scoped to its profile, so a bare @ says no
+    profile: it sets the file aside, keys are given again, and the keys with
+    no profile are reached without leaving the directory:
 
       \(outputStyle("monkeys run TYPESAFE_API_KEY claude", .argument))     outside a project
       \(outputStyle("monkeys run @ TYPESAFE_API_KEY claude", .argument))   inside one, the same secret

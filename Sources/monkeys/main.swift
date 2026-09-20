@@ -242,7 +242,7 @@ private func packedBlocks(_ arguments: [String]) throws -> (blocks: [Block], pro
     }
     guard rest.count <= 1 else { throw StoreFailure.badInvocation(packForm) }
     switch chosen {
-    case .global:
+    case .noProfile:
         throw StoreFailure.bundleFailed(profileNeeded)
     case .named(let name):
         throw StoreFailure.bundleFailed("pack picks profiles after --only: monkeys pack --only @\(name)")
