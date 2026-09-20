@@ -7,10 +7,6 @@ struct CommandSummary {
 let commandSummaries = [
     CommandSummary(verb: "set", arguments: "<KEY> [--clipboard]",
                    summary: "store a secret typed, piped or pasted"),
-    CommandSummary(verb: "list", arguments: "",
-                   summary: "the whole vault, as blocks by profile"),
-    CommandSummary(verb: "preview", arguments: "[KEY[,KEY...]]",
-                   summary: "show each secret masked, with length"),
     CommandSummary(verb: "remove", arguments: "<KEY>",
                    summary: "delete one stored secret"),
     CommandSummary(verb: "run", arguments: "<KEY[,KEY...]> <command>",
@@ -21,16 +17,20 @@ let commandSummaries = [
                    summary: "the same, output untouched"),
     CommandSummary(verb: "run", arguments: "<command>",
                    summary: "the same, keys read from .monkeys"),
-    CommandSummary(verb: "export", arguments: "[KEY[,KEY...]]",
-                   summary: "vault lookups for a startup file"),
     CommandSummary(verb: "pack", arguments: "[path] [--only ...]",
                    summary: "one encrypted file of the profiles"),
     CommandSummary(verb: "unpack", arguments: "<name> [dir] [--keep]",
                    summary: "store its secrets, write its .monkeys"),
     CommandSummary(verb: "fill", arguments: "@a --with @b",
                    summary: "give @a the keys it lacks, from @b"),
+    CommandSummary(verb: "list", arguments: "",
+                   summary: "the whole vault, as blocks by profile"),
+    CommandSummary(verb: "preview", arguments: "[KEY[,KEY...]]",
+                   summary: "show each secret masked, with length"),
     CommandSummary(verb: "doctor", arguments: "[--short]",
                    summary: "what each profile has and lacks"),
+    CommandSummary(verb: "export", arguments: "[KEY[,KEY...]]",
+                   summary: "vault lookups for a startup file"),
 ]
 
 private func plainInvocation(_ command: CommandSummary) -> String {

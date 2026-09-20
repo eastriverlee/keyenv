@@ -436,16 +436,16 @@ the fix is to delete it and change the passphrase you would have sent.
 | command | what it does |
 | --- | --- |
 | `monkeys set <KEY> [--clipboard]` | read a secret and store it |
-| `monkeys list` | the whole vault, as blocks by profile |
-| `monkeys preview [KEY[,KEY...]]` | print each secret masked, with its length |
 | `monkeys remove <KEY>` | delete one secret |
 | `monkeys run <KEY[,KEY...]> <command>` | run a command with those secrets in its environment |
 | `monkeys run <command>` | the same, with the keys a `.monkeys` file lists |
-| `monkeys export [KEY[,KEY...]]` | vault lookup lines, to paste into a startup file |
 | `monkeys pack [path] [--open] [--only ...]` | the profiles as one encrypted `a.monsecrets` |
 | `monkeys unpack <name> [directory]` | store its secrets, write its `.monkeys` |
 | `monkeys fill @a --with @b` | give `@a` the keys it lacks, from `@b` |
+| `monkeys list` | the whole vault, as blocks by profile |
+| `monkeys preview [KEY[,KEY...]]` | print each secret masked, with its length |
 | `monkeys doctor [--short]` | what each profile has and lacks |
+| `monkeys export [KEY[,KEY...]]` | vault lookup lines, to paste into a startup file |
 
 Every command takes a leading `@profile`, one the file declares;
 `@namespace.profile` reaches a profile from anywhere, and a bare `@` means no
@@ -509,74 +509,6 @@ A key you already stored is replaced, and nothing says so.
 
 Storing is a human's job. An agent that types a secret puts it in its own
 context before it reaches the vault, so the skill tells it to ask instead.
-
-## list
-
-```sh
-monkeys list
-```
-
-Prints the whole vault in the shape of a `.monkeys` file, one block per
-profile, with every profile under its full name and the keys with no profile
-first, under a bare `@`:
-
-```sh
-monkeys list
-```
-
-> ```monkeys
-> @
-> TYPESAFE_API_KEY
->
-> @foo.production
-> DATABASE_URL
-> SENTRY_DSN
->
-> @foo.test
-> DATABASE_URL
-> STRIPE_SECRET_KEY
-> ```
-
-Two profiles that share a block in a project's file appear here as two
-blocks, since the vault holds a secret per profile. `list` reads the whole
-vault, so it shows every project at once, and prints nothing when the vault
-is empty.
-
-## preview
-
-```sh
-monkeys preview [@profile] [KEY[,KEY...]]
-```
-
-Answers the question you usually have, which is whether the right secret is in
-there, without printing it:
-
-```sh
-monkeys preview
-```
-
-> ```
-> GITHUB_TOKEN        gh...f 40
-> OPENROUTER_API_KEY  sk...2 73
-> ```
-
-It shows the first two characters, the last one, and the length. A secret is
-masked whole whenever fewer than five characters would stay hidden, so nothing
-under eight characters long gives any of itself away:
-
-```sh
-monkeys preview SHORT_ONE
-```
-
-> ```
-> SHORT_ONE  ... 6
-> ```
-
-A length and a two-character prefix are enough to tell a secret pasted whole
-from one that lost a character on the way, or one provider's from another's.
-
-With no keys, `preview` shows every key in the profile: those with no profile
-outside a project, the file's keys inside one.
 
 ## remove
 
@@ -741,43 +673,6 @@ monkeys run --no-redact OPENROUTER_API_KEY envsubst < template > config
 exit. That is the way to work with a profile for a while without putting it
 into every shell you open.
 
-## export
-
-```sh
-monkeys export [@profile] [KEY[,KEY...]]
-```
-
-For a secret that every shell should carry from startup, `export` writes the
-lines and you paste them into your startup file:
-
-```sh
-monkeys export TYPESAFE_API_KEY
-```
-
-On macOS:
-
-> ```
-> export TYPESAFE_API_KEY="$(security find-generic-password -s monkeys -a TYPESAFE_API_KEY -w)"
-> ```
-
-On Linux:
-
-> ```
-> export TYPESAFE_API_KEY="$(secret-tool lookup service monkeys account TYPESAFE_API_KEY)"
-> ```
-
-No secret is in either line. Each asks the vault when the shell starts, the
-way you would have written it by hand, so a startup file written on one
-machine is for that machine's vault. With no keys, inside a project, it writes
-one line per key the file lists.
-
-`monkeys` writes nothing into your startup file for you: a secret that every
-process on the machine inherits is a decision to make with the file open.
-
-The keychain treats `security` as its own program, so the first shell that
-runs the line asks once whether to allow it. Answer Always Allow and it stays
-quiet.
-
 ## pack
 
 ```sh
@@ -926,6 +821,74 @@ elsewhere they are whatever the source holds. Either side may be another
 project's profile, `@bar.test`, which is how a secret shared by two projects
 is stored once and copied.
 
+## list
+
+```sh
+monkeys list
+```
+
+Prints the whole vault in the shape of a `.monkeys` file, one block per
+profile, with every profile under its full name and the keys with no profile
+first, under a bare `@`:
+
+```sh
+monkeys list
+```
+
+> ```monkeys
+> @
+> TYPESAFE_API_KEY
+>
+> @foo.production
+> DATABASE_URL
+> SENTRY_DSN
+>
+> @foo.test
+> DATABASE_URL
+> STRIPE_SECRET_KEY
+> ```
+
+Two profiles that share a block in a project's file appear here as two
+blocks, since the vault holds a secret per profile. `list` reads the whole
+vault, so it shows every project at once, and prints nothing when the vault
+is empty.
+
+## preview
+
+```sh
+monkeys preview [@profile] [KEY[,KEY...]]
+```
+
+Answers the question you usually have, which is whether the right secret is in
+there, without printing it:
+
+```sh
+monkeys preview
+```
+
+> ```
+> GITHUB_TOKEN        gh...f 40
+> OPENROUTER_API_KEY  sk...2 73
+> ```
+
+It shows the first two characters, the last one, and the length. A secret is
+masked whole whenever fewer than five characters would stay hidden, so nothing
+under eight characters long gives any of itself away:
+
+```sh
+monkeys preview SHORT_ONE
+```
+
+> ```
+> SHORT_ONE  ... 6
+> ```
+
+A length and a two-character prefix are enough to tell a secret pasted whole
+from one that lost a character on the way, or one provider's from another's.
+
+With no keys, `preview` shows every key in the profile: those with no profile
+outside a project, the file's keys inside one.
+
 ## doctor
 
 ```sh
@@ -962,6 +925,43 @@ monkeys doctor --short
 > ```
 > missing @production: STRIPE_SECRET_KEY,SENTRY_DSN
 > ```
+
+## export
+
+```sh
+monkeys export [@profile] [KEY[,KEY...]]
+```
+
+For a secret that every shell should carry from startup, `export` writes the
+lines and you paste them into your startup file:
+
+```sh
+monkeys export TYPESAFE_API_KEY
+```
+
+On macOS:
+
+> ```
+> export TYPESAFE_API_KEY="$(security find-generic-password -s monkeys -a TYPESAFE_API_KEY -w)"
+> ```
+
+On Linux:
+
+> ```
+> export TYPESAFE_API_KEY="$(secret-tool lookup service monkeys account TYPESAFE_API_KEY)"
+> ```
+
+No secret is in either line. Each asks the vault when the shell starts, the
+way you would have written it by hand, so a startup file written on one
+machine is for that machine's vault. With no keys, inside a project, it writes
+one line per key the file lists.
+
+`monkeys` writes nothing into your startup file for you: a secret that every
+process on the machine inherits is a decision to make with the file open.
+
+The keychain treats `security` as its own program, so the first shell that
+runs the line asks once whether to allow it. Answer Always Allow and it stays
+quiet.
 
 # Sharing a profile
 
