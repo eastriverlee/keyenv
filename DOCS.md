@@ -301,6 +301,13 @@ their keys and secrets, sealed with ChaCha20-Poly1305 under a
 key scrypt derives from a passphrase. `pack` writes one and `unpack` reads
 it, and that is the only way a secret leaves the vault.
 
+The file is two lines of text. The first names the format and the scrypt
+cost the key was derived with, so a bundle keeps opening after the default
+cost rises; the second is the salt and the sealed bytes, base64. Deriving
+the key costs 128 MiB of memory and a fraction of a second, once for `pack`
+and once for `unpack`, which is what makes guessing the passphrase
+expensive.
+
 The bundle keeps the shape of the `.monkeys` file, block for block, so
 `unpack` can write the file back and store each secret under its profile. It
 is safe to send over whatever you already use; the passphrase goes another

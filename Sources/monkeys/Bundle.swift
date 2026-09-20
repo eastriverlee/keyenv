@@ -9,11 +9,37 @@ import Glibc
 #endif
 
 let bundleSuffix = ".monkeys"
-private let bundleHeader = "monkeys bundle 1"
+private let bundleFormat = "monkeys bundle 1"
 private let saltLength = 16
-private let scryptRounds = 1 << 17
-private let scryptBlockSize = 8
-private let scryptParallelism = 1
+
+struct ScryptCost {
+    let log2Rounds: Int
+    let blockSize: Int
+    let parallelism: Int
+
+    static let current = ScryptCost(log2Rounds: 17, blockSize: 8, parallelism: 1)
+
+    var headerFields: String { "scrypt \(log2Rounds) \(blockSize) \(parallelism)" }
+
+    var isAffordable: Bool {
+        (10...22).contains(log2Rounds) && (1...32).contains(blockSize) && (1...8).contains(parallelism)
+    }
+}
+
+private func bundleHeader(_ cost: ScryptCost) -> String {
+    bundleFormat + " " + cost.headerFields
+}
+
+private func costInHeader(_ line: Substring) -> ScryptCost? {
+    let words = line.split(separator: " ")
+    guard words.count >= 3, words[0...2].joined(separator: " ") == bundleFormat else { return nil }
+    let fields = Array(words.dropFirst(3))
+    if fields.isEmpty { return .current }
+    guard fields.count == 4, fields[0] == "scrypt",
+          let log2Rounds = Int(fields[1]), let blockSize = Int(fields[2]), let parallelism = Int(fields[3]) else { return nil }
+    let cost = ScryptCost(log2Rounds: log2Rounds, blockSize: blockSize, parallelism: parallelism)
+    return cost.isAffordable ? cost : nil
+}
 
 struct BundleBlock {
     let profiles: [String]
@@ -45,10 +71,10 @@ private func readPassphrase(confirming: Bool) throws -> String {
     return entered
 }
 
-private func derivedKey(_ passphrase: String, salt: Data) throws -> SymmetricKey {
+private func derivedKey(_ passphrase: String, salt: Data, cost: ScryptCost) throws -> SymmetricKey {
     try KDF.Scrypt.deriveKey(
         from: Data(passphrase.utf8), salt: salt, outputByteCount: 32,
-        rounds: scryptRounds, blockSize: scryptBlockSize, parallelism: scryptParallelism
+        rounds: 1 << cost.log2Rounds, blockSize: cost.blockSize, parallelism: cost.parallelism
     )
 }
 
@@ -95,9 +121,10 @@ private func deserialized(_ plaintext: Data) throws -> ProfileBundle {
 func writeBundle(_ bundle: ProfileBundle, to path: String) throws {
     let passphrase = try readPassphrase(confirming: true)
     let salt = randomSalt()
-    let sealed = try ChaChaPoly.seal(serialized(bundle), using: try derivedKey(passphrase, salt: salt))
+    let cost = ScryptCost.current
+    let sealed = try ChaChaPoly.seal(serialized(bundle), using: try derivedKey(passphrase, salt: salt, cost: cost))
     let body = (salt + sealed.combined).base64EncodedString()
-    let contents = bundleHeader + "\n" + body + "\n"
+    let contents = bundleHeader(cost) + "\n" + body + "\n"
     guard FileManager.default.createFile(atPath: path, contents: Data(contents.utf8), attributes: [.posixPermissions: 0o600]) else {
         throw StoreFailure.bundleFailed("cannot write \(path)")
     }
@@ -108,12 +135,12 @@ func readBundle(from path: String) throws -> ProfileBundle {
         throw StoreFailure.bundleFailed("cannot read \(path)")
     }
     let lines = String(decoding: contents, as: UTF8.self).split(separator: "\n")
-    guard lines.count == 2, lines[0] == bundleHeader, let raw = Data(base64Encoded: String(lines[1])),
+    guard lines.count == 2, let cost = costInHeader(lines[0]), let raw = Data(base64Encoded: String(lines[1])),
           raw.count > saltLength else {
         throw StoreFailure.bundleFailed("\(path) is not a monkeys bundle")
     }
     let passphrase = try readPassphrase(confirming: false)
-    let key = try derivedKey(passphrase, salt: raw.prefix(saltLength))
+    let key = try derivedKey(passphrase, salt: raw.prefix(saltLength), cost: cost)
     do {
         let sealed = try ChaChaPoly.SealedBox(combined: raw.dropFirst(saltLength))
         return try deserialized(try ChaChaPoly.open(sealed, using: key))
