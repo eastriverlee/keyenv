@@ -251,7 +251,7 @@ SENTRY_DSN`;
 	<section class="flex flex-col gap-4">
 		<h2 class="text-2xl font-bold tracking-tight">Hand the profile to a teammate</h2>
 		<p class="max-w-prose">
-			<code>pack</code> asks for a passphrase and writes <code>a.monkeys</code>: every profile the file declares, or the ones <code>--only @test.foo</code> names, with their
+			<code>pack</code> asks for a passphrase and writes <code>/tmp/a.monkeys</code>, outside the repository: every profile the file declares, or the ones <code>--only @test.foo</code> names, with their
 			keys and secrets, sealed. Send the file however you like, and the passphrase another way.
 		</p>
 		<CodeFile code={packLine} />

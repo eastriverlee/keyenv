@@ -23,7 +23,7 @@ let commandSummaries = [
                    summary: "the same, keys read from .monkeys"),
     CommandSummary(verb: "export", arguments: "[KEY...]",
                    summary: "vault lookups for a startup file"),
-    CommandSummary(verb: "pack", arguments: "[name] [--only ...]",
+    CommandSummary(verb: "pack", arguments: "[path] [--only ...]",
                    summary: "one encrypted file of the profiles"),
     CommandSummary(verb: "unpack", arguments: "<name> [dir] [--keep]",
                    summary: "store its secrets, write its .monkeys"),
@@ -121,14 +121,16 @@ var usage: String {
     it belong to every profile in that block, the way the file is written;
     keys with no @ before them come from the default profile, the first
     the file mentions. The bundle keeps that shape, and unpack writes it
-    back as the project file. The file is a.monkeys unless you name it,
-    before --only.
+    back as the project file. It goes to /tmp/a.monkeys, outside any
+    repository; a path before --only puts it elsewhere, into a directory
+    you name or at a file you name.
     pack asks for a passphrase; unpack asks again, stores the secrets,
     writes the keys into .monkeys at the root of the git checkout you are
     in, here when there is none, or in the directory you name, and deletes
     the bundle, since it has done its job; --keep leaves it:
 
-      \(outputStyle("monkeys pack", .argument))                   writes a.monkeys
+      \(outputStyle("monkeys pack", .argument))                   /tmp/a.monkeys
+      \(outputStyle("monkeys pack ~/Desktop", .argument))         a.monkeys, there
       \(outputStyle("monkeys pack --only @foo", .argument))       the same, one profile
       \(outputStyle("monkeys pack --only OPENROUTER_API_KEY", .argument))
       \(outputStyle("monkeys pack --only @test.foo,foo OPENROUTER_API_KEY", .argument))

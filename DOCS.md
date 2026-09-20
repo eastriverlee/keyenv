@@ -329,7 +329,7 @@ the fix is to delete it and change the passphrase you would have sent.
 | `monkeys run <KEY>[,<KEY>] <command>` | run a command with those secrets in its environment |
 | `monkeys run <command>` | the same, with the keys a `.monkeys` file lists |
 | `monkeys export [KEY...]` | vault lookup lines, to paste into a startup file |
-| `monkeys pack [name] [--only ...]` | the profiles as one encrypted `name.monkeys` |
+| `monkeys pack [path] [--only ...]` | the profiles as one encrypted `a.monkeys` |
 | `monkeys unpack <name> [directory]` | store its secrets, write its `.monkeys` |
 | `monkeys fill @a --with @b` | give `@a` the keys it lacks, from `@b` |
 | `monkeys doctor [--short]` | what each profile has and lacks |
@@ -646,7 +646,7 @@ quiet.
 ## pack
 
 ```sh
-monkeys pack [name] [--only [KEY...] [@profile[,profile] [KEY...]]...]
+monkeys pack [path] [--only [KEY...] [@profile[,profile] [KEY...]]...]
 ```
 
 Writes a project's secrets as one encrypted file, the only way they leave the
@@ -659,10 +659,23 @@ monkeys pack
 > ```
 > Passphrase:
 > Again:
-> wrote a.monkeys: @test.foo,foo @foo, 5 secrets
+> wrote /tmp/a.monkeys: @test.foo,foo @foo, 5 secrets
 > ```
 
-The file is `a.monkeys` unless a word after `pack` names it.
+The file goes to `/tmp`, which is never inside a repository, and the
+message shows the path. A path before `--only` puts it elsewhere: a directory gets `a.monkeys` inside it, and a file path is used as
+given, with `.monkeys` added when missing.
+
+```sh
+monkeys pack ~/Desktop
+monkeys pack ~/Desktop/for-sam
+```
+
+> ```
+> wrote ~/Desktop/a.monkeys: @test.foo,foo @foo, 5 secrets
+> wrote ~/Desktop/for-sam.monkeys: @test.foo,foo @foo, 5 secrets
+> ```
+
 It carries each profile's name, the keys the project lists for it, and their
 secrets, sealed with ChaCha20-Poly1305 under a key scrypt derives from the
 passphrase. The file is safe to send over whatever you already use; the
@@ -689,15 +702,15 @@ monkeys pack --only @test.foo DATABASE_URL @foo SENTRY_DSN
 ```
 
 > ```
-> wrote a.monkeys: @test.foo, 2 secrets
+> wrote /tmp/a.monkeys: @test.foo, 2 secrets
 > wrote shared.monkeys: @test.foo @foo, 5 secrets
-> wrote a.monkeys: @test.foo, 1 secret
-> wrote a.monkeys: @test.foo,foo, 2 secrets
-> wrote a.monkeys: @test.foo @foo, 2 secrets
+> wrote /tmp/a.monkeys: @test.foo, 1 secret
+> wrote /tmp/a.monkeys: @test.foo,foo, 2 secrets
+> wrote /tmp/a.monkeys: @test.foo @foo, 2 secrets
 > ```
 
 The bundle keeps that shape, block for block, and `unpack` writes it back as
-the project file. The file name goes before `--only`, which takes the rest of
+the project file. The path goes before `--only`, which takes the rest of
 the line. A key a profile does not list is refused rather than left
 out.
 
@@ -820,10 +833,10 @@ monkeys pack --only @test.foo
 > ```
 > Passphrase:
 > Again:
-> wrote a.monkeys: @test.foo, 2 secrets
+> wrote /tmp/a.monkeys: @test.foo, 2 secrets
 > ```
 
-Send `a.monkeys`. On the other machine, anywhere inside their
+Send that file. On the other machine, anywhere inside their
 checkout:
 
 ```sh
