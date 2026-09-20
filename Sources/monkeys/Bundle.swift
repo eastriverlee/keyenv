@@ -15,9 +15,13 @@ private let scryptRounds = 1 << 17
 private let scryptBlockSize = 8
 private let scryptParallelism = 1
 
-struct ProfileBundle {
+struct ProfileValues {
     let profile: String
     let values: [(name: String, value: String)]
+}
+
+struct ProfileBundle {
+    let profiles: [ProfileValues]
 }
 
 func bundlePath(_ argument: String) -> String {
@@ -53,24 +57,31 @@ private func randomSalt() -> Data {
 }
 
 private func serialized(_ bundle: ProfileBundle) -> Data {
-    let lines = ["@" + bundle.profile] + bundle.values.map { "\($0.name)=\(Data($0.value.utf8).base64EncodedString())" }
+    let lines = bundle.profiles.flatMap { block in
+        ["@" + block.profile] + block.values.map { "\($0.name)=\(Data($0.value.utf8).base64EncodedString())" }
+    }
     return Data(lines.joined(separator: "\n").utf8)
 }
 
 private func deserialized(_ plaintext: Data) throws -> ProfileBundle {
-    let lines = String(decoding: plaintext, as: UTF8.self).split(separator: "\n")
-    guard let first = lines.first, first.hasPrefix("@"), isValidProfileName(String(first.dropFirst())) else {
-        throw StoreFailure.bundleFailed("the bundle names no profile")
-    }
-    let values = try lines.dropFirst().map { line -> (String, String) in
+    var profiles: [ProfileValues] = []
+    for line in String(decoding: plaintext, as: UTF8.self).split(separator: "\n") {
+        if line.hasPrefix("@") {
+            let profile = String(line.dropFirst())
+            guard isValidProfileName(profile) else { throw StoreFailure.bundleFailed("the bundle names no profile") }
+            profiles.append(ProfileValues(profile: profile, values: []))
+            continue
+        }
         let parts = line.split(separator: "=", maxSplits: 1)
-        guard parts.count == 2, isValidVariableName(String(parts[0])),
+        guard let current = profiles.popLast(), parts.count == 2, isValidVariableName(String(parts[0])),
               let raw = Data(base64Encoded: String(parts[1])) else {
             throw StoreFailure.bundleFailed("a line in the bundle is not NAME=value")
         }
-        return (String(parts[0]), String(decoding: raw, as: UTF8.self))
+        let value = (String(parts[0]), String(decoding: raw, as: UTF8.self))
+        profiles.append(ProfileValues(profile: current.profile, values: current.values + [value]))
     }
-    return ProfileBundle(profile: String(first.dropFirst()), values: values)
+    guard !profiles.isEmpty else { throw StoreFailure.bundleFailed("the bundle names no profile") }
+    return ProfileBundle(profiles: profiles)
 }
 
 func writeBundle(_ bundle: ProfileBundle, to path: String) throws {

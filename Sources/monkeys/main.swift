@@ -91,13 +91,43 @@ func runPreview(_ arguments: [String]) throws {
     }
 }
 
-func runPack(_ arguments: [String]) throws {
-    let (scope, rest) = try resolveScope(arguments)
-    guard rest.count <= 1 else { throw StoreFailure.badInvocation("monkeys pack [@profile] [name]") }
-    guard let profile = scope.profile else {
-        throw StoreFailure.bundleFailed("a bundle carries a profile: run this in a project with a \(projectFileName) file, or name one with @profile")
+private let packForm = "monkeys pack [@profile | --only @a,@b] [name]"
+
+private func packedProfiles(_ arguments: [String]) throws -> (profiles: [String], project: Project?, rest: [String]) {
+    let (chosen, afterProfile) = try takeProfileArgument(arguments)
+    let project = try locateProject()
+    var rest = afterProfile
+    var only: [String]?
+    if let flag = rest.firstIndex(of: "--only") {
+        guard flag + 1 < rest.count, case .none = chosen else { throw StoreFailure.badInvocation(packForm) }
+        only = rest[flag + 1].split(separator: ",").map { "@" + $0.drop(while: { $0 == "@" }) }
+        rest.removeSubrange(flag...(flag + 1))
     }
-    let path = bundlePath(rest.first ?? profile)
+    guard rest.count <= 1 else { throw StoreFailure.badInvocation(packForm) }
+    func resolved(_ argument: String) throws -> String {
+        guard argument.count > 1 else { throw StoreFailure.badInvocation(packForm) }
+        let name = String(argument.dropFirst())
+        guard let project else {
+            guard isValidProfileName(name) else { throw StoreFailure.invalidProfileName(argument) }
+            return name
+        }
+        return try project.profile(matching: name)
+    }
+    switch chosen {
+    case .personal:
+        throw StoreFailure.bundleFailed("a bundle carries a profile: run this in a project with a \(projectFileName) file, or name one with @profile")
+    case .named(let name):
+        return ([try resolved("@" + name)], project, rest)
+    case .none:
+        if let only { return (try only.map(resolved), project, rest) }
+        guard let project else {
+            throw StoreFailure.bundleFailed("a bundle carries a profile: run this in a project with a \(projectFileName) file, or name one with @profile")
+        }
+        return (project.profiles, project, rest)
+    }
+}
+
+private func collectedValues(_ scope: Scope) throws -> ProfileValues {
     var values: [(name: String, value: String)] = []
     var missing: [String] = []
     for name in try namesInScope(scope) {
@@ -108,8 +138,17 @@ func runPack(_ arguments: [String]) throws {
         }
     }
     guard missing.isEmpty else { throw StoreFailure.namesNotStored(missing, scope.profileArgument) }
-    try writeBundle(ProfileBundle(profile: profile, values: values), to: path)
-    printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(path, .bold) + ": @\(profile), \(values.count) value\(values.count == 1 ? "" : "s")")
+    return ProfileValues(profile: scope.profile ?? "", values: values)
+}
+
+func runPack(_ arguments: [String]) throws {
+    let (profiles, project, rest) = try packedProfiles(arguments)
+    let path = bundlePath(rest.first ?? profiles[0])
+    let blocks = try profiles.map { try collectedValues(Scope(profile: $0, project: project)) }
+    try writeBundle(ProfileBundle(profiles: blocks), to: path)
+    let count = blocks.reduce(0) { $0 + $1.values.count }
+    let listed = profiles.map { "@" + $0 }.joined(separator: ", ")
+    printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(path, .bold) + ": \(listed), \(count) value\(count == 1 ? "" : "s")")
 }
 
 func gitRoot(above directory: String) -> String? {
@@ -188,13 +227,15 @@ func runUnpack(_ arguments: [String]) throws {
     }
     let destination = try unpackDestination(arguments.dropFirst().first)
     let bundle = try readBundle(from: bundlePath(name))
-    let names = bundle.values.map(\.name)
-    try reconcileProjectFile(profile: bundle.profile, names: names, in: destination)
-    for entry in bundle.values {
-        try secretStore.store(entry.value, forName: bundle.profile + "/" + entry.name)
+    for block in bundle.profiles {
+        let names = block.values.map(\.name)
+        try reconcileProjectFile(profile: block.profile, names: names, in: destination)
+        for entry in block.values {
+            try secretStore.store(entry.value, forName: block.profile + "/" + entry.name)
+        }
+        let stored = names.map { messageStyle(block.profile + "/" + $0, .bold) }.joined(separator: ", ")
+        printToStandardError(messageStyle("stored", .good) + " " + stored)
     }
-    let stored = names.map { messageStyle(bundle.profile + "/" + $0, .bold) }.joined(separator: ", ")
-    printToStandardError(messageStyle("stored", .good) + " " + stored)
 }
 
 let arguments = Array(CommandLine.arguments.dropFirst())

@@ -23,8 +23,8 @@ let commandSummaries = [
                    summary: "the same, names read from .monkeys"),
     CommandSummary(verb: "export", arguments: "[NAME...]",
                    summary: "keyring lookups for a startup file"),
-    CommandSummary(verb: "pack", arguments: "[name]",
-                   summary: "write the profile encrypted, to share"),
+    CommandSummary(verb: "pack", arguments: "[--only @a,@b] [name]",
+                   summary: "one encrypted file of the profiles"),
     CommandSummary(verb: "unpack", arguments: "<name> [directory]",
                    summary: "store its values, write its .monkeys"),
     CommandSummary(verb: "copy", arguments: "@a --to @b",
@@ -114,13 +114,16 @@ var usage: String {
       \(outputStyle("monkeys export TYPESAFE_API_KEY", .argument))
       \(outputStyle("monkeys export", .argument))                the project's names
 
-    Share a profile as one encrypted file, named after the profile unless you
-    say otherwise. pack asks for a passphrase; unpack asks again, stores the
-    values, and writes the names into .monkeys at the root of the git checkout
-    you are in, here when there is none, or in the directory you name:
+    Share the project's profiles as one encrypted file, every profile the
+    file declares unless --only or a leading @profile picks some, named after
+    the first unless you say otherwise. pack asks for a passphrase; unpack
+    asks again, stores the values, and writes the names into .monkeys at the
+    root of the git checkout you are in, here when there is none, or in the
+    directory you name:
 
-      \(outputStyle("monkeys pack", .argument))                  writes foo.monkeys
-      \(outputStyle("monkeys unpack foo", .argument))
+      \(outputStyle("monkeys pack", .argument))                   writes test.foo.monkeys
+      \(outputStyle("monkeys pack --only @foo", .argument))       writes foo.monkeys
+      \(outputStyle("monkeys unpack test.foo", .argument))
 
     \(styledAgentGuide)
     """

@@ -159,7 +159,7 @@ names a command `monkeys help` does not list.
 | `monkeys run --no-redact <command>` | the same, output untouched |
 | `monkeys run <command>` | the same, with the names a `.monkeys` file lists |
 | `monkeys export [NAME...]` | keyring lookup lines, to paste into a startup file |
-| `monkeys pack [name]` | write the profile as `name.monkeys`, encrypted |
+| `monkeys pack [--only @a,@b] [name]` | the profiles as one encrypted `name.monkeys` |
 | `monkeys unpack <name> [directory]` | store its values, write its `.monkeys` |
 | `monkeys copy @a --to @b` | give `@b` the names it lacks, from `@a` |
 | `monkeys doctor` | what each profile has and lacks |
@@ -449,9 +449,10 @@ monkeys run STRIPE_SECRET_KEY ./hello.sh
 
 `--all` there means every name stored under the profile, listed or not.
 
-### Sharing a profile
+### Sharing profiles
 
-A profile leaves the keyring as one encrypted file, and only that way:
+A project's values leave the keyring as one encrypted file, and only that
+way. `pack` takes every profile the file declares:
 
 ```sh
 monkeys pack
@@ -460,39 +461,52 @@ monkeys pack
 > ```
 > Passphrase:
 > Again:
-> wrote foo.monkeys: @foo, 3 values
+> wrote test.foo.monkeys: @test.foo, @foo, 5 values
 > ```
 
-The file takes the profile's name. A word after `pack` names it otherwise,
-and `monkeys pack @test` bundles another declared profile,
-with the names the file lists for it.
+`--only` picks some of them, which is how a teammate gets test and never
+production; a leading `@profile` is the same for one:
 
-It carries the profile's name, the names the project lists, and their values,
-sealed with ChaCha20-Poly1305 under a key scrypt derives from the passphrase.
-The file is safe to send over whatever you already use; the passphrase goes
-another way. A pack with a value still missing refuses, since a bundle
-that fills half a profile is a bug for whoever receives it.
+```sh
+monkeys pack --only @test.foo
+monkeys pack --only @test.foo,foo shared
+```
+
+> ```
+> wrote test.foo.monkeys: @test.foo, 2 values
+> wrote shared.monkeys: @test.foo, @foo, 5 values
+> ```
+
+The file takes the first profile's name; a word after `pack` names it
+otherwise. It carries each profile's name, the names the project lists for
+it, and their values, sealed with ChaCha20-Poly1305 under a key scrypt
+derives from the passphrase. The file is safe to send over whatever you
+already use; the passphrase goes another way. A pack with a value still
+missing refuses, since a bundle that fills half a profile is a bug for
+whoever receives it.
 
 The other side runs `unpack` anywhere inside the checkout:
 
 ```sh
-monkeys unpack foo
+monkeys unpack test.foo
 ```
 
 > ```
 > Passphrase:
-> wrote .monkeys: @foo, 3 names
-> stored foo/DATABASE_URL, foo/STRIPE_SECRET_KEY, foo/OPENROUTER_API_KEY
+> wrote .monkeys: @test.foo, 2 names
+> stored test.foo/DATABASE_URL, test.foo/STRIPE_SECRET_KEY
+> added @foo with 3 names to .monkeys
+> stored foo/DATABASE_URL, foo/STRIPE_SECRET_KEY, foo/SENTRY_DSN
 > ```
 
-The values go into that person's keyring under the bundle's profile, `foo/`,
-and the profile and names become a `.monkeys` file at the root of the git
+The values go into that person's keyring under each bundle's profile, and
+the profiles and names become a `.monkeys` file at the root of the git
 checkout, the way `.gitignore` sits at the root, so `monkeys run ./hello.sh` works
 from any directory in it. Outside a checkout the file goes in the current
 directory, and a second argument names the directory outright. When a
-`.monkeys` file is already there, `unpack` adds the bundle's profile as a
-block at the end, with the names the file does not yet list for it, and leaves
-the rest of the file alone.
+`.monkeys` file is already there, `unpack` adds each of the bundle's profiles
+as a block at the end, with the names the file does not yet list for it, and
+leaves the rest of the file alone.
 
 `run` looks for the file from the current directory upward, nearest first, and
 stops at the root of the git checkout, so a file above the checkout is never
