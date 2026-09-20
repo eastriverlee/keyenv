@@ -88,39 +88,60 @@ monkeys set OPENROUTER_API_KEY
 monkeys run OPENROUTER_API_KEY ./hello.sh
 ```
 
-A key takes letters, digits and `_`, and cannot start with a digit, the way a
-shell variable cannot. Keys are public: they are committed in `.monkeys`, they
-appear in `list` and in every message, and the process `run` starts sees them
-as variables. The same key in two profiles is two secrets, and the key alone,
-with no profile, is a third.
+### Form
 
-`monkeys` takes no secret as an argument, only keys, so storing one never
-types it: your shell history and the process table both see `monkeys set
-GITHUB_TOKEN` and nothing more.
+A key takes letters, digits and `_`, and cannot start with a digit, the rule
+POSIX gives for a variable name. `OPENROUTER_API_KEY` is a key;
+`openrouter-key` is refused.
+
+### Where a key appears
+
+Keys are public. They are committed in `.monkeys`, they appear in `list` and
+in every message, and the process `run` starts sees them as the names of its
+variables. `monkeys` takes no secret as an argument, only keys, so storing one
+never types it: your shell history and the process table both see `monkeys
+set GITHUB_TOKEN` and nothing more.
+
+### One key, several secrets
+
+The same key in two profiles is two secrets, `foo.test/DATABASE_URL` and
+`foo.production/DATABASE_URL`, and the key alone, with no profile, is a third.
+Which one a command gets is decided by the profile, never by the key.
 
 ## Secret
 
-A secret is what a key holds: the API key, token or password itself. It goes
-into the vault with `set`, comes out only into the environment of a command
-`run` starts, and is never printed. What `run` gets back from that command is
-searched for it, and it comes back as `[redacted KEY]`.
+A secret is what a key holds: the API key, token or password itself. It is the
+only thing `monkeys` exists to keep, and the only thing it never prints.
 
-A secret you store under a key you already stored replaces the old one, and
-nothing says so. The previous secret is gone, and the vault keeps no history
-to recover it from.
+### Where it goes
 
-To read a secret in full, open the vault itself, Keychain Access or your
-desktop's secret browser, where the decision to look at one is yours and
-deliberate. No `monkeys` command prints one.
+A secret enters the vault through `set`, typed at a prompt, piped in or read
+from the clipboard, and leaves it in exactly one way: into the environment of
+a command that `run` starts. What that command prints comes back through
+`monkeys`, which replaces the secret with `[redacted KEY]` on the way.
+
+### Replacing one
+
+Storing a secret under a key you already stored replaces the old one, and
+nothing says so. The previous secret is gone; the vault keeps no history to
+recover it from.
+
+### Reading one
+
+No `monkeys` command prints a secret. To read one in full, open the vault
+itself, Keychain Access on macOS or the desktop's secret browser on Linux,
+where the decision to look at one is yours and deliberate.
 
 ## Vault
 
 The vault is the operating system's own secret store, and `monkeys` keeps
-nothing anywhere else. On macOS it is the login keychain, reached through
-Security.framework; on Linux it is whatever answers the Secret Service D-Bus
-API, which is gnome-keyring on most desktops and KWallet on KDE, reached
-through `secret-tool`. There is no file of `monkeys`'s own to back up, leak
+nothing anywhere else. There is no file of `monkeys`'s own to back up, leak
 or forget, and the desktop's own tools see everything `monkeys` stores.
+
+| platform | vault | reached through |
+| --- | --- | --- |
+| macOS | the login keychain | Security.framework |
+| Linux | whatever answers the [Secret Service](https://specifications.freedesktop.org/secret-service-spec/latest/) API over D-Bus: GNOME Keyring on most desktops, KWallet on KDE | `secret-tool` from libsecret |
 
 ### What an item looks like
 
@@ -138,8 +159,9 @@ security find-generic-password -s monkeys -a OPENROUTER_API_KEY
 security find-generic-password -s monkeys -a foo.test/OPENROUTER_API_KEY
 ```
 
-Items are created with `kSecAttrAccessibleAfterFirstUnlock`, so a shell that
-starts while the screen is locked can still read them.
+Items are created with
+[`kSecAttrAccessibleAfterFirstUnlock`](https://developer.apple.com/documentation/security/ksecattraccessibleafterfirstunlock),
+so a shell that starts while the screen is locked can still read them.
 
 On Linux the same attributes go through `secret-tool`:
 
@@ -149,11 +171,12 @@ secret-tool lookup service monkeys account foo.test/OPENROUTER_API_KEY
 
 ### The keychain prompt on macOS
 
-A binary built from source carries an ad-hoc signature, whose identity is a
-hash of the binary itself. A rebuild changes that identity, so the keychain
-may ask you to allow access once when the new build first reads an item the
-old one stored. The release builds are what `brew` and the install script
-give you.
+A binary built from source carries an ad-hoc
+code signature,
+whose identity is a hash of the binary itself. A rebuild changes that
+identity, so the keychain may ask you to allow access once when the new build
+first reads an item the old one stored. The release builds are what `brew`
+and the install script give you.
 
 ### The Secret Service on Linux
 
@@ -272,12 +295,22 @@ A namespace is the part of a profile's name that belongs to the project. The
 `+` line of a `.monkeys` file sets it, and every `@` line in that file is
 read with it in front: in a file that starts with `+foo`, `@test` is the
 profile `foo.test`, and its secrets are stored as `foo.test/DATABASE_URL`.
-That is what keeps two projects' `test` apart, since `bar.test/DATABASE_URL`
-is another secret.
 
-It is written once, in the file, so it is the same in every clone and needs no
-git remote or directory name to agree with. A namespace takes letters,
-digits, `_`, `-` and `.`, usually the repository's name.
+### What it is for
+
+Two projects that both call a profile `test` would otherwise share
+`test/DATABASE_URL`. With a namespace each keeps its own, since
+`bar.test/DATABASE_URL` is another secret, and `list` reads as a list of
+projects.
+
+### Where it is written
+
+Once, in the file. It is the same in every clone and needs no git remote or
+directory name to agree with. A namespace takes letters, digits, `_`, `-` and
+`.`, usually the repository's name; a group that publishes several projects
+can use reverse domain name notation, as in `+dev.eastriver.foo`.
+
+### Referring to a profile
 
 Inside the project the namespace is never typed. A profile is `@test` or
 `@production`, and the file supplies the rest. The full name works from
@@ -290,14 +323,19 @@ monkeys preview @foo.production           # from anywhere
 monkeys fill @bar.test --with @foo.test   # across projects
 ```
 
+### Without one
+
 A file with no `+` line names its profiles as written, so `@test` there is
 the profile `test`, stored as `test/DATABASE_URL`, and a second project that
-also says `@test` would share it. A namespace is how a project keeps its own.
+also says `@test` would share it.
 
 ## .monkeys
 
 A project lists the keys it needs once, in a `.monkeys` file next to the
-code:
+code. It is the secret half of `.env.example`: the list of what the program
+reads, with nothing it reads in it. Commit it.
+
+### Format
 
 ```monkeys
 +foo
@@ -308,38 +346,85 @@ STRIPE_SECRET_KEY
 SENTRY_DSN
 ```
 
-The first line, `+foo`, is the namespace. A `@` line names one profile or
-several, the keys below it belong to those profiles, and `#` starts a
-comment. Commit it. It is the secret half of `.env.example`, and a project
-keeps one or the other, since two lists of the same keys drift. The file
-holds keys and never secrets, which is what makes it safe to commit.
+| line | meaning |
+| --- | --- |
+| `+foo` | the namespace, first and at most once |
+| `@test,production` | opens a block for one profile or several |
+| `DATABASE_URL` | a key, belonging to every profile of the block above it |
+| `# ...` | a comment |
 
-The file is looked for from the current directory upward, nearest first, and
-the search stops at the root of the git checkout, so a file above the checkout
-is never read. Outside a checkout only the current directory counts, and where
-no file is found the commands take keys on the line, as they do anywhere else.
+The first profile mentioned is the default. A key listed twice for one
+profile, a key before any `@` line, or a name that is not a key is refused
+with the line quoted.
 
-`unpack` writes the file at the root of the checkout, and `doctor` reads it
-whole.
+### Where it is looked for
+
+From the current directory upward, nearest first, stopping at the root of the
+git checkout, so a file above the checkout is never read. Outside a checkout
+only the current directory counts. Where no file is found the commands take
+keys on the line, as they do anywhere else.
+
+### What it replaces
+
+The [twelve-factor](https://12factor.net/config) habit of a `.env` that is
+never committed, a `.env.example` that lists the same keys again by hand, and
+a `.gitignore` line that keeps the two apart. `.monkeys` is one file, it is
+committed, and the secrets are somewhere a repository cannot reach.
+
+### Who writes it
+
+You, or `unpack`, which writes it at the root of the checkout from a bundle.
+`doctor` reads it whole and says what each profile still lacks.
 
 ## *.monsecrets
 
 A bundle, `a.monsecrets` unless you name it, is one or more profiles with
-their keys and secrets, sealed with ChaCha20-Poly1305 under a
-key scrypt derives from a passphrase. `pack` writes one and `unpack` reads
-it, and that is the only way a secret leaves the vault.
+their keys and secrets in a single encrypted file. `pack` writes one and
+`unpack` reads it, and that is the only way a secret leaves the vault.
 
-The file is two lines of text. The first names the format and the scrypt
-cost the key was derived with, so a bundle keeps opening after the default
-cost rises; the second is the salt and the sealed bytes, base64. Deriving
-the key costs 128 MiB of memory and a fraction of a second, once for `pack`
-and once for `unpack`, which is what makes guessing the passphrase
-expensive.
+### Format
 
-The bundle keeps the shape of the `.monkeys` file, namespace line and blocks,
-so `unpack` can write the file back and store each secret under its profile.
-It is safe to send over whatever you already use; the passphrase goes another
-way, and `unpack` deletes the bundle once it has done its job.
+Two lines of text:
+
+```
+monkeys bundle 1 scrypt 17 8 1
+<salt and sealed bytes, base64>
+```
+
+The first line names the format and the scrypt cost the key was derived with,
+log2 N, r and p, so a bundle keeps opening after the default cost rises. The
+second is the salt followed by the sealed bytes, in
+base64. Inside, the bundle keeps the
+shape of the `.monkeys` file, namespace line and blocks, so `unpack` can write
+the file back and store each secret under its profile.
+
+### Security
+
+The sealed bytes are
+[ChaCha20-Poly1305](https://en.wikipedia.org/wiki/ChaCha20-Poly1305), the
+AEAD of [RFC 8439](https://www.rfc-editor.org/rfc/rfc8439) that TLS 1.3,
+WireGuard and OpenSSH use. A bundle that has been altered fails to open rather than opening
+wrong, and a wrong passphrase fails the same way.
+
+The key is derived from the passphrase with
+[scrypt](https://en.wikipedia.org/wiki/Scrypt) ([RFC
+7914](https://www.rfc-editor.org/rfc/rfc7914)) and a fresh 16-byte salt each
+time, at N = 2^17, r = 8, p = 1. Deriving it costs 128 MiB of memory and a fraction of a
+second, once for `pack` and once for `unpack`; that memory is what keeps a
+guess from being cheap to run in parallel. The passphrase is the weakest part,
+so it goes by another route than the file.
+
+A header that asks for a cost outside a fixed range is refused before any
+work is done, so a crafted file cannot make `unpack` run for hours.
+
+### Sharing one
+
+The file is safe to send over whatever you already use, and the passphrase
+goes another way. `unpack` deletes the bundle once it has done its job; `pack`
+writes it to `/tmp`, outside any repository. [Sharing a
+profile](/docs/sharing-a-profile) walks through it.
+
+### If one is committed
 
 A bundle has no reason to be in a repository, and `.monkeys` needs no ignore
 rule, since it is meant to be committed. If a bundle is committed by mistake

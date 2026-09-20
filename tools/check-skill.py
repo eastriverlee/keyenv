@@ -24,7 +24,7 @@ CODE_IN_MARKUP = re.compile(r"<code[^>]*>.*?</code>", re.S)
 SCRIPT_BLOCK = re.compile(r"<script[^>]*>(.*?)</script>", re.S)
 STRING_LITERAL = re.compile(r"'[^']*'|`[^`]*`|\"[^\"]*\"", re.S)
 INVOCATION_LINE = re.compile(r"^\s*(?:\$ )?monkeys ")
-CODE_IN_MARKDOWN = re.compile(r"```.*?```|`[^`]*`", re.S)
+CODE_IN_MARKDOWN = re.compile(r"```(?:sh|bash|shellsession)\b.*?```|`[^`\n]*`", re.S)
 
 
 def code_spans(path):

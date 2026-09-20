@@ -78,9 +78,10 @@ function linkingConcepts(text: string, ownSlug?: string) {
 	return lines.join('\n');
 }
 
-function writePage(path: string, title: string, text: string, description?: string, linked = true) {
+function writePage(path: string, title: string, text: string, description?: string) {
 	mkdirSync(join(content, path, '..'), { recursive: true });
 	const ownSlug = path.startsWith('concepts/') ? path.slice('concepts/'.length) : undefined;
+	const linked = path === 'index';
 	const body = asMdx(text).trim();
 	writeFileSync(join(content, `${path}.mdx`), frontmatter(title, description) + (linked ? linkingConcepts(body, ownSlug) : body) + '\n');
 }
@@ -145,8 +146,7 @@ writePage(
 	'The skill',
 	'\nThis is `plugins/monkeys/skills/monkeys/SKILL.md`, the file a coding agent reads before it runs anything. Copy it as is: [monk3ys.dev/skill](https://monk3ys.dev/skill).\n\n' +
 		skill.replace(/^---[\s\S]*?---\n/, ''),
-	'The file a coding agent loads, verbatim.',
-	false
+	'The file a coding agent loads, verbatim.'
 );
 order.push('skill');
 
