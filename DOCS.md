@@ -81,7 +81,7 @@ everyday problem.
 
 ## Where to go next
 
-[Quickstart](/docs/quickstart) stores a secret and spends it,
+[Quickstart](/docs/quickstart) stores a secret and uses it,
 [Concepts](/docs/concepts/key) defines the words the reference uses, and
 [Commands](/docs/commands) has one page per command.
 

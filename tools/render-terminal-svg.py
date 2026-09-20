@@ -51,11 +51,11 @@ SHOWN_VALUES = {
     "STRIPE_SECRET_KEY": "sk-demo-" + "x" * 20 + "2",
 }
 # run prints neither the value nor its shape, so whatever is stored here is
-# safe to spend in the picture.
-SPENT_VALUES = {
+# safe to use in the picture.
+USED_VALUES = {
     "OPENROUTER_API_KEY": "sk-demo-" + "x" * 64 + "2",
 }
-DEMO_VALUES = {**SHOWN_VALUES, **SPENT_VALUES}
+DEMO_VALUES = {**SHOWN_VALUES, **USED_VALUES}
 
 
 def stored_names():

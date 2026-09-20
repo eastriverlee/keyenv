@@ -73,7 +73,7 @@ var usage: String {
 
     \(commandLines.joined(separator: "\n"))
 
-    Spend a secret on one command:
+    Use a secret in one command:
 
       \(outputStyle("monkeys run OPENROUTER_API_KEY ./hello.sh", .argument))
 

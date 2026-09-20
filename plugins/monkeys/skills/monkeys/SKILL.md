@@ -21,7 +21,7 @@ If `monkeys` is not on `PATH`, say so and point at
 <https://github.com/eastriverlee/monkeys>. Do not work around it by asking for
 the secret yourself.
 
-## Spend a secret
+## Use a secret
 
 Name the keys the command reads, then the command:
 

@@ -11,7 +11,7 @@
 
 	const repository = { owner: 'eastriverlee', repo: 'monkeys' };
 
-	const structuredData = `<script type="application/ld+json">${JSON.stringify({"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "monkeys", "url": "https://monk3ys.dev", "description": ".env you can hand to an LLM, or git add: secrets in your vault, keys in your repo, spent one command at a time, never printed.", "applicationCategory": "DeveloperApplication", "operatingSystem": "macOS, Linux", "license": "https://github.com/eastriverlee/monkeys/blob/main/LICENSE", "downloadUrl": "https://github.com/eastriverlee/monkeys/releases", "sameAs": ["https://github.com/eastriverlee/monkeys"], "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "eastriverlee", "url": "https://github.com/eastriverlee"}, "copyrightHolder": {"@type": "Organization", "name": "13e7 corp."}})}<\/script>`;
+	const structuredData = `<script type="application/ld+json">${JSON.stringify({"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "monkeys", "url": "https://monk3ys.dev", "description": ".env you can hand to an LLM, or git add: secrets in your vault, keys in your repo, used one command at a time, never printed.", "applicationCategory": "DeveloperApplication", "operatingSystem": "macOS, Linux", "license": "https://github.com/eastriverlee/monkeys/blob/main/LICENSE", "downloadUrl": "https://github.com/eastriverlee/monkeys/releases", "sameAs": ["https://github.com/eastriverlee/monkeys"], "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "eastriverlee", "url": "https://github.com/eastriverlee"}, "copyrightHolder": {"@type": "Organization", "name": "13e7 corp."}})}<\/script>`;
 	const installTabs = [
 		{ label: 'curl', code: 'curl -fsSL https://monk3ys.dev/install | sh' },
 		{ label: 'Homebrew', code: 'brew install eastriverlee/tap/monkeys' },
@@ -39,11 +39,11 @@ give it to a command with:
 			code: 'mkdir -p .agents/skills/monkeys\ncurl -fsSL https://monk3ys.dev/skill -o .agents/skills/monkeys/SKILL.md'
 		}
 	];
-	const spendLine = `monkeys run SUPER_SECRET sh -c '
+	const useLine = `monkeys run SUPER_SECRET sh -c '
   test "${'$'}SUPER_SECRET" = sesame && echo opened || echo closed
   echo "the word was ${'$'}SUPER_SECRET"
 '`;
-	const spendOutput = `opened
+	const useOutput = `opened
 the word was [redacted SUPER_SECRET]`;
 	const withoutLine = `sh -c 'test "${'$'}SUPER_SECRET" = sesame && echo opened || echo closed'`;
 	const againLine = `monkeys forget SUPER_SECRET
@@ -89,20 +89,20 @@ SENTRY_DSN`;
 
 <svelte:head>
 	<title>monkeys: .env you can hand to an LLM, or git add</title>
-	<meta name="description" content=".env you can hand to an LLM, or git add. Secrets in your vault, keys in your repo, spent one command at a time, never printed." />
+	<meta name="description" content=".env you can hand to an LLM, or git add. Secrets in your vault, keys in your repo, used one command at a time, never printed." />
 	<meta name="robots" content="index, follow" />
 	<link rel="canonical" href="https://monk3ys.dev/" />
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="monkeys" />
 	<meta property="og:title" content="monkeys: .env you can hand to an LLM, or git add" />
-	<meta property="og:description" content=".env you can hand to an LLM, or git add. Secrets in your vault, keys in your repo, spent one command at a time, never printed." />
+	<meta property="og:description" content=".env you can hand to an LLM, or git add. Secrets in your vault, keys in your repo, used one command at a time, never printed." />
 	<meta property="og:url" content="https://monk3ys.dev/" />
 	<meta property="og:image" content="https://monk3ys.dev/og.png" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content="monkeys: .env you can hand to an LLM, or git add" />
-	<meta name="twitter:description" content=".env you can hand to an LLM, or git add. Secrets in your vault, keys in your repo, spent one command at a time, never printed." />
+	<meta name="twitter:description" content=".env you can hand to an LLM, or git add. Secrets in your vault, keys in your repo, used one command at a time, never printed." />
 	<meta name="twitter:image" content="https://monk3ys.dev/og.png" />
 	<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 	<link rel="icon" href="/favicon.png" type="image/png" sizes="any" />
@@ -218,12 +218,12 @@ SENTRY_DSN`;
 	</section>
 
 	<section class="flex flex-col gap-4">
-		<h2 class="text-2xl font-bold tracking-tight">Spend it on one command</h2>
+		<h2 class="text-2xl font-bold tracking-tight">Use it in one command</h2>
 		<p class="max-w-prose">
 			Name the keys the command reads, then the command, written the way you always write it.
 			<code>run</code> puts the secret in that one process and becomes it.
 		</p>
-		<CodeFile code={spendLine} output={spendOutput} />
+		<CodeFile code={useLine} output={useOutput} />
 		<p class="max-w-prose">
 			The right word reached the command, and what it printed came back with the secret taken out.
 			The single quotes matter: the shell <code>run</code> starts is the one with the secret, so it

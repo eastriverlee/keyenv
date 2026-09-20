@@ -8,7 +8,7 @@ const assets = join(import.meta.dirname, '..', 'public');
 const siteStatic = join(repository, 'site', 'static');
 
 const description =
-	'.env you can hand to an LLM, or git add: secrets in your vault, keys in your repo, spent one command at a time, never printed.';
+	'.env you can hand to an LLM, or git add: secrets in your vault, keys in your repo, used one command at a time, never printed.';
 
 const slugOf = (title: string) =>
 	title

@@ -36,7 +36,7 @@ monkeys for an automated caller
 
 A stored secret must never enter an agent's context or transcript. Anything
 an agent reads stays in both, and a vault cannot take it back. No command
-prints a stored secret, so the only thing to get right is how one is spent.
+prints a stored secret, so the only thing to get right is how one is used.
 
 monkeys run puts the named secrets into one command's environment, and
 nowhere else:
@@ -65,7 +65,7 @@ asks for a passphrase, so that too is a human's job.
 
 Name the keys the command actually reads. Naming them is how a missing secret
 shows up, and it keeps the rest out of a process that has no business with
-them. --all spends everything, for when the keys are not worth working out:
+them. --all uses everything, for when the keys are not worth working out:
 
   monkeys run --all ./hello.sh
 
