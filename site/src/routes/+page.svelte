@@ -20,11 +20,11 @@
 			code: 'git clone https://github.com/eastriverlee/monkeys\ncd monkeys\nmake install'
 		}
 	];
-	const storeLine = 'monkeys set OPENROUTER_API_KEY';
+	const storeLine = 'monkeys set SUPER_SECRET';
 	const storeOutput = `Secret:
-stored OPENROUTER_API_KEY
+stored SUPER_SECRET
 give it to a command with:
-  monkeys run OPENROUTER_API_KEY <command>`;
+  monkeys run SUPER_SECRET <command>`;
 	const agentTabs = [
 		{
 			label: 'Claude Code',
@@ -39,11 +39,21 @@ give it to a command with:
 			code: 'mkdir -p skills/monkeys\ncurl -fsSL https://monk3ys.dev/skill -o skills/monkeys/SKILL.md'
 		}
 	];
-	const spendLine = `monkeys run OPENROUTER_API_KEY sh -c '
-  curl -s -o /dev/null -w "%{http_code}\\n" \\
-    -H "Authorization: Bearer ${'$'}OPENROUTER_API_KEY" \\
-    https://openrouter.ai/api/v1/key
+	const spendLine = `monkeys run SUPER_SECRET sh -c '
+  test "${'$'}SUPER_SECRET" = sesame && echo opened || echo closed
+  echo "the word was ${'$'}SUPER_SECRET"
 '`;
+	const spendOutput = `opened
+the word was [redacted SUPER_SECRET]`;
+	const withoutLine = `sh -c 'test "${'$'}SUPER_SECRET" = sesame && echo opened || echo closed'`;
+	const againLine = `monkeys remove SUPER_SECRET
+monkeys run SUPER_SECRET sh -c '
+  test "${'$'}SUPER_SECRET" = sesame && echo opened || echo closed
+'`;
+	const againOutput = `removed SUPER_SECRET
+monkeys: SUPER_SECRET is not stored yet
+nothing ran. a human has to store it, then try again:
+  monkeys set SUPER_SECRET`;
 	const projectFile = `+foo
 @test
 OPENROUTER_API_KEY`;
@@ -194,8 +204,8 @@ SENTRY_DSN`;
 	<section class="flex flex-col gap-4">
 		<h2 class="text-2xl font-bold tracking-tight">Store a secret once</h2>
 		<p class="max-w-prose">
-			Paste it at the prompt. It goes into your vault, the keychain on macOS and the Secret Service on Linux, and
-			nothing you type lands in your shell history.
+			Type <code>sesame</code> at the prompt. It goes into your vault, the keychain on macOS and the Secret
+			Service on Linux, and nothing you type lands in your shell history.
 		</p>
 		<CodeFile code={storeLine} output={storeOutput} />
 	</section>
@@ -206,11 +216,19 @@ SENTRY_DSN`;
 			Name the keys the command reads, then the command, written the way you always write it.
 			<code>run</code> puts the secret in that one process and becomes it.
 		</p>
-		<CodeFile code={spendLine} output="200" />
+		<CodeFile code={spendLine} output={spendOutput} />
 		<p class="max-w-prose">
-			The secret went into the request and the status came back. Nothing else did. The single quotes
-			matter: the shell <code>run</code> starts is the one that has the secret, so it has to be the
-			one that expands <code>$OPENROUTER_API_KEY</code>.
+			The right word reached the command, and what the command printed came back with the secret taken
+			out. The single quotes matter: the shell <code>run</code> starts is the one that has the secret,
+			so it has to be the one that expands <code>$SUPER_SECRET</code>.
+		</p>
+		<p class="max-w-prose">Without monkeys the door stays shut:</p>
+		<CodeFile code={withoutLine} output="closed" />
+		<p class="max-w-prose">Take the word away and try the door again:</p>
+		<CodeFile code={againLine} output={againOutput} />
+		<p class="max-w-prose">
+			Nothing ran at all. A missing secret stops <code>run</code> before the command starts, and the
+			message says what to do, which is what an agent passes on.
 		</p>
 	</section>
 

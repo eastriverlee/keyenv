@@ -41,42 +41,58 @@ is nothing to read.
 
 ```sh
 curl -fsSL https://monk3ys.dev/install | sh
-monkeys set OPENROUTER_API_KEY
+monkeys set SUPER_SECRET
 ```
 
-Write the thing that needs the key. It reads a variable, the way any program
-reads one:
+Type `sesame` at the prompt. Now open the door:
 
 ```sh
-cat > hello.sh <<'SCRIPT'
-#!/bin/sh
-curl -s https://openrouter.ai/api/v1/chat/completions \
-  -H "Authorization: Bearer $OPENROUTER_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"model":"google/gemma-4-26b-a4b-it:free","messages":[{"role":"user","content":"say hello world"}]}' |
-  python3 -c 'import json,sys; print(json.load(sys.stdin)["choices"][0]["message"]["content"].strip())'
-SCRIPT
-chmod +x hello.sh
-```
-
-Then let monkeys hand it over:
-
-```sh
-monkeys run OPENROUTER_API_KEY ./hello.sh
+monkeys run SUPER_SECRET sh -c '
+  test "$SUPER_SECRET" = sesame && echo opened || echo closed
+  echo "the word was $SUPER_SECRET"
+'
 ```
 
 > ```
-> Hello world!
+> opened
+> the word was [redacted SUPER_SECRET]
 > ```
 
-The key is in that one process and nowhere else. It never reached your shell
-history, your startup file, or the line you just typed. `run` becomes the
-command once the secrets are set, so the exit status, the output and the signals
-are the command's own.
+The right word reached the command, and what the command printed came back
+with the secret taken out. Without monkeys the door stays shut:
 
-A project that already has `.env` files moves them in with `monkeys kill`,
-which asks, key by key, whether each one is a secret or a public value, and
-deletes the files once everything is stored.
+```sh
+sh -c 'test "$SUPER_SECRET" = sesame && echo opened || echo closed'
+```
+
+> ```
+> closed
+> ```
+
+Take the word away and try the door again:
+
+```sh
+monkeys remove SUPER_SECRET
+monkeys run SUPER_SECRET sh -c '
+  test "$SUPER_SECRET" = sesame && echo opened || echo closed
+'
+```
+
+> ```
+> removed SUPER_SECRET
+> monkeys: SUPER_SECRET is not stored yet
+> nothing ran. a human has to store it, then try again:
+>   monkeys set SUPER_SECRET
+> ```
+
+Nothing ran at all: a missing secret stops `run` before the command starts,
+and the message says what to do, which is what an agent passes on.
+
+`run` becomes the command once the secret is set, so the exit status, the
+output and the signals are the command's own. A real key is the same two
+lines: `monkeys set OPENROUTER_API_KEY`, then `monkeys run OPENROUTER_API_KEY
+./hello.sh`, with `hello.sh` reading `$OPENROUTER_API_KEY` the way any program
+reads a variable.
 
 ## Install
 
