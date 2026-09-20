@@ -489,6 +489,8 @@ the fix is to delete it and change the passphrase you would have sent.
 | command | what it does |
 | --- | --- |
 | `monkeys set <KEY> [--clipboard]` | read a secret and store it |
+| `monkeys set --public <KEY>` | write a plain value into `.monvalues` |
+| `monkeys set [@profile] [--all]` | prompt for each key the profile lacks |
 | `monkeys remove <KEY>` | delete one secret |
 | `monkeys rename @old @new` | move a profile to a new name, in the vault and the file |
 | `monkeys rename +old +new` | the same for every profile under a namespace |
@@ -695,7 +697,12 @@ monkeys rename @staging @preview
 > ```
 > moved @staging to @preview: DATABASE_URL, STRIPE_SECRET_KEY, SENTRY_DSN
 > rewrote .monkeys: @staging is now @preview
+> rewrote .monvalues: @staging is now @preview
 > ```
+
+A `.monvalues` next to the file has its `@` lines rewritten the same way, so a
+value the old profile had keeps its profile. A namespace rename leaves that
+file alone, since its profiles are named without the namespace.
 
 Inside a project both names are the project's, and a prefix that fits only one
 declared profile is enough for the old one, `@stag`. From anywhere, by full
