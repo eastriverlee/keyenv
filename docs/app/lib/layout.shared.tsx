@@ -10,8 +10,8 @@ export function baseOptions(): BaseLayoutProps {
           {appName}
         </span>
       ),
+      url: 'https://monk3ys.dev',
     },
-    links: [{ text: 'monk3ys.dev', url: 'https://monk3ys.dev' }],
     githubUrl: `https://github.com/${gitConfig.user}/${gitConfig.repo}`,
   };
 }
