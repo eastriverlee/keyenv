@@ -8,3 +8,5 @@
 /content/
 /public/fonts/
 /public/favicon.*
+/public/sitemap.xml
+/public/robots.txt

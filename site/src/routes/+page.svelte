@@ -217,7 +217,7 @@ SENTRY_DSN`;
 	<section class="flex flex-col gap-4">
 		<h2 class="text-2xl font-bold tracking-tight">Let the project list the keys it needs</h2>
 		<p class="max-w-prose">
-			A <code>.monsecrets</code> file next to the code names the project on its first line and lists
+			A <code>.monkeys</code> file next to the code names its namespace on the first line and lists
 			the keys under a profile. Commit it. In that directory, <code>run</code> takes only the
 			command, and the script reads the variable the way any program does.
 		</p>

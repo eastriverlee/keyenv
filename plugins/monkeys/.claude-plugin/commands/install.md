@@ -23,7 +23,7 @@ Install the `monkeys` binary on this machine.
    A "command not found" here means `~/.local/bin` is missing from `PATH`. Say
    so and give the line to add, rather than moving the binary somewhere else.
 
-3. On Linux, `monkeys` needs `secret-tool` to reach the keyring. If step 2
+3. On Linux, `monkeys` needs `secret-tool` to reach the vault. If step 2
    worked but `monkeys list` reports it missing, tell the person to install
    `libsecret-tools` on Debian or Ubuntu, `libsecret` on Fedora or Arch.
 

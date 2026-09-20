@@ -40,7 +40,8 @@ DATABASE_URL
 STRIPE_SECRET_KEY
 ```
 
-The `+` line names the project, the namespace every profile of it lives in.
+The `+` line is the namespace, the part of every profile's name that belongs
+to the project: `@test` here is the profile `foo.test`.
 In that directory or below it within the git checkout, `run` takes only the
 command, and every key is scoped to that profile, so `monkeys set
 STRIPE_SECRET_KEY` there stores into the same profile the command reads from:

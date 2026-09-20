@@ -844,8 +844,8 @@ the project file. The path goes before `--only`, which takes the rest of
 the line. A key a profile does not list is refused rather than left
 out.
 
-Outside a project, `--only @foo.test` names the project as well as the
-profile, and every profile on the line has to belong to the same one.
+Outside a project, `--only @foo.test` names a profile in full, and a bundle
+made there carries its profiles under their full names, with no `+` line.
 
 The passphrase is read from standard input when it is not a terminal, for the
 rare script that needs to.
@@ -871,7 +871,7 @@ monkeys unpack a
 > removed a.monsecrets
 > ```
 
-`<name>` is the bundle, with or without its `.monkeys` suffix; a path works
+`<name>` is the bundle, with or without its `.monsecrets` suffix; a path works
 too. The bundle is deleted only once every secret is stored and the file is
 written, since by then it has done its job and a copy left behind is one more
 thing to lose. `--keep` leaves it where it was, for a bundle you are handing

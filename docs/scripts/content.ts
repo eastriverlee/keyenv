@@ -1,6 +1,6 @@
 import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { docsRoute } from '../app/lib/shared';
+import { docsOrigin, docsRoute } from '../app/lib/shared';
 
 const repository = join(import.meta.dirname, '..', '..');
 const content = join(import.meta.dirname, '..', 'content', 'docs');
@@ -78,12 +78,51 @@ function linkingConcepts(text: string, ownSlug?: string) {
 	return lines.join('\n');
 }
 
+const plainText = (markdown: string) =>
+	markdown
+		.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+		.replace(/<(https?:\/\/[^>\s]+)>/g, '$1')
+		.replace(/[`*_]/g, '')
+		.replace(/\s+/g, ' ')
+		.trim();
+
+/** The first paragraph of prose on a page, cut to a length a search result shows. */
+function firstParagraph(markdown: string) {
+	const lines = markdown.split('\n');
+	let inFence = false;
+	let paragraph: string[] = [];
+	for (const line of lines) {
+		if (line.startsWith('```')) {
+			inFence = !inFence;
+			continue;
+		}
+		if (inFence) continue;
+		const isProse = line.trim() && !/^(#|>|\||-|\d+\.)/.test(line);
+		if (isProse) paragraph.push(line);
+		else if (paragraph.length) break;
+	}
+	const text = plainText(paragraph.join(' ')).replace(/:$/, '.');
+	if (text.length <= 160) return text;
+	return text.slice(0, text.lastIndexOf(' ', 157)) + '…';
+}
+
+const written: string[] = [];
+
 function writePage(path: string, title: string, text: string, description?: string) {
 	mkdirSync(join(content, path, '..'), { recursive: true });
 	const ownSlug = path.startsWith('concepts/') ? path.slice('concepts/'.length) : undefined;
 	const linked = path === 'index';
 	const body = asMdx(text).trim();
-	writeFileSync(join(content, `${path}.mdx`), frontmatter(title, description) + (linked ? linkingConcepts(body, ownSlug) : body) + '\n');
+	const summary = description ?? firstParagraph(body);
+	writeFileSync(join(content, `${path}.mdx`), frontmatter(title, summary) + (linked ? linkingConcepts(body, ownSlug) : body) + '\n');
+	written.push(path);
+}
+
+function writeSitemap() {
+	const urls = written.map((path) => `${docsOrigin}${docsRoute}${path === 'index' ? '' : '/' + path.replace(/\/index$/, '')}`);
+	const entries = urls.map((url) => `  <url><loc>${url}</loc></url>`).join('\n');
+	writeFileSync(join(assets, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>\n`);
+	writeFileSync(join(assets, 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${docsOrigin}/sitemap.xml\n`);
 }
 
 function splitOn(markdown: string, level: number) {
@@ -151,6 +190,7 @@ writePage(
 order.push('skill');
 
 writeFileSync(join(content, 'meta.json'), JSON.stringify({ title: 'monkeys', pages: order }, null, 2) + '\n');
+writeSitemap();
 
 for (const name of ['favicon.svg', 'favicon.png']) cpSync(join(siteStatic, name), join(assets, name));
 cpSync(join(siteStatic, 'fonts'), join(assets, 'fonts'), { recursive: true });

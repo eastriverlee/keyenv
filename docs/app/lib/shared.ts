@@ -1,6 +1,8 @@
 import { createGetUrl } from 'fumadocs-core/source';
 
 export const appName = 'monkeys';
+export const siteOrigin = 'https://monk3ys.dev';
+export const docsOrigin = 'https://docs.monk3ys.dev';
 export const docsRoute = '/docs';
 export const docsImageRoute = '/og/docs';
 export const docsContentRoute = '/llms.mdx/docs';
