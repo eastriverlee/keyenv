@@ -100,7 +100,7 @@ private func setPublicValue(_ scope: Scope, _ name: String, readsClipboard: Bool
 private func rejectingProfileList(_ arguments: [String]) throws {
     guard let first = arguments.first, first.hasPrefix("@"), first.contains(",") else { return }
     let one = first.dropFirst().split(separator: ",").first.map(String.init) ?? ""
-    throw StoreFailure.bundleFailed("set walks one profile at a time: monkeys set @\(one)")
+    throw StoreFailure.bundleFailed("remember walks one profile at a time: monkeys remember @\(one)")
 }
 
 func runSet(_ arguments: [String]) throws {
@@ -112,9 +112,9 @@ func runSet(_ arguments: [String]) throws {
     let (scope, rest) = try resolveScope(positional)
     guard !rest.isEmpty else {
         guard !readsClipboard else {
-            throw StoreFailure.bundleFailed("--clipboard stores one key: monkeys set <KEY> --clipboard")
+            throw StoreFailure.bundleFailed("--clipboard remembers one key: monkeys remember <KEY> --clipboard")
         }
-        guard !isPublic else { throw StoreFailure.badInvocation("monkeys set --public [@profile] <KEY>") }
+        guard !isPublic else { throw StoreFailure.badInvocation("monkeys remember --public [@profile] <KEY>") }
         try walkProfile(scope, walksAll: walksAll)
         return
     }
@@ -127,7 +127,7 @@ func runSet(_ arguments: [String]) throws {
     let value = readsClipboard ? try readSecretFromClipboard() : readSecretFromInput()
     guard !value.isEmpty else { throw StoreFailure.emptySecret }
     try secretStore.store(value, forName: scope.storedName(name))
-    printToStandardError(messageStyle("stored", .good) + " " + messageStyle(scope.storedName(name), .bold))
+    printToStandardError(messageStyle("remembered", .good) + " " + messageStyle(scope.storedName(name), .bold))
     printHintToTerminal(messageStyle("give it to a command with:", .dim))
     printHintToTerminal("  " + messageStyle(spendHint(scope, name), .argument))
 }
@@ -153,7 +153,7 @@ func runForget(_ arguments: [String]) throws {
 func runList() throws {
     let stored = try secretStore.storedKeys()
     guard !stored.isEmpty else {
-        printToStandardError("nothing stored")
+        printToStandardError("nothing remembered")
         return
     }
     var keysByProfile: [String: [String]] = [:]
@@ -551,7 +551,7 @@ func runUnpack(_ arguments: [String]) throws {
             }
         }
         guard !stored.isEmpty else { continue }
-        printToStandardError(messageStyle("stored", .good) + " " + stored.map { messageStyle($0, .bold) }.joined(separator: ", "))
+        printToStandardError(messageStyle("remembered", .good) + " " + stored.map { messageStyle($0, .bold) }.joined(separator: ", "))
     }
     guard !keepsBundle else { return }
     guard unlink(path) == 0 else {
@@ -570,7 +570,7 @@ let rest = Array(arguments.dropFirst())
 
 do {
     switch command {
-    case "set": try runSet(rest)
+    case "remember": try runSet(rest)
     case "list": try runList()
     case "preview": try runPreview(rest)
     case "forget": try runForget(rest)

@@ -321,7 +321,7 @@ func runEat(_ arguments: [String]) throws {
         case .value: try writeValue(choice.value, forKey: choice.key, profile: choice.profile, in: declared)
         }
     }
-    reportGroups("stored", .good, choices.filter { $0.destination == .secret }.map { (declared.shortName($0.profile), $0.key) })
+    reportGroups("remembered", .good, choices.filter { $0.destination == .secret }.map { (declared.shortName($0.profile), $0.key) })
     reportGroups("public", .good, choices.filter { $0.destination == .value }.map { (declared.shortName($0.profile), $0.key) })
     reportGroups("kept", .dim, kept.map { ($0.profile, $0.key) })
     removedFiles(files)

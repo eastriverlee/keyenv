@@ -20,9 +20,9 @@
 			code: 'git clone https://github.com/eastriverlee/monkeys\ncd monkeys\nmake install'
 		}
 	];
-	const storeLine = 'monkeys set SUPER_SECRET';
-	const storeOutput = `Secret:
-stored SUPER_SECRET
+	const rememberLine = 'monkeys remember SUPER_SECRET';
+	const rememberOutput = `secret:
+remembered SUPER_SECRET
 give it to a command with:
   monkeys run SUPER_SECRET <command>`;
 	const agentTabs = [
@@ -51,9 +51,10 @@ monkeys run SUPER_SECRET sh -c '
   test "${'$'}SUPER_SECRET" = sesame && echo opened || echo closed
 '`;
 	const againOutput = `forgot SUPER_SECRET
-monkeys: SUPER_SECRET is not stored yet
-nothing ran. a human has to store it, then try again:
-  monkeys set SUPER_SECRET`;
+monkeys: SUPER_SECRET is not remembered yet
+nothing happened. a human types the secret into:
+  monkeys remember SUPER_SECRET
+then try again.`;
 	const projectFile = `+foo
 @test
 OPENROUTER_API_KEY`;
@@ -191,7 +192,7 @@ SENTRY_DSN`;
 		<h2 class="text-2xl font-bold tracking-tight">Plugin</h2>
 		<p class="max-w-prose">
 			The plugin adds the skill. It makes an agent reach for <code>monkeys</code> instead of asking
-			you to paste a secret, and a key you have not stored comes back as a message saying what to
+			you to paste a secret, and a key you have not remembered comes back as a message saying what to
 			ask for.
 		</p>
 		<CommandTabs tabs={agentTabs} />
@@ -209,12 +210,12 @@ SENTRY_DSN`;
 	/>
 
 	<section class="flex flex-col gap-4">
-		<h2 class="text-2xl font-bold tracking-tight">Store a secret once</h2>
+		<h2 class="text-2xl font-bold tracking-tight">Remember a secret once</h2>
 		<p class="max-w-prose">
 			Type <code>sesame</code> at the prompt. It goes into your vault, the keychain on macOS and the Secret
 			Service on Linux, and nothing you type lands in your shell history.
 		</p>
-		<CodeFile code={storeLine} output={storeOutput} />
+		<CodeFile code={rememberLine} output={rememberOutput} />
 	</section>
 
 	<section class="flex flex-col gap-4">
@@ -283,7 +284,7 @@ SENTRY_DSN`;
 		</p>
 		<CodeFile code={packLine} />
 		<p class="max-w-prose">
-			On the other machine, <code>unpack</code> asks for the passphrase, stores the secrets, writes
+			On the other machine, <code>unpack</code> asks for the passphrase, remembers the secrets, writes
 			<code>.monkeys</code> at the root of the checkout, and deletes the bundle. That is the only
 			way a secret leaves the vault.
 		</p>

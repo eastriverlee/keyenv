@@ -97,7 +97,7 @@ private func renameProfile(_ oldArgument: String, _ newArgument: String) throws 
     guard old != new else { throw StoreFailure.renameRefused("\(shownProfile(old, in: project)) is already its name") }
     let keys = try storedKeys(under: old)
     guard !keys.isEmpty || isDeclared else {
-        throw StoreFailure.renameRefused("nothing is stored under \(shownProfile(old, in: project)), and no \(projectFileName) here names it")
+        throw StoreFailure.renameRefused("nothing is remembered under \(shownProfile(old, in: project)), and no \(projectFileName) here names it")
     }
     let taken = try storedKeys(under: new)
     guard taken.isEmpty else {
@@ -129,7 +129,7 @@ private func renameNamespace(_ oldArgument: String, _ newArgument: String) throw
     let stored = try secretStore.storedKeys()
     let profiles = storedProfiles(under: old, in: stored)
     guard !profiles.isEmpty || isDeclared else {
-        throw StoreFailure.renameRefused("nothing is stored under +\(old), and no \(projectFileName) here names it")
+        throw StoreFailure.renameRefused("nothing is remembered under +\(old), and no \(projectFileName) here names it")
     }
     let taken = storedProfiles(under: new, in: stored)
     guard taken.isEmpty else {

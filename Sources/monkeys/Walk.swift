@@ -6,10 +6,10 @@ import Darwin
 import Glibc
 #endif
 
-let walkForm = "monkeys set [@profile] [--all]"
+let walkForm = "monkeys remember [@profile] [--all]"
 
 private enum WalkOutcome: String {
-    case stored
+    case remembered
     case kept
     case skipped
 }
@@ -38,10 +38,10 @@ private func printWalkSummary(_ scope: Scope, _ outcomes: [(key: String, outcome
 
 func walkProfile(_ scope: Scope, walksAll: Bool) throws {
     guard let profile = scope.profile, let keys = scope.projectKeys else {
-        throw StoreFailure.bundleFailed("a key is required here: monkeys set <KEY>. set walks a profile's keys only inside a project")
+        throw StoreFailure.bundleFailed("a key is required here: monkeys remember <KEY>. remember walks a profile's keys only inside a project")
     }
     guard isTerminal(STDIN_FILENO) else {
-        throw StoreFailure.bundleFailed("the walk reads each secret from the terminal; pipe one secret into monkeys set <KEY> instead")
+        throw StoreFailure.bundleFailed("the walk reads each secret from the terminal; pipe one secret into monkeys remember <KEY> instead")
     }
     let stored = Set(try storedKeysInScope(scope))
     var outcomes: [(key: String, outcome: WalkOutcome)] = []
@@ -59,7 +59,7 @@ func walkProfile(_ scope: Scope, walksAll: Bool) throws {
             continue
         }
         try secretStore.store(entered, forName: name)
-        outcomes.append((key, .stored))
+        outcomes.append((key, .remembered))
     }
     printWalkSummary(scope, outcomes)
     guard outcomes.allSatisfy({ $0.outcome != .skipped }) else { exit(1) }

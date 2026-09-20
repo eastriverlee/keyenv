@@ -44,9 +44,9 @@ PORT=3000
 ```
 
 ```sh
-monkeys set OPENROUTER_API_KEY    # the secret goes into the vault, once
-monkeys run ./hello.sh            # the command gets it, nothing else does
-monkeys pack                      # to share: one encrypted file
+monkeys remember OPENROUTER_API_KEY  # the secret goes into the vault, once
+monkeys run ./hello.sh               # the command gets it, nothing else does
+monkeys pack                         # to share: one encrypted file
 ```
 
 It exists for two reasons, and either would have been enough.
@@ -102,10 +102,10 @@ on Debian and Ubuntu, `libsecret` on Fedora and Arch.
 
 ## Quickstart
 
-### Store it
+### Remember it
 
 ```sh
-monkeys set SUPER_SECRET
+monkeys remember SUPER_SECRET
 ```
 
 Type `sesame` at the prompt.
@@ -149,9 +149,10 @@ monkeys run SUPER_SECRET sh -c '
 
 > ```
 > forgot SUPER_SECRET
-> monkeys: SUPER_SECRET is not stored yet
-> nothing ran. a human has to store it, then try again:
->   monkeys set SUPER_SECRET
+> monkeys: SUPER_SECRET is not remembered yet
+> nothing happened. a human types the secret into:
+>   monkeys remember SUPER_SECRET
+> then try again.
 > ```
 
 Nothing ran at all: a missing secret stops `run` before the command starts,

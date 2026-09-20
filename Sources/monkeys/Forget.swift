@@ -8,7 +8,7 @@ private func reportForgotten(_ keys: [String], from shown: String) {
 
 private func removeEverything(under profile: String, shown: String) throws {
     let keys = try storedKeysInScope(Scope(profile: profile, project: nil))
-    guard !keys.isEmpty else { throw StoreFailure.forgetRefused("nothing is stored under \(shown)") }
+    guard !keys.isEmpty else { throw StoreFailure.forgetRefused("nothing is remembered under \(shown)") }
     var removed: [String] = []
     for key in keys {
         do {
@@ -16,7 +16,7 @@ private func removeEverything(under profile: String, shown: String) throws {
             removed.append(key)
         } catch {
             reportForgotten(removed, from: shown)
-            throw StoreFailure.forgetRefused("stopped at \(key): \(error); the keys before it are gone and the rest are still stored")
+            throw StoreFailure.forgetRefused("stopped at \(key): \(error); the keys before it are gone and the rest are still remembered")
         }
     }
     reportForgotten(removed, from: shown)
@@ -26,7 +26,7 @@ private func removeNamespace(_ argument: String) throws {
     let namespace = String(argument.dropFirst())
     guard isValidProfileName(namespace) else { throw StoreFailure.invalidProfileName(argument) }
     let profiles = storedProfiles(under: namespace, in: try secretStore.storedKeys())
-    guard !profiles.isEmpty else { throw StoreFailure.forgetRefused("nothing is stored under +\(namespace)") }
+    guard !profiles.isEmpty else { throw StoreFailure.forgetRefused("nothing is remembered under +\(namespace)") }
     for profile in profiles {
         try removeEverything(under: profile, shown: "@" + profile)
     }

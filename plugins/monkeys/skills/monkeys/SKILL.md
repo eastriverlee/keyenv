@@ -1,6 +1,6 @@
 ---
 name: monkeys
-description: Give a command an API key, token or password held in the OS vault, without the secret entering the conversation. Use whenever a command needs a credential, when one fails for a missing or empty credential, when a project needs a new environment variable, when a `.env` file turns up in a project, when asked where a secret is kept, or when asked to store one.
+description: Give a command an API key, token or password held in the OS vault, without the secret entering the conversation. Use whenever a command needs a credential, when one fails for a missing or empty credential, when a project needs a new environment variable, when a `.env` file turns up in a project, when asked where a secret is kept, or when asked to remember one.
 ---
 
 # monkeys
@@ -14,7 +14,7 @@ monkeys run OPENROUTER_API_KEY ./hello.sh
 
 Each secret sits in the operating system's own vault, the macOS keychain or
 the Linux Secret Service, under the name of the environment variable that
-carries it. No command prints a stored secret, and none should: one that
+carries it. No command prints a remembered secret, and none should: one that
 reaches you is in this transcript for good, and a vault cannot take it back.
 
 If `monkeys` is not on `PATH`, say so and point at
@@ -32,7 +32,7 @@ monkeys run OPENROUTER_API_KEY,GITHUB_TOKEN ./deploy
 
 Nothing in that line holds a secret, so nothing you write can spill one. The
 exit status and the signals are the command's own. Its output comes back
-through `monkeys`, and a stored secret in it comes back as `[redacted KEY]`.
+through `monkeys`, and a remembered secret in it comes back as `[redacted KEY]`.
 Reach for `monkeys run --all <command>` only when you cannot tell which keys
 the command reads.
 
@@ -85,7 +85,7 @@ one project never quietly reads another's secret. Reaching those keys from
 inside a project is a bare `@`, with the key named again:
 
 ```sh
-monkeys run @ TYPESAFE_API_KEY claude
+monkeys run @ ANTHROPIC_API_KEY claude
 ```
 
 The rest of the file's grammar, namespaces and several profiles among it, is
@@ -99,14 +99,14 @@ not. Do not create a `.env`, do not add a line to one, and do not tell someone
 to put a variable there.
 
 - A variable that is not secret goes in as `KEY=value`, which you write
-  yourself: `monkeys set --public PORT`.
-- A secret goes in as a bare key, and a human stores it.
+  yourself: `monkeys remember --public PORT`.
+- A secret goes in as a bare key, and a human remembers it.
 
 ## Eat a .env you find
 
 A project that still has `.env` files is one command away. Name the keys that
 are not secret; every other key becomes a secret in the vault, and the files
-are deleted once everything is stored:
+are deleted once everything is remembered:
 
 ```sh
 monkeys eat --public PORT,NODE_ENV
@@ -122,9 +122,10 @@ and needs a terminal, which is a human's run.
 `run` stops before anything happens and names what to ask for:
 
 ```
-monkeys: ANTHROPIC_API_KEY is not stored yet in @foo.test
-nothing ran. a human has to store it, then try again:
-  monkeys set @foo.test ANTHROPIC_API_KEY
+monkeys: SUPER_SECRET is not remembered yet in @foo.test
+nothing happened. a human types the secret into:
+  monkeys remember @foo.test SUPER_SECRET
+then try again.
 ```
 
 Pass that on. `monkeys doctor --short` prints one `missing @profile: A,B` line
@@ -139,10 +140,10 @@ from one that lost a character.
 
 ## Leave to a human
 
-Storing is a human's job: typing a secret yourself puts it in the conversation
+Remembering is a human's job: typing a secret yourself puts it in the conversation
 before it reaches the vault. Say what is needed and stop.
 
-- `monkeys set` stores a secret, and `monkeys set --public PORT` stores a
+- `monkeys remember` remembers a secret, and `monkeys remember --public PORT` remembers a
   value that is not secret, which you may run yourself.
 - `monkeys unpack` fills a profile from a shared bundle. It asks for a
   passphrase and deletes the bundle.

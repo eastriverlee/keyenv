@@ -27,5 +27,5 @@ Install the `monkeys` binary on this machine.
    worked but `monkeys list` reports it missing, tell the person to install
    `libsecret-tools` on Debian or Ubuntu, `libsecret` on Fedora or Arch.
 
-Report the installed path and stop. Do not store any secret on the person's
+Report the installed path and stop. Do not remember any secret on the person's
 behalf.

@@ -34,9 +34,9 @@ var styledAgentGuide: String {
 private let agentGuide = """
 monkeys for an automated caller
 
-A stored secret must never enter an agent's context or transcript. Anything
+A remembered secret must never enter an agent's context or transcript. Anything
 an agent reads stays in both, and a vault cannot take it back. No command
-prints a stored secret, so the only thing to get right is how one is used.
+prints a remembered secret, so the only thing to get right is how one is used.
 
 monkeys run puts the named secrets into one command's environment, and
 nowhere else:
@@ -46,7 +46,7 @@ nowhere else:
 
 Nothing on that line holds a secret, so nothing an agent writes can spill
 one. The exit status and the signals are the command's own. Its output comes
-back through monkeys, and a stored secret in it comes back as [redacted KEY],
+back through monkeys, and a remembered secret in it comes back as [redacted KEY],
 so echo $KEY says which secret was there and never the secret. A file that
 has to end up with the secret in it takes the redirect inside the command,
 where the secret goes from the child straight into the file and never passes
@@ -64,7 +64,7 @@ run there takes only the command:
 
 A + line names the namespace the profiles live in, the @ lines scope every
 key, and the first profile in the file is the one run uses unless @profile
-says otherwise, so set in that directory stores into the same profile the
+says otherwise, so remember in that directory writes into the same profile the
 command reads from. The file is the list; read it before adding a key.
 Filling a profile from a shared .monsecrets bundle is monkeys unpack, which
 asks for a passphrase, so that too is a human's job.
@@ -75,12 +75,13 @@ them. --all uses everything, for when the keys are not worth working out:
 
   monkeys run --all ./hello.sh
 
-A key with no secret stored stops the run before it starts, and says what to
+A key with no secret remembered stops the run before it starts, and says what to
 ask for:
 
-  monkeys: ANTHROPIC_API_KEY is not stored yet
-  nothing ran. a human has to store it, then try again:
-    monkeys set ANTHROPIC_API_KEY
+  monkeys: SUPER_SECRET is not remembered yet
+  nothing happened. a human types the secret into:
+    monkeys remember SUPER_SECRET
+  then try again.
 
 An agent passes that on. Storing a secret is a human's job: an agent that
 types one puts it in its own context before it reaches the vault.

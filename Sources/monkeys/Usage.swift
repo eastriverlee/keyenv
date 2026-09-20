@@ -5,14 +5,14 @@ struct CommandSummary {
 }
 
 let commandSummaries = [
-    CommandSummary(verb: "set", arguments: "<KEY> [--clipboard]",
-                   summary: "store a secret typed, piped or pasted"),
-    CommandSummary(verb: "set", arguments: "--public <KEY>",
+    CommandSummary(verb: "remember", arguments: "<KEY> [--clipboard]",
+                   summary: "remember a secret typed, piped or pasted"),
+    CommandSummary(verb: "remember", arguments: "--public <KEY>",
                    summary: "write a plain value into .monkeys"),
-    CommandSummary(verb: "set", arguments: "[@profile] [--all]",
+    CommandSummary(verb: "remember", arguments: "[@profile] [--all]",
                    summary: "prompt for each key the profile lacks"),
     CommandSummary(verb: "forget", arguments: "<KEY>",
-                   summary: "delete one stored secret"),
+                   summary: "delete one remembered secret"),
     CommandSummary(verb: "forget", arguments: "@profile[,profile...]",
                    summary: "delete every secret of those profiles"),
     CommandSummary(verb: "forget", arguments: "+namespace",
@@ -24,13 +24,13 @@ let commandSummaries = [
     CommandSummary(verb: "run", arguments: "<KEY[,KEY...]> <command>",
                    summary: "run a command with those secrets set"),
     CommandSummary(verb: "run", arguments: "--all <command>",
-                   summary: "the same, with every stored secret"),
+                   summary: "the same, with every remembered secret"),
     CommandSummary(verb: "run", arguments: "<command>",
                    summary: "the same, keys read from .monkeys"),
     CommandSummary(verb: "pack", arguments: "[path] [--only ...]",
                    summary: "one encrypted file of the profiles"),
     CommandSummary(verb: "unpack", arguments: "<name> [dir] [--keep]",
-                   summary: "store its secrets, write its .monkeys"),
+                   summary: "remember its secrets, write its .monkeys"),
     CommandSummary(verb: "eat", arguments: "[--public KEY[,KEY...]]",
                    summary: "move the .env files here into monkeys"),
     CommandSummary(verb: "fill", arguments: "@a --with @b",
@@ -86,17 +86,17 @@ var usage: String {
       \(outputStyle("SENTRY_DSN", .argument))
 
     In that directory or below it within the checkout, run takes only the
-    command, and set, preview and forget read and write the first profile:
+    command, and remember, preview and forget read and write the first profile:
 
       \(outputStyle("monkeys run ./hello.sh", .argument))
-      \(outputStyle("monkeys set STRIPE_SECRET_KEY", .argument))      stored as foo.test/STRIPE_SECRET_KEY
-      \(outputStyle("monkeys set", .argument))                        each key it lacks, one prompt each
+      \(outputStyle("monkeys remember STRIPE_SECRET_KEY", .argument))      remembered as foo.test/STRIPE_SECRET_KEY
+      \(outputStyle("monkeys remember", .argument))                        each key it lacks, one prompt each
 
     A value that is not secret, PORT=3000 and the like, is a KEY=value line in
     the same file, under the same @ block. run puts it in the environment
     straight from the file, and the vault never sees it:
 
-      \(outputStyle("monkeys set --public PORT", .argument))        Value: 3000, written as PORT=3000
+      \(outputStyle("monkeys remember --public PORT", .argument))        value: 3000, written as PORT=3000
 
     Each profile gets the keys of every block that lists it, and the first
     profile in the file is the one run uses when none is given:
@@ -121,22 +121,22 @@ var usage: String {
     only one of them is enough. From outside the project, or for another
     project's profile, say the namespace too, @namespace.profile:
 
-      \(outputStyle("monkeys set @production SENTRY_DSN", .argument))   stored as foo.production/SENTRY_DSN
-      \(outputStyle("monkeys set @foo.production SENTRY_DSN", .argument))    the same, from anywhere
+      \(outputStyle("monkeys remember @production SENTRY_DSN", .argument))   remembered as foo.production/SENTRY_DSN
+      \(outputStyle("monkeys remember @foo.production SENTRY_DSN", .argument))    the same, from anywhere
 
-    A key stored outside any project has no profile and needs no @. Inside
+    A key remembered outside any project has no profile and needs no @. Inside
     a project every command is scoped to its profile, so a bare @ says no
     profile: it sets the file aside, keys are given again, and the keys with
     no profile are reached without leaving the directory:
 
-      \(outputStyle("monkeys run TYPESAFE_API_KEY claude", .argument))     outside a project
-      \(outputStyle("monkeys run @ TYPESAFE_API_KEY claude", .argument))   inside one, the same secret
+      \(outputStyle("monkeys run ANTHROPIC_API_KEY claude", .argument))     outside a project
+      \(outputStyle("monkeys run @ ANTHROPIC_API_KEY claude", .argument))   inside one, the same secret
 
     For a shell that should carry secrets from startup, export writes the lines
     to paste into your startup file yourself. Each asks this machine's vault
     for one secret when the shell starts; none of them holds one:
 
-      \(outputStyle("monkeys export TYPESAFE_API_KEY", .argument))
+      \(outputStyle("monkeys export ANTHROPIC_API_KEY", .argument))
       \(outputStyle("monkeys export", .argument))                the project's keys
 
     Share the project's profiles as one encrypted file: every profile the
@@ -149,7 +149,7 @@ var usage: String {
     outside any repository; a path before --only puts it elsewhere, into a
     directory you name or at a file you name, and --open reveals it in your
     file manager, ready to drag.
-    pack asks for a passphrase; unpack asks again, stores the secrets,
+    pack asks for a passphrase; unpack asks again, remembers the secrets,
     writes the keys into .monkeys at the root of the git checkout you are
     in, here when there is none, or in the directory you name, and deletes
     the bundle, since it has done its job; --keep leaves it:
@@ -165,7 +165,7 @@ var usage: String {
     A project that still has .env files moves them in with one command. eat
     asks, key by key, whether each one is a secret for the vault or a public
     value for .monkeys, writes the file, and deletes the .env files once
-    everything is stored. Naming the public keys answers every question up
+    everything is remembered. Naming the public keys answers every question up
     front, so it asks nothing and needs no terminal:
 
       \(outputStyle("monkeys eat", .argument))

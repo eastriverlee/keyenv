@@ -47,13 +47,14 @@ extension StoreFailure: CustomStringConvertible {
             let listed = candidates.map { "@" + $0 }.joined(separator: ", ")
             return "@\(name) could be \(listed); say enough to tell them apart"
         case .keysNotStored(let keys, let profileArgument):
-            let subject = keys.count == 1 ? "it" : "them"
-            let asks = keys.map { "  monkeys set \(profileArgument)\($0)" }.joined(separator: "\n")
+            let subject = keys.count == 1 ? "the secret" : "the secrets"
+            let asks = keys.map { "  monkeys remember \(profileArgument)\($0)" }.joined(separator: "\n")
             let place = profileArgument.isEmpty ? "" : " in \(profileArgument.trimmingCharacters(in: .whitespaces))"
             return """
-            \(keys.joined(separator: ", ")) \(keys.count == 1 ? "is" : "are") not stored yet\(place)
-            nothing ran. a human has to store \(subject), then try again:
+            \(keys.joined(separator: ", ")) \(keys.count == 1 ? "is" : "are") not remembered yet\(place)
+            nothing happened. a human types \(subject) into:
             \(asks)
+            then try again.
             """
         case .namesAlreadyListed(let keys, let profile, let path):
             return """
@@ -63,7 +64,7 @@ extension StoreFailure: CustomStringConvertible {
         case .emptyValue:
             return "no value was given"
         case .keyIsValue(let key, let profile):
-            return "\(key) is a value in \(projectFileName) for @\(profile); replace it with monkeys set --public \(key), or forget it first"
+            return "\(key) is a value in \(projectFileName) for @\(profile); replace it with monkeys remember --public \(key), or forget it first"
         case .keyIsSecret(let key, let profile):
             return "\(key) is a key in \(projectFileName) for @\(profile), with its secret in the vault; remove it first"
         case .valuesNeedProject:
