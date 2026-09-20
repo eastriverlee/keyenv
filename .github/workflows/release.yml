@@ -14,40 +14,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build a universal binary
         run: swift build --configuration release --arch arm64 --arch x86_64
-      - name: Sign
-        env:
-          CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
-          CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
-          IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
-        if: env.CERTIFICATE != ''
-        run: |
-          keychain="$RUNNER_TEMP/signing.keychain-db"
-          password=$(uuidgen)
-          security create-keychain -p "$password" "$keychain"
-          security set-keychain-settings -lut 900 "$keychain"
-          security unlock-keychain -p "$password" "$keychain"
-          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
-          printf '%s' "$CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/identity.p12"
-          security import "$RUNNER_TEMP/identity.p12" -k "$keychain" -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple: -k "$password" "$keychain" > /dev/null
-          rm -f "$RUNNER_TEMP/identity.p12"
-          codesign --force --timestamp --options runtime --identifier dev.monk3ys.monkeys \
-            --sign "$IDENTITY" .build/apple/Products/Release/monkeys
-          codesign --verify --strict --verbose=2 .build/apple/Products/Release/monkeys
       - name: Package
         run: tar czf monkeys-macos-universal.tar.gz -C .build/apple/Products/Release monkeys
-      - name: Notarize
-        env:
-          NOTARY_KEY: ${{ secrets.NOTARY_KEY }}
-          NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
-          NOTARY_ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
-        if: env.NOTARY_KEY != ''
-        run: |
-          printf '%s' "$NOTARY_KEY" > "$RUNNER_TEMP/notary.p8"
-          ditto -c -k .build/apple/Products/Release/monkeys "$RUNNER_TEMP/notarize.zip"
-          xcrun notarytool submit "$RUNNER_TEMP/notarize.zip" \
-            --key "$RUNNER_TEMP/notary.p8" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID" --wait
-          rm -f "$RUNNER_TEMP/notary.p8"
       - uses: actions/upload-artifact@v4
         with:
           name: monkeys-macos-universal
