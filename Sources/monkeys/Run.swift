@@ -45,6 +45,7 @@ func runCommandWithSecrets(_ arguments: [String]) throws -> Never {
     let (scope, rest) = try resolveScope(cleaned)
     let (keys, command) = try namesToSpend(scope, rest)
     guard !command.isEmpty else { throw StoreFailure.badInvocation(runInvocation) }
+    let publicValues = try spentValues(of: scope.project, for: scope.profile)
 
     var values: [SpentValue] = []
     var missing: [String] = []
@@ -57,6 +58,7 @@ func runCommandWithSecrets(_ arguments: [String]) throws -> Never {
         }
     }
     guard missing.isEmpty else { throw StoreFailure.keysNotStored(missing, scope.profileArgument) }
+    for entry in publicValues { setenv(entry.name, entry.value, 1) }
     if isRedacting { runRedacted(command, values) }
     runUnredacted(command, values)
 }

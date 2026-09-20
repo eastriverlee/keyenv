@@ -59,7 +59,9 @@ $ monkeys unpack a.monsecrets       # on their machine, into their vault
 ```
 
 The `.monkeys` file replaces all three of `.env`, `.env.example` and the
-`.gitignore` line, and it is the one that is committed. One binary for macOS
+`.gitignore` line, and it is the one that is committed; `.monvalues` next to
+it holds the lines that were never secret, `PORT=3000` and the like, and is
+committed too. One binary for macOS
 and Linux does the rest: no runtime, no service, and no vault of its own,
 since the login keychain and the Secret Service are already there.
 
@@ -67,7 +69,8 @@ since the login keychain and the Secret Service are already there.
 
 Not a secret manager with a server or an audit log. Not a wall against an
 agent that sets out to read a secret; it removes the reflex, which is the
-everyday problem. Not a place for `PORT=3000`, which stays in the repository.
+everyday problem. Not a vault for `PORT=3000`, which stays in the repository,
+in `.monvalues`.
 
 ## Where to go next
 
@@ -376,6 +379,52 @@ committed, and the secrets are somewhere a repository cannot reach.
 You, or `unpack`, which writes it at the root of the checkout from a bundle.
 `doctor` reads it whole and says what each profile still lacks.
 
+## .monvalues
+
+A project's plain values, the `PORT=3000` and `API_URL=...` lines of a `.env`
+that were never secret, live in a `.monvalues` file next to `.monkeys`.
+Commit it. A project without such values never has the file.
+
+### Format
+
+```monkeys
+@test
+PORT=3000
+API_URL=http://localhost:8080
+@production
+PORT=80
+API_URL=https://api.example.com
+```
+
+| line | meaning |
+| --- | --- |
+| `@test` | opens a block for one profile or several, as in `.monkeys` |
+| `PORT=3000` | a key and its value, for every profile of the block above it |
+| `# ...` | a comment |
+
+There is no `+` line: the namespace is the project's, and a profile named
+here has to be one `.monkeys` declares. The value is everything after the
+`=`, kept as it is, with no quoting, no `${OTHER}` expansion and no second
+line. That is the part of the dotenv grammar every library agrees on, and
+anything else is refused with its line number rather than read one library's
+way.
+
+### One file for each key
+
+A key is either a secret or a value, and the file it is in says which. The
+same key in both files for one profile is a conflict: `run` refuses before
+running anything, `doctor` says `both files`, and `set` refuses to write a
+key the other file already holds, naming the other form. A value is never
+looked up in the vault, and a secret is never read from the file.
+
+### Who writes it
+
+`set --public` writes a value under a profile's block, creating the file the
+first time. `remove` deletes one. `unpack` writes the values a bundle
+carries, next to the `.monkeys` it writes. `run` puts every value of the
+profile into the command's environment, and `preview` and `doctor` show them
+as they are, since they are public.
+
 ## *.monsecrets
 
 A bundle, `a.monsecrets` unless you name it, is one or more profiles with
@@ -396,7 +445,10 @@ log2 N, r and p, so a bundle keeps opening after the default cost rises. The
 second is the salt followed by the sealed bytes, in
 base64. Inside, the bundle keeps the
 shape of the `.monkeys` file, namespace line and blocks, so `unpack` can write
-the file back and store each secret under its profile.
+the file back and store each secret under its profile. When the project has a
+`.monvalues` file, its blocks for the packed profiles follow, after a line
+that says `.monvalues`, so `unpack` writes that file too; a bundle without
+that line is one written before values existed, and still opens.
 
 ### Security
 
@@ -469,6 +521,7 @@ and a bundle cannot carry half of a profile.
 
 ```sh
 monkeys set [@profile] <KEY> [--clipboard]
+monkeys set --public [@profile] <KEY> [--clipboard]
 ```
 
 Reads a secret and stores it under the key. On a terminal it prompts, and what
@@ -510,6 +563,45 @@ A key you already stored is replaced, and nothing says so.
 Storing is a human's job. An agent that types a secret puts it in its own
 context before it reaches the vault, so the skill tells it to ask instead.
 
+### --public
+
+`--public` writes a value that is not secret, `PORT=3000` and the like, into
+the project's `.monvalues` file instead of the vault. It prompts with
+`Value:` and echoes what you type, since the value will be committed, and
+from a pipe it reads the value the same way:
+
+```sh
+echo 3000 | monkeys set --public PORT
+echo 80 | monkeys set --public @production PORT
+```
+
+> ```
+> wrote PORT=3000 to .monvalues for @test
+> wrote PORT=80 to .monvalues for @production
+> ```
+
+The line goes into the block that is that profile's alone, or into a new
+block at the end, and the file is created the first time. A value the
+profile already has is replaced in place. A key the file holds for several
+profiles together is refused, since replacing it would change them all;
+split the block by hand.
+
+`--public` only works inside a project, because a value has nowhere to go
+without `.monkeys`. It refuses a key that `.monkeys` lists as a secret for
+the profile, and plain `set` refuses a key that `.monvalues` holds as a
+value, each naming the other form:
+
+```sh
+monkeys set PORT
+```
+
+> ```
+> monkeys: PORT is a value in .monvalues for @test; replace it with monkeys set --public PORT, or remove it there first
+> ```
+
+Turning one into the other is `remove` and then `set`, so a secret never
+becomes a committed line by accident.
+
 ## remove
 
 ```sh
@@ -526,6 +618,21 @@ monkeys remove @ TYPESAFE_API_KEY
 
 The `.monkeys` file is not touched: a project still lists the key, and
 `doctor` reports it missing until someone stores a secret for it again.
+
+A key that `.monvalues` holds as a value for the profile is deleted from that
+file instead, since the file says which of the two it is:
+
+```sh
+monkeys remove API_URL
+```
+
+> ```
+> removed API_URL from .monvalues for @test
+> ```
+
+A value the file sets for several profiles together is refused, the way
+`set --public` refuses it, and a key that is in both files is refused until
+it is in one.
 
 ## run
 
@@ -568,6 +675,25 @@ monkeys run STRIPE_SECRET_KEY ./hello.sh
 > ```
 > monkeys: ~/foo/.monkeys already lists STRIPE_SECRET_KEY for @test
 > inside a project, run takes only the command: monkeys run <command>
+> ```
+
+The profile's values from `.monvalues`, when the project has one, go into the
+environment as well, straight from the file:
+
+```sh
+monkeys run sh -c 'echo "$API_URL on port $PORT"'
+```
+
+> ```
+> http://localhost:8080 on port 3000
+> ```
+
+A key that is in both files for the profile stops the run before anything
+happens:
+
+> ```
+> monkeys: PORT is both a key in .monkeys and a value in .monvalues for @test
+> a key lives in one file or the other; remove it from one of them
 > ```
 
 ### --all
@@ -655,7 +781,8 @@ does not catch the secret transformed, so `echo $KEY | base64` goes through;
 this is for the reflex, not for someone trying.
 
 A short secret is redacted wherever it appears, so store secrets here and keep
-`PORT=3000` in the repository.
+`PORT=3000` in `.monvalues`, whose values are public and pass through
+untouched.
 
 ### --no-redact
 
@@ -708,8 +835,16 @@ monkeys pack ~/Desktop/for-sam
 
 It carries the project's namespace, each profile's name, the keys the project
 lists for it, and their secrets, sealed with ChaCha20-Poly1305 under a key
-scrypt derives from the passphrase. One bundle carries one project. The file is safe to send over whatever you already use; the
-passphrase goes another way.
+scrypt derives from the passphrase. When the project has a `.monvalues`
+file, the values of the packed profiles ride along whole, since they are
+public anyway, and the message counts them:
+
+> ```
+> wrote /tmp/a.monsecrets: +foo @test, 2 secrets, 2 values
+> ```
+
+One bundle carries one project. The file is safe to send over whatever you
+already use; the passphrase goes another way.
 
 `--open` then reveals the file, in Finder with the file selected, or its
 folder through `xdg-open` on Linux, since the next thing to do with a bundle
@@ -788,6 +923,16 @@ outright. When a `.monkeys` file is already there, `unpack` adds a block at
 the end for the keys the file does not yet list, grouped the way the bundle
 groups them, and leaves the rest of the file alone. A file that names another
 project on its `+` line refuses the bundle, and the bundle stays.
+
+A bundle that carries values writes `.monvalues` next to `.monkeys` the same
+way, adding the values the file does not have and leaving the ones it has:
+
+> ```
+> wrote .monkeys: +foo @test, 2 keys
+> wrote .monvalues: 2 values
+> stored foo.test/DATABASE_URL, foo.test/STRIPE_SECRET_KEY
+> removed /tmp/a.monsecrets
+> ```
 
 The passphrase is read from standard input when it is not a terminal.
 
@@ -887,7 +1032,19 @@ A length and a two-character prefix are enough to tell a secret pasted whole
 from one that lost a character on the way, or one provider's from another's.
 
 With no keys, `preview` shows every key in the profile: those with no profile
-outside a project, the file's keys inside one.
+outside a project, the file's keys inside one. A value from `.monvalues` is
+shown as it is, after the secrets, since it is public:
+
+```sh
+monkeys preview
+```
+
+> ```
+> DATABASE_URL       po...t 29
+> STRIPE_SECRET_KEY  sk...p 34
+> PORT               3000
+> API_URL            http://localhost:8080
+> ```
 
 ## doctor
 
@@ -912,6 +1069,17 @@ monkeys doctor
 >   ✗ SENTRY_DSN
 > ```
 
+A value from `.monvalues` counts as present and is shown with its value,
+and a key that is in both files is marked as such, since `run` will refuse it:
+
+> ```
+> @test  default
+>   ✓ DATABASE_URL
+>   ✓ STRIPE_SECRET_KEY
+>   ✗ PORT  also a value in .monvalues
+>   ✓ API_URL=http://localhost:8080
+> ```
+
 ### --short
 
 `--short` says only what is wrong, one line per profile with a problem, and
@@ -925,6 +1093,8 @@ monkeys doctor --short
 > ```
 > missing @production: STRIPE_SECRET_KEY,SENTRY_DSN
 > ```
+
+A key in both files gets its own line, `both files @test: PORT`.
 
 ## export
 

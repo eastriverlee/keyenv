@@ -7,6 +7,8 @@ struct CommandSummary {
 let commandSummaries = [
     CommandSummary(verb: "set", arguments: "<KEY> [--clipboard]",
                    summary: "store a secret typed, piped or pasted"),
+    CommandSummary(verb: "set", arguments: "--public <KEY>",
+                   summary: "write a plain value into .monvalues"),
     CommandSummary(verb: "remove", arguments: "<KEY>",
                    summary: "delete one stored secret"),
     CommandSummary(verb: "run", arguments: "<KEY[,KEY...]> <command>",
@@ -78,6 +80,13 @@ var usage: String {
 
       \(outputStyle("monkeys run ./hello.sh", .argument))
       \(outputStyle("monkeys set STRIPE_SECRET_KEY", .argument))      stored as foo.test/STRIPE_SECRET_KEY
+
+    A value that is not secret, PORT=3000 and the like, goes in \(valuesFileName)
+    next to it, in the same blocks with the value after the key. Commit it
+    too. run puts those in the environment straight from the file, and a key
+    lives in one file or the other, never both:
+
+      \(outputStyle("monkeys set --public PORT", .argument))        Value: 3000, written to \(valuesFileName)
 
     Each profile gets the keys of every block that lists it, and the first
     profile in the file is the one run uses when none is given:

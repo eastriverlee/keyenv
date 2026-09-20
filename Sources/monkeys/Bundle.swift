@@ -49,7 +49,10 @@ struct BundleBlock {
 struct ProfileBundle {
     let namespace: String?
     let blocks: [BundleBlock]
+    let values: [ValueBlock]
 }
+
+private let valuesMarker = valuesFileName
 
 func bundlePath(_ argument: String) -> String {
     argument.hasSuffix(bundleSuffix) ? argument : argument + bundleSuffix
@@ -93,16 +96,50 @@ private func serializedBlock(_ block: BundleBlock, in namespace: String?) -> [St
     return ["@" + written.joined(separator: ",")] + block.entries.map(encodedEntry)
 }
 
+private func serializedValues(_ block: ValueBlock, in namespace: String?) -> [String] {
+    let written = block.profiles.map { shortened($0, in: namespace) }
+    return ["@" + written.joined(separator: ",")] + block.entries.map { $0.key + "=" + Data($0.value.utf8).base64EncodedString() }
+}
+
 private func serialized(_ bundle: ProfileBundle) -> Data {
     let header = bundle.namespace.map { ["+" + $0] } ?? []
-    let lines = header + bundle.blocks.flatMap { serializedBlock($0, in: bundle.namespace) }
-    return Data(lines.joined(separator: "\n").utf8)
+    let secrets = bundle.blocks.flatMap { serializedBlock($0, in: bundle.namespace) }
+    let values = bundle.values.isEmpty ? [] : [valuesMarker] + bundle.values.flatMap { serializedValues($0, in: bundle.namespace) }
+    return Data((header + secrets + values).joined(separator: "\n").utf8)
+}
+
+private func deserializedValues(_ lines: [Substring], namespace: String?) throws -> [ValueBlock] {
+    var blocks: [ValueBlock] = []
+    for line in lines {
+        if line.hasPrefix("@") {
+            let profiles = line.dropFirst().split(separator: ",").map(String.init)
+            guard !profiles.isEmpty, profiles.allSatisfy(isValidProfileName) else {
+                throw StoreFailure.bundleFailed("the bundle carries no profile")
+            }
+            blocks.append(ValueBlock(profiles: profiles.map { prefixed($0, with: namespace) }, entries: []))
+            continue
+        }
+        let parts = line.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)
+        guard let current = blocks.popLast(), parts.count == 2, isValidKey(String(parts[0])),
+              let decoded = Data(base64Encoded: String(parts[1])) else {
+            throw StoreFailure.bundleFailed("a line in the bundle is not KEY=value")
+        }
+        let entry = ValueEntry(key: String(parts[0]), value: String(decoding: decoded, as: UTF8.self))
+        blocks.append(ValueBlock(profiles: current.profiles, entries: current.entries + [entry]))
+    }
+    return blocks
 }
 
 private func deserialized(_ plaintext: Data) throws -> ProfileBundle {
     var namespace: String?
     var blocks: [BundleBlock] = []
-    for line in String(decoding: plaintext, as: UTF8.self).split(separator: "\n") {
+    var lines = String(decoding: plaintext, as: UTF8.self).split(separator: "\n")[...]
+    var valueLines: [Substring] = []
+    if let marker = lines.firstIndex(of: Substring(valuesMarker)) {
+        valueLines = Array(lines[(marker + 1)...])
+        lines = lines[..<marker]
+    }
+    for line in lines {
         if line.hasPrefix("+") {
             let name = String(line.dropFirst())
             guard namespace == nil, blocks.isEmpty, isValidProfileName(name) else {
@@ -132,7 +169,7 @@ private func deserialized(_ plaintext: Data) throws -> ProfileBundle {
         blocks.append(BundleBlock(profiles: current.profiles, entries: current.entries + [entry]))
     }
     guard !blocks.isEmpty else { throw StoreFailure.bundleFailed("the bundle carries no profile") }
-    return ProfileBundle(namespace: namespace, blocks: blocks)
+    return ProfileBundle(namespace: namespace, blocks: blocks, values: try deserializedValues(valueLines, namespace: namespace))
 }
 
 func writeBundle(_ bundle: ProfileBundle, to path: String) throws {

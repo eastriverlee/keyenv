@@ -13,6 +13,12 @@ enum StoreFailure: Error {
     case profileAmbiguous(String, [String])
     case keysNotStored([String], String)
     case namesAlreadyListed([String], String, String)
+    case badValuesFile(String, Int, String)
+    case keysInBothFiles([String], String)
+    case emptyValue
+    case keyIsValue(String, String)
+    case keyIsSecret(String, String)
+    case valuesNeedProject
     case bundleFailed(String)
     case backendUnavailable(String)
     case backendFailed(String)
@@ -53,6 +59,22 @@ extension StoreFailure: CustomStringConvertible {
             \(path) already lists \(keys.joined(separator: ", ")) for @\(profile)
             inside a project, run takes only the command: monkeys run <command>
             """
+        case .badValuesFile(let path, let line, let problem):
+            return "\(path):\(line): \(problem)"
+        case .keysInBothFiles(let keys, let profile):
+            let listed = keys.joined(separator: ", ")
+            return """
+            \(listed) \(keys.count == 1 ? "is" : "are") both a key in \(projectFileName) and a value in \(valuesFileName) for @\(profile)
+            a key lives in one file or the other; remove it from one of them
+            """
+        case .emptyValue:
+            return "no value was given"
+        case .keyIsValue(let key, let profile):
+            return "\(key) is a value in \(valuesFileName) for @\(profile); replace it with monkeys set --public \(key), or remove it there first"
+        case .keyIsSecret(let key, let profile):
+            return "\(key) is a key in \(projectFileName) for @\(profile), with its secret in the vault; remove it there first"
+        case .valuesNeedProject:
+            return "a value has nowhere to go without a project: run this next to a \(projectFileName) file"
         case .bundleFailed(let reason):
             return reason
         case .backendUnavailable(let reason):

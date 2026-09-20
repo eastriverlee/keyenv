@@ -41,7 +41,11 @@ STRIPE_SECRET_KEY
 ```
 
 The `+` line is the namespace, the part of every profile's name that belongs
-to the project: `@test` here is the profile `foo.test`.
+to the project: `@test` here is the profile `foo.test`. A `.monvalues` file
+next to it holds the values that are not secret, `PORT=3000` and the like,
+and `run` puts those in the environment too. A value goes there with
+`monkeys set --public PORT`, which you may run yourself, since nothing in
+it is secret.
 In that directory or below it within the git checkout, `run` takes only the
 command, and every key is scoped to that profile, so `monkeys set
 STRIPE_SECRET_KEY` there stores into the same profile the command reads from:
