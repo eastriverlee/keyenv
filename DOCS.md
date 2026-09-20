@@ -613,6 +613,42 @@ monkeys remember @production DATABASE_URL
 
 A key you already remembered is replaced, and nothing says so.
 
+### What it writes into .monkeys
+
+A key the project does not list is added to it, under the profile the secret
+went to, so the command that needs it can find it:
+
+```sh
+monkeys remember STRIPE_SECRET_KEY
+```
+
+> ```
+> secret:
+> remembered foo.test/STRIPE_SECRET_KEY
+> listed STRIPE_SECRET_KEY in .monkeys for @test
+> ```
+
+In a git checkout with no `.monkeys` at all, the first `remember` makes one at
+the root of the checkout, named after that directory, with `test` as its first
+profile:
+
+```sh
+monkeys remember DATABASE_URL
+```
+
+> ```
+> made .monkeys for +foo @test
+> remembered foo.test/DATABASE_URL
+> listed DATABASE_URL in .monkeys for @test
+> ```
+
+The file is made only once there is a secret to put in it, so an answer you
+abandon at the prompt leaves nothing behind. Outside a checkout nothing is
+made and the key keeps no profile, and a bare `@` says so from inside one.
+
+A profile the file does not declare is refused rather than added, since a
+mistyped one would otherwise become a profile of its own.
+
 ### Walking a profile
 
 With no key, inside a project, `remember` walks the profile's keys in the order the

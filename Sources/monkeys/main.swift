@@ -88,11 +88,14 @@ func readValueFromInput() -> String {
     return readLine(strippingNewline: true) ?? ""
 }
 
-private func setPublicValue(_ scope: Scope, _ name: String, readsClipboard: Bool) throws {
-    guard let project = scope.project, let profile = scope.profile else { throw StoreFailure.valuesNeedProject }
-    guard !project.keys(for: profile).contains(name) else { throw StoreFailure.keyIsSecret(name, project.shortName(profile)) }
+private func setPublicValue(_ given: Scope, _ chosen: ProfileArgument, _ name: String, readsClipboard: Bool) throws {
+    if let project = given.project, let profile = given.profile, project.keys(for: profile).contains(name) {
+        throw StoreFailure.keyIsSecret(name, project.shortName(profile))
+    }
     let value = readsClipboard ? try readSecretFromClipboard() : readValueFromInput()
     guard !value.isEmpty else { throw StoreFailure.emptyValue }
+    let scope = given.project == nil ? (try makingProjectFile(chosen) ?? given) : given
+    guard let project = scope.project, let profile = scope.profile else { throw StoreFailure.valuesNeedProject }
     try writeValue(value, forKey: name, profile: profile, in: project)
     printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(name + "=" + value, .bold) + " to \(projectFileName) for @\(project.shortName(profile))")
 }
@@ -103,13 +106,35 @@ private func rejectingProfileList(_ arguments: [String]) throws {
     throw StoreFailure.bundleFailed("remember walks one profile at a time: monkeys remember @\(one)")
 }
 
+private let firstProfileName = "test"
+
+private func makingProjectFile(_ chosen: ProfileArgument) throws -> Scope? {
+    guard case .none = chosen else { return nil }
+    guard let root = checkoutRoot(), let namespace = namespaceFromDirectory(root) else { return nil }
+    let path = root + "/" + projectFileName
+    try ("+" + namespace + "\n@" + firstProfileName + "\n").write(toFile: path, atomically: true, encoding: .utf8)
+    let shown = root == FileManager.default.currentDirectoryPath ? projectFileName : abbreviatingHome(path)
+    printToStandardError(messageStyle("made", .good) + " " + messageStyle(shown, .bold)
+        + " for " + messageStyle("+" + namespace + " @" + firstProfileName, .argument))
+    return try scope(for: chosen)
+}
+
+func listKey(_ key: String, in scope: Scope) throws {
+    guard let project = scope.project, let profile = scope.profile else { return }
+    guard project.profiles.contains(profile), !project.keys(for: profile).contains(key) else { return }
+    try writeKey(key, profile: profile, in: project)
+    printToStandardError(messageStyle("listed", .good) + " " + messageStyle(key, .bold)
+        + " in \(projectFileName) for @\(project.shortName(profile))")
+}
+
 func runSet(_ arguments: [String]) throws {
     let readsClipboard = arguments.contains("--clipboard")
     let isPublic = arguments.contains("--public")
     let walksAll = arguments.contains("--all")
     let positional = arguments.filter { $0 != "--clipboard" && $0 != "--public" && $0 != "--all" }
     try rejectingProfileList(positional)
-    let (scope, rest) = try resolveScope(positional)
+    let (chosen, rest) = try takeProfileArgument(positional)
+    var scope = try scope(for: chosen)
     guard !rest.isEmpty else {
         guard !readsClipboard else {
             throw StoreFailure.bundleFailed("--clipboard remembers one key: monkeys remember <KEY> --clipboard")
@@ -120,14 +145,16 @@ func runSet(_ arguments: [String]) throws {
     }
     guard !walksAll else { throw StoreFailure.badInvocation(walkForm) }
     let name = try requireKey(rest)
-    if isPublic { return try setPublicValue(scope, name, readsClipboard: readsClipboard) }
+    if isPublic { return try setPublicValue(scope, chosen, name, readsClipboard: readsClipboard) }
     if let project = scope.project, let profile = scope.profile, project.value(of: name, for: profile) != nil {
         throw StoreFailure.keyIsValue(name, project.shortName(profile))
     }
     let value = readsClipboard ? try readSecretFromClipboard() : readSecretFromInput()
     guard !value.isEmpty else { throw StoreFailure.emptySecret }
+    if scope.project == nil, let made = try makingProjectFile(chosen) { scope = made }
     try secretStore.store(value, forName: scope.storedName(name))
     printToStandardError(messageStyle("remembered", .good) + " " + messageStyle(scope.storedName(name), .bold))
+    try listKey(name, in: scope)
     printHintToTerminal(messageStyle("give it to a command with:", .dim))
     printHintToTerminal("  " + messageStyle(spendHint(scope, name), .argument))
 }

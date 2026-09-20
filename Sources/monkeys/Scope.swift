@@ -156,6 +156,26 @@ func locateProject() throws -> Project? {
     return nil
 }
 
+func checkoutRoot() -> String? {
+    var directory = FileManager.default.currentDirectoryPath
+    while true {
+        if FileManager.default.fileExists(atPath: directory + "/.git") { return directory }
+        guard directory != "/" else { return nil }
+        directory = URL(fileURLWithPath: directory).deletingLastPathComponent().path
+    }
+}
+
+func namespaceFromDirectory(_ directory: String) -> String? {
+    let name = URL(fileURLWithPath: directory).lastPathComponent
+    var written = ""
+    for character in name {
+        let keeps = (character.isASCII && (character.isLetter || character.isNumber)) || "_-".contains(character)
+        if keeps { written.append(character) } else if !written.hasSuffix("-") { written.append("-") }
+    }
+    let trimmed = written.trimmingCharacters(in: CharacterSet(charactersIn: "-"))
+    return trimmed.isEmpty ? nil : trimmed
+}
+
 private func directoriesOfThisCheckout() -> [String] {
     var directory = FileManager.default.currentDirectoryPath
     var climbed: [String] = []

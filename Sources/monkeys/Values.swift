@@ -84,3 +84,40 @@ func removeValue(forKey key: String, profile: String, in project: Project) throw
     try writeLines(lines, to: project.path)
     return true
 }
+
+private func locateKey(_ key: String, for profile: String, in lines: [String], of project: Project) -> ValueLineLocation? {
+    var open: [String] = []
+    for (index, line) in lines.enumerated() {
+        let trimmed = line.trimmingCharacters(in: .whitespaces)
+        if trimmed.hasPrefix("@") {
+            open = trimmed.dropFirst().split(separator: ",").map { prefixed($0.trimmingCharacters(in: .whitespaces), with: project.namespace) }
+            continue
+        }
+        guard open.contains(profile), trimmed == key else { continue }
+        return ValueLineLocation(index: index, profiles: open)
+    }
+    return nil
+}
+
+func writeKey(_ key: String, profile: String, in project: Project) throws {
+    var lines = try fileLines(at: project.path)
+    guard locateKey(key, for: profile, in: lines, of: project) == nil else { return }
+    if let block = lines.lastIndex(of: profileLine([profile], in: project.namespace)) {
+        var end = block + 1
+        while end < lines.count, !lines[end].trimmingCharacters(in: .whitespaces).hasPrefix("@") { end += 1 }
+        while end > block + 1, lines[end - 1].trimmingCharacters(in: .whitespaces).isEmpty { end -= 1 }
+        lines.insert(key, at: end)
+    } else {
+        lines += [profileLine([profile], in: project.namespace), key]
+    }
+    try writeLines(lines, to: project.path)
+}
+
+func removeKey(_ key: String, profile: String, in project: Project) throws -> Bool {
+    var lines = try fileLines(at: project.path)
+    guard let location = locateKey(key, for: profile, in: lines, of: project) else { return false }
+    try rejectingSharedBlock(location, key, profile, project)
+    lines.remove(at: location.index)
+    try writeLines(lines, to: project.path)
+    return true
+}
