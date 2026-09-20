@@ -85,25 +85,25 @@ Two parts, `test.foo`, is enough for most; a third, `test.foo.lee`, is for a
 keyring that holds many projects and collides at two. A single word does for
 a profile nothing else will collide with.
 
-## The personal profile
+## No profile
 
-A name stored outside any project has no prefix and needs no `@`. That is
-where a value that belongs to you rather than to a project lives, such as the
-key a tool you start from anywhere reads:
+A name stored outside any project has no profile and needs no `@`. Those
+are the global names, where a value that belongs to you rather than to a
+project lives, such as the key a tool you start from anywhere reads:
 
 ```sh
 monkeys set TYPESAFE_API_KEY
 monkeys run TYPESAFE_API_KEY claude
 ```
 
-A project profile never reads from the personal one. A name missing in `@foo`
+A project profile never reads from the global names. A name missing in `@foo`
 is missing there even when a bare copy exists, so a project cannot quietly
 pick up a value meant for another.
 
 Inside a project every command is scoped to that project's profile, so the
-personal names are out of reach there: `monkeys run` reads `foo/`, and
+global names are out of reach there: `monkeys run` reads `foo/`, and
 `monkeys set TYPESAFE_API_KEY` would write `foo/TYPESAFE_API_KEY`. A bare `@`
-means the personal profile. It sets the project file aside, so names are
+means no profile. It sets the project file aside, so names are
 given again, and reaches the unprefixed names without leaving the directory:
 
 ```sh
@@ -118,8 +118,8 @@ when a file would otherwise decide.
 ## Where values are stored
 
 Each variable is one keyring item carrying two attributes: `service` is
-`monkeys`, and `account` is `<profile>/<NAME>`, or `<NAME>` alone in the
-personal profile. The label is `monkeys: ` followed by the account. The same
+`monkeys`, and `account` is `<profile>/<NAME>`, or `<NAME>` alone for a
+global name. The label is `monkeys: ` followed by the account. The same
 name in two profiles is two items. Your desktop's own keyring tools see the
 same items, and deleting one there deletes it for `monkeys`.
 
@@ -161,7 +161,7 @@ command prints one.
 | `monkeys fill @a --with @b` | give `@a` the names it lacks, from `@b` |
 | `monkeys doctor [--short]` | what each profile has and lacks |
 
-Every command takes a leading `@profile`; a bare `@` is the personal profile.
+Every command takes a leading `@profile`; a bare `@` means no profile, the global names.
 Naming no name means every name for `preview` and `export`, or the project's
 names inside a project. `run` asks to be told, since the names are how it
 knows what to check for and what to leave out.
@@ -209,7 +209,7 @@ wl-paste | monkeys set GITHUB_TOKEN       # Linux, Wayland
 
 Inside a project the name is stored under the project's profile, so
 `monkeys set STRIPE_SECRET_KEY` there writes `foo/STRIPE_SECRET_KEY`. A
-leading `@profile` picks another, and a bare `@` the personal one.
+leading `@profile` picks another, and a bare `@` the global names.
 
 A name you already stored is replaced, and nothing says so. The previous
 value is gone, and the keyring keeps no history to recover it from.
@@ -272,7 +272,7 @@ monkeys preview SHORT_ONE
 A length and a two-character prefix are enough to tell a key pasted whole from
 one that lost a character on the way, or one provider's key from another's.
 
-With no names, `preview` shows every name in the profile: the personal ones
+With no names, `preview` shows every name in the profile: the global ones
 outside a project, the file's names inside one.
 
 ## remove
@@ -282,7 +282,7 @@ monkeys remove [@profile] <NAME>
 ```
 
 Deletes one value from the keyring. Inside a project the name is the
-project's; `@` reaches a personal one from there:
+project's; `@` reaches a global one from there:
 
 ```sh
 monkeys remove OPENROUTER_API_KEY
@@ -343,7 +343,7 @@ you would rather not say which:
 monkeys run --all ./bench
 ```
 
-Outside a project that is every personal name, which is the wide end of the
+Outside a project that is every global name, which is the wide end of the
 tool. Name what the command reads when you can.
 
 ### When a name is missing

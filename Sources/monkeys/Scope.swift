@@ -74,14 +74,14 @@ func isValidProfileName(_ name: String) -> Bool {
 
 enum ProfileArgument {
     case none
-    case personal
+    case global
     case named(String)
 }
 
 func takeProfileArgument(_ arguments: [String]) throws -> (profile: ProfileArgument, rest: [String]) {
     guard let first = arguments.first, first.hasPrefix("@") else { return (.none, arguments) }
     let rest = Array(arguments.dropFirst())
-    guard first != "@" else { return (.personal, rest) }
+    guard first != "@" else { return (.global, rest) }
     let name = String(first.dropFirst())
     guard isValidProfileName(name) else { throw StoreFailure.invalidProfileName(first) }
     return (.named(name), rest)
@@ -90,7 +90,7 @@ func takeProfileArgument(_ arguments: [String]) throws -> (profile: ProfileArgum
 func resolveScope(_ arguments: [String]) throws -> (scope: Scope, rest: [String]) {
     let (chosen, rest) = try takeProfileArgument(arguments)
     switch chosen {
-    case .personal:
+    case .global:
         return (Scope(profile: nil, project: nil), rest)
     case .named(let name):
         guard let project = try locateProject() else { return (Scope(profile: name, project: nil), rest) }

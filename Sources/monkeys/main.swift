@@ -193,7 +193,7 @@ private func packedBlocks(_ arguments: [String]) throws -> (blocks: [Block], pro
     }
     guard rest.count <= 1 else { throw StoreFailure.badInvocation(packForm) }
     switch chosen {
-    case .personal:
+    case .global:
         throw StoreFailure.bundleFailed(profileNeeded)
     case .named(let name):
         guard !selection.contains(where: { $0.hasPrefix("@") }) else { throw StoreFailure.badInvocation(packForm) }

@@ -99,10 +99,11 @@ var usage: String {
 
       \(outputStyle("monkeys set @foo SENTRY_DSN", .argument))      stored as foo/SENTRY_DSN
 
-    A name stored outside any project has no prefix and needs no @. Inside a
-    project every command is scoped to its profile, so a bare @ says the
-    personal profile instead: it sets the file aside, names are given again,
-    and the unprefixed names are reached without leaving the directory:
+    A name stored outside any project has no profile and needs no @; those
+    are the global names. Inside a project every command is scoped to its
+    profile, so a bare @ says no profile: it sets the file aside, names are
+    given again, and the global names are reached without leaving the
+    directory:
 
       \(outputStyle("monkeys run TYPESAFE_API_KEY claude", .argument))     outside a project
       \(outputStyle("monkeys run @ TYPESAFE_API_KEY claude", .argument))   inside one, the same value
