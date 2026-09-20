@@ -353,8 +353,8 @@ PORT=80
 | --- | --- |
 | `+foo` | the namespace, first and at most once |
 | `@test,production` | opens a block for one profile or several |
-| `DATABASE_URL` | a key, belonging to every profile of the block above it |
-| `PORT=80` | a value, kept in the file and never in the vault |
+| `DATABASE_URL` | a key whose secret is in the vault, for every profile of the block above it |
+| `PORT=80` | a key with its value set right here, kept in the file and never in the vault |
 | `# ...` | a comment |
 
 The first profile mentioned is the default. A key listed twice for one
