@@ -329,7 +329,7 @@ the fix is to delete it and change the passphrase you would have sent.
 | `monkeys run <KEY>[,<KEY>] <command>` | run a command with those secrets in its environment |
 | `monkeys run <command>` | the same, with the keys a `.monkeys` file lists |
 | `monkeys export [KEY[,KEY]]` | vault lookup lines, to paste into a startup file |
-| `monkeys pack [path] [--only ...]` | the profiles as one encrypted `a.monkeys` |
+| `monkeys pack [path] [--open] [--only ...]` | the profiles as one encrypted `a.monkeys` |
 | `monkeys unpack <name> [directory]` | store its secrets, write its `.monkeys` |
 | `monkeys fill @a --with @b` | give `@a` the keys it lacks, from `@b` |
 | `monkeys doctor [--short]` | what each profile has and lacks |
@@ -648,7 +648,7 @@ quiet.
 ## pack
 
 ```sh
-monkeys pack [path] [--only [KEY[,KEY]] [@profile[,profile] [KEY[,KEY]]]...]
+monkeys pack [path] [--open] [--only [KEY[,KEY]] [@profile[,profile] [KEY[,KEY]]]...]
 ```
 
 Writes a project's secrets as one encrypted file, the only way they leave the
@@ -682,6 +682,10 @@ It carries each profile's name, the keys the project lists for it, and their
 secrets, sealed with ChaCha20-Poly1305 under a key scrypt derives from the
 passphrase. The file is safe to send over whatever you already use; the
 passphrase goes another way.
+
+`--open` then reveals the file, in Finder with the file selected, or its
+folder through `xdg-open` on Linux, since the next thing to do with a bundle
+is to drag it somewhere.
 
 A pack with a secret still missing refuses, since a bundle that fills half a
 profile is a bug for whoever receives it.

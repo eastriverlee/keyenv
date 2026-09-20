@@ -123,7 +123,8 @@ var usage: String {
     the file mentions. The bundle keeps that shape, and unpack writes it
     back as the project file. It goes to /tmp/a.monkeys, outside any
     repository; a path before --only puts it elsewhere, into a directory
-    you name or at a file you name.
+    you name or at a file you name, and --open reveals it in your file
+    manager, ready to drag.
     pack asks for a passphrase; unpack asks again, stores the secrets,
     writes the keys into .monkeys at the root of the git checkout you are
     in, here when there is none, or in the directory you name, and deletes

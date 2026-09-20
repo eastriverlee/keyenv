@@ -92,7 +92,7 @@ func runPreview(_ arguments: [String]) throws {
     }
 }
 
-private let packForm = "monkeys pack [path] [--only [KEY[,KEY]] [@profile[,profile] [KEY[,KEY]]]...]"
+private let packForm = "monkeys pack [path] [--open] [--only [KEY[,KEY]] [@profile[,profile] [KEY[,KEY]]]...]"
 
 private let profileNeeded = "a bundle carries a profile: run this in a project with a \(projectFileName) file, or name one with @profile"
 
@@ -240,13 +240,35 @@ private func blockLines(_ profiles: [[String]]) -> String {
 }
 
 func runPack(_ arguments: [String]) throws {
-    let (blocks, project, fileName) = try packedBlocks(arguments)
+    let opens = arguments.contains("--open")
+    let (blocks, project, fileName) = try packedBlocks(arguments.filter { $0 != "--open" })
     guard !blocks.isEmpty else { throw StoreFailure.bundleFailed("nothing to pack: no keys are listed for that") }
     let filled = try blocks.map { try filledBlock($0, project: project) }
     let path = bundleDestination(fileName)
     try writeBundle(ProfileBundle(blocks: filled), to: path)
     let count = filled.reduce(0) { $0 + $1.entries.count * $1.profiles.count }
     printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(abbreviatingHome(path), .bold) + ": \(blockLines(filled.map(\.profiles))), \(count) secret\(count == 1 ? "" : "s")")
+    if opens { revealInFileManager(path) }
+}
+
+func revealInFileManager(_ path: String) {
+    #if os(macOS)
+    let command = ["/usr/bin/open", "-R", path]
+    #else
+    let openers = ["/usr/bin/xdg-open", "/usr/local/bin/xdg-open"]
+    guard let opener = openers.first(where: { FileManager.default.isExecutableFile(atPath: $0) }) else {
+        printToStandardError("xdg-open is not installed, so the folder stays closed")
+        return
+    }
+    let command = [opener, URL(fileURLWithPath: path).deletingLastPathComponent().path]
+    #endif
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: command[0])
+    process.arguments = Array(command.dropFirst())
+    process.standardOutput = FileHandle.nullDevice
+    process.standardError = FileHandle.nullDevice
+    guard (try? process.run()) != nil else { return }
+    process.waitUntilExit()
 }
 
 func bundleDestination(_ argument: String?) -> String {
