@@ -21,17 +21,16 @@
 
 ## Overview
 
-`.monkeys` is a `.env` you can commit. The keys stay in the file, the secrets
-stay in your vault, and nothing, the command you run included, can print one.
+`.monkeys` is a `.env` you can commit. Keys stay in the file, secrets stay in
+your vault. Even the command you hand one to cannot print it.
 
 It exists for two reasons, and either would have been enough.
 
 1. **LLMs read `.env`.** `cat .env` is just too tempting, and once it's in
    the transcript, it's there for good. The usual answers are to ignore it,
-   trust the provider, or rotate the key after it leaks. Someone will call it
-   a skill issue. It isn't: there has never been a safe way for the people on
-   a project to share a secret and use it, so it went in a file. C had a
-   memory problem too, and being careful didn't fix it. Rust did.
+   trust the provider, or rotate the key after it leaks. Skill issue? There
+   was never a safe way to share a secret, so it went in a file. Being
+   careful never fixed C's memory bugs. Rust did.
 
 2. **`.env` was never good, even for people.** Sharing it means pasting the
    whole file into a chat. Test and production mean `.env.test`,

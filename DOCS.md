@@ -2,8 +2,7 @@
 
 `.monkeys` is a `.env` you can commit. The keys a project needs are listed in
 that file, the secrets stay in each person's vault, and `monkeys run` hands
-them to one command at a time. Nothing prints a stored secret, the command you
-run included.
+them to the command that needs them. Even that command cannot print one.
 
 ## Why it exists
 

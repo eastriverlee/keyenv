@@ -122,7 +122,12 @@ SENTRY_DSN`;
 		</nav>
 	</header>
 
-	<img src="/monkeys.svg" alt="" class="mx-auto h-36 w-72 object-cover sm:h-48 sm:w-96" />
+	<div class="flex flex-col items-center gap-3">
+		<img src="/monkeys.svg" alt="" class="h-36 w-72 object-cover sm:h-48 sm:w-96" />
+		<p class="text-muted-foreground text-center text-balance">
+			<code>.env</code> you can hand to an LLM, or <code>git add</code>.
+		</p>
+	</div>
 
 	<section class="flex flex-col gap-4">
 		<h1 class="text-4xl leading-[1.08] font-semibold tracking-tight text-balance italic sm:text-5xl">
@@ -163,13 +168,12 @@ SENTRY_DSN`;
 			<li>Rotate the key after it leaks.</li>
 		</ol>
 		<p class="max-w-prose">
-			Someone will call it a skill issue. It isn't. There has never been a safe way for the people
-			on a project to share a secret and use it, so it went in a file. C had a memory problem too,
-			and being careful didn't fix it. Rust did.
+			Skill issue? There was never a safe way to share a secret, so it went in a file. Being
+			careful never fixed C's memory bugs. Rust did.
 		</p>
 		<p class="max-w-prose">
-			<code>.monkeys</code> is a <code>.env</code> you can commit. The keys stay in the file,
-			the secrets stay in your vault, and nothing, the command you run included, can print one.
+			Keys stay in a file you commit. Secrets stay in your vault and reach one command at a time.
+			Even that command cannot print one.
 		</p>
 	</section>
 
