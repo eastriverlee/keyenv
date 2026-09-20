@@ -96,11 +96,6 @@ With Homebrew, which then upgrades it along with everything else:
 brew install eastriverlee/tap/monkeys
 ```
 
-Use the full name. Homebrew 7 loads a formula from a third-party tap only
-once it is trusted, and installing by full name trusts that one formula; after
-a plain `brew tap eastriverlee/tap`, `brew install monkeys` is refused until
-`brew trust --formula eastriverlee/tap/monkeys`.
-
 From source, with Swift 6.1 or later, on macOS 13 or later or on Linux:
 
 ```sh
