@@ -14,7 +14,7 @@ const skill = readFileSync(join(repository, 'plugins', 'monkeys', 'skills', 'mon
 const fullText = [
 	'# monkeys',
 	'',
-	"> A cross-platform .env alternative for the LLM era: secrets in your vault, their keys in your repo, spent one command at a time, never printed. `monkeys run` redacts a secret the command prints back. macOS and Linux, MIT. Source: https://github.com/eastriverlee/monkeys",
+	"> A cross-platform .env alternative for the LLM era: secrets in your vault, keys in your repo, spent one command at a time, never printed. `monkeys run` redacts a secret the command prints back. macOS and Linux, MIT. Source: https://github.com/eastriverlee/monkeys",
 	'',
 	'What follows is the README, the reference (DOCS.md) and the skill for coding agents, joined at build time.',
 	'',

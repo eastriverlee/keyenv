@@ -1,3 +1,79 @@
+# Overview
+
+`monkeys` keeps secrets in your operating system's vault and hands them to
+one command at a time. It replaces `.env`: the keys a project needs are
+committed in `.monkeys`, the secrets stay in each person's keychain or Secret
+Service, and `monkeys run` gives them to the command that needs them. No
+command prints a stored secret.
+
+## Why it exists
+
+Coding agents read `.env`. A variable was empty, the task was stuck, and
+`cat .env` was the shortest way back; the secret is then in the transcript
+for good. `monkeys` takes that path away and gives the agent a shorter one:
+the secret goes from the vault into the process, a missing one comes back
+as a message saying what to ask for, and the output comes back redacted.
+
+People get the same shape. A secret shared with a teammate becomes `pack`
+and `unpack`, and `.env`, `.env.example` and the `.gitignore` line between
+them collapse into one committed file that lists keys and holds nothing.
+
+## What it is
+
+The same project, the way it is kept today and the way `monkeys` keeps it.
+With `.env`, the secrets sit in a file next to the code, and the file is what
+you protect, copy and share:
+
+```sh
+$ cat .env                          # secrets, on disk, never committed
+OPENROUTER_API_KEY=sk-or...
+STRIPE_SECRET_KEY=sk_li...
+
+$ cat .env.example                  # the same keys again, kept in step by hand
+OPENROUTER_API_KEY=
+STRIPE_SECRET_KEY=
+
+$ cat .gitignore                    # so the first file stays out of git
+.env
+
+$ ./hello.sh                        # a library loads .env, or you source it
+$ cat .env | pbcopy                 # to share it: paste into a chat
+```
+
+With `monkeys`, the file holds keys and the vault holds secrets, and each
+command gets only what it names:
+
+```sh
+$ cat .monkeys                      # keys under a profile, committed
+@foo
+OPENROUTER_API_KEY
+STRIPE_SECRET_KEY
+
+$ monkeys set OPENROUTER_API_KEY    # the secret goes into the vault, once
+Secret:
+
+$ monkeys run ./hello.sh            # the command gets them, and nothing else does
+$ monkeys pack                      # to share: one encrypted file
+$ monkeys unpack foo.monkeys        # on their machine, into their vault
+```
+
+The `.monkeys` file replaces all three of `.env`, `.env.example` and the
+`.gitignore` line, and it is the one that is committed. One binary for macOS
+and Linux does the rest: no runtime, no service, and no vault of its own,
+since the login keychain and the Secret Service are already there.
+
+## What it is not
+
+Not a secret manager with a server or an audit log. Not a wall against an
+agent that sets out to read a secret; it removes the reflex, which is the
+everyday problem. Not a place for `PORT=3000`, which stays in the repository.
+
+## Where to go next
+
+[Quickstart](/docs/quickstart) spends a first secret in three commands,
+[Concepts](/docs/concepts/profile) defines the six words the reference uses,
+and [Commands](/docs/commands) has one page per command.
+
 # Concepts
 
 ## Profile

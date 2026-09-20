@@ -11,7 +11,7 @@
 
 	const repository = { owner: 'eastriverlee', repo: 'monkeys' };
 
-	const structuredData = `<script type="application/ld+json">${JSON.stringify({"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "monkeys", "url": "https://monk3ys.dev", "description": "A cross-platform .env alternative for the LLM era: secrets in your vault, their keys in your repo, spent one command at a time, never printed.", "applicationCategory": "DeveloperApplication", "operatingSystem": "macOS, Linux", "license": "https://github.com/eastriverlee/monkeys/blob/main/LICENSE", "downloadUrl": "https://github.com/eastriverlee/monkeys/releases", "sameAs": ["https://github.com/eastriverlee/monkeys"], "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "eastriverlee", "url": "https://github.com/eastriverlee"}, "copyrightHolder": {"@type": "Organization", "name": "13e7 corp."}})}<\/script>`;
+	const structuredData = `<script type="application/ld+json">${JSON.stringify({"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "monkeys", "url": "https://monk3ys.dev", "description": "A cross-platform .env alternative for the LLM era: secrets in your vault, keys in your repo, spent one command at a time, never printed.", "applicationCategory": "DeveloperApplication", "operatingSystem": "macOS, Linux", "license": "https://github.com/eastriverlee/monkeys/blob/main/LICENSE", "downloadUrl": "https://github.com/eastriverlee/monkeys/releases", "sameAs": ["https://github.com/eastriverlee/monkeys"], "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "eastriverlee", "url": "https://github.com/eastriverlee"}, "copyrightHolder": {"@type": "Organization", "name": "13e7 corp."}})}<\/script>`;
 	const installTabs = [
 		{ label: 'curl', code: 'curl -fsSL https://monk3ys.dev/install | sh' },
 		{ label: 'Homebrew', code: 'brew install eastriverlee/tap/monkeys' },
@@ -77,20 +77,20 @@ SENTRY_DSN`;
 
 <svelte:head>
 	<title>monkeys: a cross-platform .env alternative for the LLM era</title>
-	<meta name="description" content="A cross-platform .env alternative for the LLM era. Secrets in your vault, their keys in your repo, spent one command at a time, never printed." />
+	<meta name="description" content="A cross-platform .env alternative for the LLM era. Secrets in your vault, keys in your repo, spent one command at a time, never printed." />
 	<meta name="robots" content="index, follow" />
 	<link rel="canonical" href="https://monk3ys.dev/" />
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="monkeys" />
 	<meta property="og:title" content="monkeys: a cross-platform .env alternative for the LLM era" />
-	<meta property="og:description" content="A cross-platform .env alternative for the LLM era. Secrets in your vault, their keys in your repo, spent one command at a time, never printed." />
+	<meta property="og:description" content="A cross-platform .env alternative for the LLM era. Secrets in your vault, keys in your repo, spent one command at a time, never printed." />
 	<meta property="og:url" content="https://monk3ys.dev/" />
 	<meta property="og:image" content="https://monk3ys.dev/og.png" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content="monkeys: a cross-platform .env alternative for the LLM era" />
-	<meta name="twitter:description" content="A cross-platform .env alternative for the LLM era. Secrets in your vault, their keys in your repo, spent one command at a time, never printed." />
+	<meta name="twitter:description" content="A cross-platform .env alternative for the LLM era. Secrets in your vault, keys in your repo, spent one command at a time, never printed." />
 	<meta name="twitter:image" content="https://monk3ys.dev/og.png" />
 	<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 	<link rel="icon" href="/favicon.png" type="image/png" sizes="any" />

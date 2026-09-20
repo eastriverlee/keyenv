@@ -7,7 +7,7 @@ const assets = join(import.meta.dirname, '..', 'public');
 const siteStatic = join(repository, 'site', 'static');
 
 const description =
-	'A cross-platform .env alternative for the LLM era: secrets in your keyring, their names in your repo, spent one command at a time, never printed.';
+	'A cross-platform .env alternative for the LLM era: secrets in your vault, keys in your repo, spent one command at a time, never printed.';
 
 const slugOf = (title: string) =>
 	title
@@ -53,18 +53,20 @@ rmSync(content, { recursive: true, force: true });
 mkdirSync(content, { recursive: true });
 const order: string[] = [];
 
+const reference = readFileSync(join(repository, 'DOCS.md'), 'utf8');
+const [overview, ...groups] = splitOn(reference, 1).chunks;
+writePage('index', overview.title, overview.text, description);
+order.push('index');
+
 const readme = readFileSync(join(repository, 'README.md'), 'utf8');
 const readmeSections = splitOn(readme.slice(readme.indexOf('\n## ') + 1), 2).chunks;
-writePage('index', readmeSections[0].title, readmeSections[0].text, description);
-order.push('index');
 for (const section of readmeSections.filter(({ title }) => title === 'Quickstart' || title === 'Install')) {
 	const slug = slugOf(section.title);
 	writePage(slug, section.title, section.text);
 	order.push(slug);
 }
 
-const reference = readFileSync(join(repository, 'DOCS.md'), 'utf8');
-for (const group of splitOn(reference, 1).chunks) {
+for (const group of groups) {
 	const slug = slugOf(group.title);
 	const { intro, chunks: pages } = splitOn(group.text, 2);
 	if (pages.length === 0) {
