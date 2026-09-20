@@ -63,14 +63,9 @@ private func rewriteProfileLines(in project: Project, replacing old: String, wit
         let profiles = line.dropFirst().split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
         return "@" + profiles.map { $0 == oldShort ? newShort : $0 }.joined(separator: ",")
     }
-    let valuesPath = project.directory + "/" + valuesFileName
-    let paths = [project.path] + (FileManager.default.fileExists(atPath: valuesPath) ? [valuesPath] : [])
-    for path in paths {
-        let rewritten = try rewrittenLines(at: path, renamingProfiles)
-        try rewritten.write(toFile: path, atomically: true, encoding: .utf8)
-        let shown = path == project.path ? shownPath(of: project) : valuesFileName
-        printToStandardError(messageStyle("rewrote", .good) + " " + messageStyle(shown, .bold) + ": @\(oldShort) is now @\(newShort)")
-    }
+    let rewritten = try rewrittenLines(at: project.path, renamingProfiles)
+    try rewritten.write(toFile: project.path, atomically: true, encoding: .utf8)
+    printToStandardError(messageStyle("rewrote", .good) + " " + messageStyle(shownPath(of: project), .bold) + ": @\(oldShort) is now @\(newShort)")
 }
 
 private func rewriteNamespaceLine(in project: Project, with new: String) throws {

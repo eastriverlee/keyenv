@@ -37,7 +37,6 @@ const concepts: Concept[] = [
 	{ slug: 'profile', word: /\bprofiles?\b/ },
 	{ slug: 'namespace', word: /\bnamespaces?\b/ },
 	{ slug: 'dot-monkeys', code: '`.monkeys`' },
-	{ slug: 'dot-monvalues', code: '`.monvalues`' },
 	{ slug: 'any-monsecrets', word: /\bbundles?\b/ }
 ];
 

@@ -8,7 +8,7 @@ let commandSummaries = [
     CommandSummary(verb: "set", arguments: "<KEY> [--clipboard]",
                    summary: "store a secret typed, piped or pasted"),
     CommandSummary(verb: "set", arguments: "--public <KEY>",
-                   summary: "write a plain value into .monvalues"),
+                   summary: "write a plain value into .monkeys"),
     CommandSummary(verb: "set", arguments: "[@profile] [--all]",
                    summary: "prompt for each key the profile lacks"),
     CommandSummary(verb: "remove", arguments: "<KEY>",
@@ -94,12 +94,11 @@ var usage: String {
       \(outputStyle("monkeys set STRIPE_SECRET_KEY", .argument))      stored as foo.test/STRIPE_SECRET_KEY
       \(outputStyle("monkeys set", .argument))                        each key it lacks, one prompt each
 
-    A value that is not secret, PORT=3000 and the like, goes in \(valuesFileName)
-    next to it, in the same blocks with the value after the key. Commit it
-    too. run puts those in the environment straight from the file, and a key
-    lives in one file or the other, never both:
+    A value that is not secret, PORT=3000 and the like, is a KEY=value line in
+    the same file, under the same @ block. run puts it in the environment
+    straight from the file, and the vault never sees it:
 
-      \(outputStyle("monkeys set --public PORT", .argument))        Value: 3000, written to \(valuesFileName)
+      \(outputStyle("monkeys set --public PORT", .argument))        Value: 3000, written as PORT=3000
 
     Each profile gets the keys of every block that lists it, and the first
     profile in the file is the one run uses when none is given:
@@ -167,7 +166,7 @@ var usage: String {
 
     A project that still has .env files moves them in with one command. kill
     asks, key by key, whether each one is a secret for the vault or a public
-    value for .monvalues, writes both files, and deletes the .env files once
+    value for .monkeys, writes the file, and deletes the .env files once
     everything is stored:
 
       \(outputStyle("monkeys kill", .argument))

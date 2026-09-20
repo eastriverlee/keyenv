@@ -220,8 +220,7 @@ SENTRY_DSN`;
 			A <code>.monkeys</code> file next to the code names its namespace on the first line and lists
 			the keys under a profile. Commit it. In that directory, <code>run</code> takes only the
 			command, and the script reads the variable the way any program does. A value that was
-			never secret, <code>PORT=3000</code> and the like, goes in <code>.monvalues</code> next to it,
-			committed too.
+			never secret, <code>PORT=3000</code> and the like, sits in it as <code>KEY=value</code>.
 		</p>
 		<div class="grid gap-3 sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)]">
 			<TreeView.Root class="rounded-lg border p-2">

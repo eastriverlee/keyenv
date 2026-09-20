@@ -94,7 +94,7 @@ private func setPublicValue(_ scope: Scope, _ name: String, readsClipboard: Bool
     let value = readsClipboard ? try readSecretFromClipboard() : readValueFromInput()
     guard !value.isEmpty else { throw StoreFailure.emptyValue }
     try writeValue(value, forKey: name, profile: profile, in: project)
-    printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(name + "=" + value, .bold) + " to \(valuesFileName) for @\(project.shortName(profile))")
+    printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(name + "=" + value, .bold) + " to \(projectFileName) for @\(project.shortName(profile))")
 }
 
 private func rejectingProfileList(_ arguments: [String]) throws {
@@ -121,8 +121,7 @@ func runSet(_ arguments: [String]) throws {
     guard !walksAll else { throw StoreFailure.badInvocation(walkForm) }
     let name = try requireKey(rest)
     if isPublic { return try setPublicValue(scope, name, readsClipboard: readsClipboard) }
-    if let project = scope.project, let profile = scope.profile,
-       try loadValues(of: project).value(of: name, for: profile) != nil {
+    if let project = scope.project, let profile = scope.profile, project.value(of: name, for: profile) != nil {
         throw StoreFailure.keyIsValue(name, project.shortName(profile))
     }
     let value = readsClipboard ? try readSecretFromClipboard() : readSecretFromInput()
@@ -139,11 +138,9 @@ func runRemove(_ arguments: [String]) throws {
     }
     let (scope, rest) = try resolveScope(arguments)
     let name = try requireKey(rest)
-    if let project = scope.project, let profile = scope.profile,
-       try loadValues(of: project).value(of: name, for: profile) != nil {
-        guard !project.keys(for: profile).contains(name) else { throw StoreFailure.keysInBothFiles([name], project.shortName(profile)) }
+    if let project = scope.project, let profile = scope.profile, project.value(of: name, for: profile) != nil {
         _ = try removeValue(forKey: name, profile: profile, in: project)
-        printToStandardError(messageStyle("removed", .good) + " " + messageStyle(name, .bold) + " from \(valuesFileName) for @\(project.shortName(profile))")
+        printToStandardError(messageStyle("removed", .good) + " " + messageStyle(name, .bold) + " from \(projectFileName) for @\(project.shortName(profile))")
         return
     }
     try secretStore.remove(forName: scope.storedName(name))
@@ -198,7 +195,7 @@ func runPreview(_ arguments: [String]) throws {
 
 private func publicValues(_ scope: Scope, given: [String]?) throws -> [ValueEntry] {
     guard let project = scope.project, let profile = scope.profile else { return [] }
-    let entries = try loadValues(of: project).entries(for: profile)
+    let entries = project.values(for: profile)
     guard let given else { return entries }
     return entries.filter { given.contains($0.key) }
 }
@@ -359,7 +356,7 @@ func runPack(_ arguments: [String]) throws {
     let filled = try blocks.map { try filledBlock($0, project: project) }
     let path = bundleDestination(fileName)
     let namespace = project?.namespace
-    let values = try packedValues(project, for: filled.flatMap(\.profiles))
+    let values = packedValues(project, for: filled.flatMap(\.profiles))
     try writeBundle(ProfileBundle(namespace: namespace, blocks: filled, values: values), to: path)
     let count = filled.reduce(0) { $0 + $1.entries.count * $1.profiles.count }
     let valueCount = values.reduce(0) { $0 + $1.entries.count * $1.profiles.count }
@@ -368,13 +365,11 @@ func runPack(_ arguments: [String]) throws {
     if opens { revealInFileManager(path) }
 }
 
-private func packedValues(_ project: Project?, for profiles: [String]) throws -> [ValueBlock] {
+private func packedValues(_ project: Project?, for profiles: [String]) -> [ValueBlock] {
     guard let project else { return [] }
-    let values = try loadValues(of: project)
-    for profile in profiles { try rejectingSharedKeys(project, values, for: profile) }
-    return values.blocks.compactMap { block in
+    return project.blocks.compactMap { block in
         let kept = block.profiles.filter(profiles.contains)
-        return kept.isEmpty || block.entries.isEmpty ? nil : ValueBlock(profiles: kept, entries: block.entries)
+        return kept.isEmpty || block.values.isEmpty ? nil : ValueBlock(profiles: kept, entries: block.values)
     }
 }
 
@@ -473,24 +468,25 @@ func reconcileProjectFile(namespace: String?, _ blocks: [Block], in directory: S
 }
 
 
-func reconcileValuesFile(_ blocks: [ValueBlock], in directory: String) throws {
+func reconcileValueLines(_ blocks: [ValueBlock], in directory: String) throws {
     guard !blocks.isEmpty else { return }
     let project = try parseProject(at: directory + "/" + projectFileName, directory: directory)
-    let path = directory + "/" + valuesFileName
-    let shown = directory == FileManager.default.currentDirectoryPath ? valuesFileName : abbreviatingHome(path)
-    let existing = try loadValues(of: project)
+    let shown = directory == FileManager.default.currentDirectoryPath ? projectFileName : abbreviatingHome(project.path)
     var written = 0
     var kept = 0
     for block in blocks {
-        for profile in block.profiles {
-            for entry in block.entries {
-                guard existing.value(of: entry.key, for: profile) == nil else {
-                    kept += 1
-                    continue
+        for entry in block.entries {
+            let lacking = block.profiles.filter { project.value(of: entry.key, for: $0) == nil }
+            kept += block.profiles.count - lacking.count
+            guard !lacking.isEmpty else { continue }
+            if lacking.count == block.profiles.count {
+                try writeValue(entry.value, forKey: entry.key, profile: lacking[0], block: block.profiles, in: project)
+            } else {
+                for profile in lacking {
+                    try writeValue(entry.value, forKey: entry.key, profile: profile, in: project)
                 }
-                try writeValue(entry.value, forKey: entry.key, profile: profile, in: project)
-                written += 1
             }
+            written += lacking.count
         }
     }
     if written > 0 {
@@ -512,26 +508,22 @@ func runDoctor(_ arguments: [String]) throws {
         throw StoreFailure.badInvocation("monkeys doctor next to a \(projectFileName) file")
     }
     let stored = Set(try secretStore.storedKeys())
-    let values = try loadValues(of: project)
     var isComplete = true
     for profile in project.profiles {
         let keys = project.keys(for: profile)
         let shown = project.shortName(profile)
         let missing = keys.filter { !stored.contains(profile + "/" + $0) }
-        let shared = sharedKeys(project, values, for: profile)
-        isComplete = isComplete && missing.isEmpty && shared.isEmpty
+        isComplete = isComplete && missing.isEmpty
         if isShort {
             if !missing.isEmpty { print("missing @\(shown): " + missing.joined(separator: ",")) }
-            if !shared.isEmpty { print("both files @\(shown): " + shared.joined(separator: ",")) }
             continue
         }
         let label = profile == project.defaultProfile ? outputStyle("  default", .dim) : ""
         print(outputStyle("@" + shown, .bold) + label)
         for name in keys {
-            let note = shared.contains(name) ? outputStyle("  also a value in \(valuesFileName)", .bad) : ""
-            print("  " + mark(!missing.contains(name) && !shared.contains(name)) + " " + name + note)
+            print("  " + mark(!missing.contains(name)) + " " + name)
         }
-        for entry in values.entries(for: profile) where !shared.contains(entry.key) {
+        for entry in project.values(for: profile) {
             print("  " + mark(true) + " " + entry.key + outputStyle("=" + entry.value, .dim))
         }
     }
@@ -548,7 +540,7 @@ func runUnpack(_ arguments: [String]) throws {
     let path = bundlePath(name)
     let bundle = try readBundle(from: path)
     try reconcileProjectFile(namespace: bundle.namespace, bundle.blocks.map { Block(profiles: $0.profiles, keys: $0.entries.map(\.name)) }, in: destination)
-    try reconcileValuesFile(bundle.values, in: destination)
+    try reconcileValueLines(bundle.values, in: destination)
     for block in bundle.blocks {
         var stored: [String] = []
         for entry in block.entries {
@@ -558,6 +550,7 @@ func runUnpack(_ arguments: [String]) throws {
                 stored.append(name)
             }
         }
+        guard !stored.isEmpty else { continue }
         printToStandardError(messageStyle("stored", .good) + " " + stored.map { messageStyle($0, .bold) }.joined(separator: ", "))
     }
     guard !keepsBundle else { return }
