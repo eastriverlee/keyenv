@@ -1,10 +1,9 @@
 # Overview
 
-`monkeys` keeps secrets in your operating system's vault and hands them to
-one command at a time. It replaces `.env`: the keys a project needs are
-committed in `.monkeys`, the secrets stay in each person's keychain or Secret
-Service, and `monkeys run` gives them to the command that needs them. No
-command prints a stored secret.
+`.monkeys` is a `.env` you can commit. The keys a project needs are listed in
+that file, the secrets stay in each person's vault, and `monkeys run` hands
+them to one command at a time. Nothing prints a stored secret, the command you
+run included.
 
 ## Why it exists
 

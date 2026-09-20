@@ -168,9 +168,8 @@ SENTRY_DSN`;
 			and being careful didn't fix it. Rust did.
 		</p>
 		<p class="max-w-prose">
-			<code>monkeys</code> keeps each secret in your vault and hands it to one command at a
-			time. Nothing prints a stored secret, the command you hand it to included, so there is
-			nothing to read.
+			<code>.monkeys</code> is a <code>.env</code> you can commit. The keys stay in the file,
+			the secrets stay in your vault, and nothing, the command you run included, can print one.
 		</p>
 	</section>
 
