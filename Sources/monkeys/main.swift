@@ -91,46 +91,87 @@ func runPreview(_ arguments: [String]) throws {
     }
 }
 
-private let packForm = "monkeys pack [@profile | --only @a,@b] [name]"
+private let packForm = "monkeys pack [@profile] [name] [--only @a NAME,NAME @b ...]"
 
-private func packedProfiles(_ arguments: [String]) throws -> (profiles: [String], project: Project?, rest: [String]) {
+private struct PackBlock {
+    let profile: String
+    let names: [String]?
+}
+
+private let profileNeeded = "a bundle carries a profile: run this in a project with a \(projectFileName) file, or name one with @profile"
+
+private func namesIn(_ token: String) throws -> [String] {
+    let names = token.split(separator: ",").map(String.init)
+    guard !names.isEmpty, names.allSatisfy(isValidVariableName) else { throw StoreFailure.badInvocation(packForm) }
+    return names
+}
+
+private func resolvedProfile(_ argument: String, in project: Project?) throws -> String {
+    guard argument.count > 1 else { throw StoreFailure.badInvocation(packForm) }
+    let name = String(argument.dropFirst())
+    guard let project else {
+        guard isValidProfileName(name) else { throw StoreFailure.invalidProfileName(argument) }
+        return name
+    }
+    return try project.profile(matching: name)
+}
+
+private func selectedBlocks(_ tokens: [String], defaults: [String], project: Project?) throws -> [PackBlock] {
+    var blocks: [PackBlock] = []
+    var leading: [String] = []
+    for token in tokens {
+        if token.hasPrefix("@") {
+            blocks.append(PackBlock(profile: try resolvedProfile(token, in: project), names: nil))
+            continue
+        }
+        let names = try namesIn(token)
+        guard let last = blocks.popLast() else {
+            leading += names
+            continue
+        }
+        blocks.append(PackBlock(profile: last.profile, names: (last.names ?? []) + names))
+    }
+    guard blocks.isEmpty || leading.isEmpty else { throw StoreFailure.badInvocation(packForm) }
+    guard blocks.isEmpty else { return blocks }
+    return defaults.map { PackBlock(profile: $0, names: leading.isEmpty ? nil : leading) }
+}
+
+private func packedBlocks(_ arguments: [String]) throws -> (blocks: [PackBlock], project: Project?, fileName: String?) {
     let (chosen, afterProfile) = try takeProfileArgument(arguments)
     let project = try locateProject()
     var rest = afterProfile
-    var only: [String]?
+    var selection: [String] = []
     if let flag = rest.firstIndex(of: "--only") {
-        guard flag + 1 < rest.count, case .none = chosen else { throw StoreFailure.badInvocation(packForm) }
-        only = rest[flag + 1].split(separator: ",").map { "@" + $0.drop(while: { $0 == "@" }) }
-        rest.removeSubrange(flag...(flag + 1))
+        selection = Array(rest[(flag + 1)...])
+        rest.removeSubrange(flag...)
     }
     guard rest.count <= 1 else { throw StoreFailure.badInvocation(packForm) }
-    func resolved(_ argument: String) throws -> String {
-        guard argument.count > 1 else { throw StoreFailure.badInvocation(packForm) }
-        let name = String(argument.dropFirst())
-        guard let project else {
-            guard isValidProfileName(name) else { throw StoreFailure.invalidProfileName(argument) }
-            return name
-        }
-        return try project.profile(matching: name)
-    }
+    let defaults: [String]
     switch chosen {
     case .personal:
-        throw StoreFailure.bundleFailed("a bundle carries a profile: run this in a project with a \(projectFileName) file, or name one with @profile")
+        throw StoreFailure.bundleFailed(profileNeeded)
     case .named(let name):
-        return ([try resolved("@" + name)], project, rest)
+        guard !selection.contains(where: { $0.hasPrefix("@") }) else { throw StoreFailure.badInvocation(packForm) }
+        defaults = [try resolvedProfile("@" + name, in: project)]
     case .none:
-        if let only { return (try only.map(resolved), project, rest) }
         guard let project else {
-            throw StoreFailure.bundleFailed("a bundle carries a profile: run this in a project with a \(projectFileName) file, or name one with @profile")
+            guard selection.contains(where: { $0.hasPrefix("@") }) else { throw StoreFailure.bundleFailed(profileNeeded) }
+            defaults = []
+            return (try selectedBlocks(selection, defaults: defaults, project: nil), nil, rest.first)
         }
-        return (project.profiles, project, rest)
+        defaults = project.profiles
     }
+    return (try selectedBlocks(selection, defaults: defaults, project: project), project, rest.first)
 }
 
-private func collectedValues(_ scope: Scope) throws -> ProfileValues {
+private func collectedValues(_ scope: Scope, keeping only: [String]?) throws -> ProfileValues {
+    let listed = try namesInScope(scope)
+    if let only, let stray = only.first(where: { !listed.contains($0) }) {
+        throw StoreFailure.bundleFailed("\(stray) is not listed for @\(scope.profile ?? ""), so there is nothing to pack under that name")
+    }
     var values: [(name: String, value: String)] = []
     var missing: [String] = []
-    for name in try namesInScope(scope) {
+    for name in listed where only?.contains(name) ?? true {
         do {
             values.append((name, try secretStore.read(forName: scope.storedName(name))))
         } catch StoreFailure.nameNotStored {
@@ -142,12 +183,12 @@ private func collectedValues(_ scope: Scope) throws -> ProfileValues {
 }
 
 func runPack(_ arguments: [String]) throws {
-    let (profiles, project, rest) = try packedProfiles(arguments)
-    let path = bundlePath(rest.first ?? profiles[0])
-    let blocks = try profiles.map { try collectedValues(Scope(profile: $0, project: project)) }
-    try writeBundle(ProfileBundle(profiles: blocks), to: path)
-    let count = blocks.reduce(0) { $0 + $1.values.count }
-    let listed = profiles.map { "@" + $0 }.joined(separator: ", ")
+    let (blocks, project, fileName) = try packedBlocks(arguments)
+    let filled = try blocks.map { try collectedValues(Scope(profile: $0.profile, project: project), keeping: $0.names) }
+    let path = bundlePath(fileName ?? filled[0].profile)
+    try writeBundle(ProfileBundle(profiles: filled), to: path)
+    let count = filled.reduce(0) { $0 + $1.values.count }
+    let listed = filled.map { "@" + $0.profile }.joined(separator: ", ")
     printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(path, .bold) + ": \(listed), \(count) value\(count == 1 ? "" : "s")")
 }
 

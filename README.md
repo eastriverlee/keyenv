@@ -159,7 +159,7 @@ names a command `monkeys help` does not list.
 | `monkeys run --no-redact <command>` | the same, output untouched |
 | `monkeys run <command>` | the same, with the names a `.monkeys` file lists |
 | `monkeys export [NAME...]` | keyring lookup lines, to paste into a startup file |
-| `monkeys pack [--only @a,@b] [name]` | the profiles as one encrypted `name.monkeys` |
+| `monkeys pack [name] [--only ...]` | the profiles as one encrypted `name.monkeys` |
 | `monkeys unpack <name> [directory]` | store its values, write its `.monkeys` |
 | `monkeys copy @a --to @b` | give `@b` the names it lacks, from `@a` |
 | `monkeys doctor` | what each profile has and lacks |
@@ -464,21 +464,31 @@ monkeys pack
 > wrote test.foo.monkeys: @test.foo, @foo, 5 values
 > ```
 
-`--only` picks some of them, which is how a teammate gets test and never
-production; a leading `@profile` is the same for one:
+`--only` says which, and reads the way the file is written: each `@profile`
+opens a block, and the names after it belong to that block. A profile with
+no names after it goes whole; names with no `@` before them apply to every
+profile. That is how a teammate gets test and never production, or one key
+on its own:
 
 ```sh
 monkeys pack --only @test.foo
-monkeys pack --only @test.foo,foo shared
+monkeys pack shared --only @test.foo @foo
+monkeys pack --only OPENROUTER_API_KEY
+monkeys pack --only @test.foo OPENROUTER_API_KEY @foo SENTRY_DSN
 ```
 
 > ```
 > wrote test.foo.monkeys: @test.foo, 2 values
 > wrote shared.monkeys: @test.foo, @foo, 5 values
+> wrote test.foo.monkeys: @test.foo, @foo, 2 values
+> wrote test.foo.monkeys: @test.foo, @foo, 2 values
 > ```
 
-The file takes the first profile's name; a word after `pack` names it
-otherwise. It carries each profile's name, the names the project lists for
+A leading `@profile` before `--only` means that one profile, with the names
+that follow. The file name goes before `--only`, which takes the rest of the
+line. A name a profile does not list is refused rather than left out.
+
+The file takes the first profile's name unless a word after `pack` names it. It carries each profile's name, the names the project lists for
 it, and their values, sealed with ChaCha20-Poly1305 under a key scrypt
 derives from the passphrase. The file is safe to send over whatever you
 already use; the passphrase goes another way. A pack with a value still
