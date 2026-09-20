@@ -65,11 +65,11 @@ private func readPassphrase(confirming: Bool) throws -> String {
         guard !first.isEmpty else { throw StoreFailure.bundleFailed("no passphrase on standard input") }
         return String(first)
     }
-    guard let entered = getpass("Passphrase: ").map({ String(cString: $0) }), !entered.isEmpty else {
+    guard let entered = getpass("passphrase: ").map({ String(cString: $0) }), !entered.isEmpty else {
         throw StoreFailure.bundleFailed("no passphrase was given")
     }
     guard confirming else { return entered }
-    guard let again = getpass("Again: ").map({ String(cString: $0) }), again == entered else {
+    guard let again = getpass("again: ").map({ String(cString: $0) }), again == entered else {
         throw StoreFailure.bundleFailed("the passphrases differ")
     }
     return entered

@@ -111,12 +111,12 @@ private func askedDestination(for key: String, in profiles: [String]) -> Destina
 }
 
 private func askedDefaultProfile() -> String {
-    let answer = readAnswer("Profile for \(dotenvName) " + messageStyle("[test]", .bold) + ": ")
+    let answer = readAnswer("profile for \(dotenvName) " + messageStyle("[test]", .bold) + ": ")
     return answer.isEmpty ? "test" : answer
 }
 
 private func askedNamespace() -> String? {
-    let answer = readAnswer("Namespace, +name " + messageStyle("(Enter for none)", .dim) + ": ")
+    let answer = readAnswer("namespace, +name " + messageStyle("(Enter for none)", .dim) + ": ")
     return answer.isEmpty ? nil : String(answer.drop(while: { $0 == "+" }))
 }
 

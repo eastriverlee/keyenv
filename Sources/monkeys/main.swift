@@ -35,7 +35,7 @@ func readSecretFromInput() -> String {
         let piped = FileHandle.standardInput.readDataToEndOfFile()
         return String(decoding: piped, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
     }
-    guard let entered = getpass("Secret: ") else { return "" }
+    guard let entered = getpass("secret: ") else { return "" }
     return String(cString: entered)
 }
 
@@ -84,7 +84,7 @@ func readValueFromInput() -> String {
         let piped = FileHandle.standardInput.readDataToEndOfFile()
         return String(decoding: piped, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
     }
-    FileHandle.standardError.write(Data("Value: ".utf8))
+    FileHandle.standardError.write(Data("value: ".utf8))
     return readLine(strippingNewline: true) ?? ""
 }
 

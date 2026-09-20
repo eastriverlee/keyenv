@@ -660,7 +660,7 @@ context before it reaches the vault, so the skill tells it to ask instead.
 
 `--public` writes a value that is not secret, `PORT=3000` and the like, into
 `.monkeys` as a `KEY=value` line instead of into the vault. It prompts with
-`Value:` and echoes what you type, since the value will be committed, and
+`value:` and echoes what you type, since the value will be committed, and
 from a pipe it reads the value the same way:
 
 ```sh
@@ -1009,8 +1009,8 @@ monkeys pack
 ```
 
 > ```
-> Passphrase:
-> Again:
+> passphrase:
+> again:
 > wrote /tmp/a.monsecrets: +foo @test,production @production, 5 secrets
 > ```
 
@@ -1100,7 +1100,7 @@ monkeys unpack a
 ```
 
 > ```
-> Passphrase:
+> passphrase:
 > wrote .monkeys: +foo @test,production @production, 3 keys
 > remembered foo.test/DATABASE_URL, foo.production/DATABASE_URL, foo.test/STRIPE_SECRET_KEY, foo.production/STRIPE_SECRET_KEY
 > remembered foo.production/SENTRY_DSN
@@ -1118,7 +1118,7 @@ monkeys unpack a --keep
 ```
 
 > ```
-> Passphrase:
+> passphrase:
 > wrote .monkeys: +foo @test,production @production, 3 keys
 > remembered foo.test/DATABASE_URL, foo.production/DATABASE_URL
 > remembered foo.production/SENTRY_DSN
@@ -1160,8 +1160,8 @@ a secret's key into `.monkeys` with the secret in the vault, a public line
 into `.monkeys` as it is.
 
 > ```
-> Namespace, +name (Enter for none): foo
-> Profile for .env [test]:
+> namespace, +name (Enter for none): foo
+> profile for .env [test]:
 > DATABASE_URL @test,@production  [s]ecret or [p]ublic? s
 > STRIPE_SECRET_KEY @test  [s]ecret or [p]ublic? s
 > PORT @test,@production  [s]ecret or [p]ublic? p
@@ -1495,8 +1495,8 @@ monkeys pack --only @test
 ```
 
 > ```
-> Passphrase:
-> Again:
+> passphrase:
+> again:
 > wrote /tmp/a.monsecrets: +foo @test, 2 secrets
 > ```
 
@@ -1508,7 +1508,7 @@ monkeys unpack ~/Downloads/a.monsecrets
 ```
 
 > ```
-> Passphrase:
+> passphrase:
 > wrote .monkeys: +foo @test, 2 keys
 > remembered foo.test/DATABASE_URL, foo.test/STRIPE_SECRET_KEY
 > removed /Users/them/Downloads/a.monsecrets
