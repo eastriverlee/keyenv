@@ -7,6 +7,8 @@ struct CommandSummary {
 let commandSummaries = [
     CommandSummary(verb: "set", arguments: "<KEY> [--clipboard]",
                    summary: "store a secret typed, piped or pasted"),
+    CommandSummary(verb: "set", arguments: "[@profile] [--all]",
+                   summary: "prompt for each key the profile lacks"),
     CommandSummary(verb: "remove", arguments: "<KEY>",
                    summary: "delete one stored secret"),
     CommandSummary(verb: "run", arguments: "<KEY[,KEY...]> <command>",
@@ -78,6 +80,7 @@ var usage: String {
 
       \(outputStyle("monkeys run ./hello.sh", .argument))
       \(outputStyle("monkeys set STRIPE_SECRET_KEY", .argument))      stored as foo.test/STRIPE_SECRET_KEY
+      \(outputStyle("monkeys set", .argument))                        each key it lacks, one prompt each
 
     Each profile gets the keys of every block that lists it, and the first
     profile in the file is the one run uses when none is given:

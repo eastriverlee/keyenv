@@ -469,6 +469,7 @@ and a bundle cannot carry half of a profile.
 
 ```sh
 monkeys set [@profile] <KEY> [--clipboard]
+monkeys set [@profile] [--all]
 ```
 
 Reads a secret and stores it under the key. On a terminal it prompts, and what
@@ -506,6 +507,46 @@ set STRIPE_SECRET_KEY` there writes `foo.test/STRIPE_SECRET_KEY`. A leading
 bare `@` no profile.
 
 A key you already stored is replaced, and nothing says so.
+
+### Walking a profile
+
+With no key, inside a project, `set` walks the profile's keys in the order the
+file lists them and prompts for each one that has no secret yet. An empty
+answer skips that key. At the end it shows the profile the way `doctor` does,
+with what each key got, and exits non-zero while anything is still missing:
+
+```sh
+monkeys set
+```
+
+> ```
+> DATABASE_URL:
+> STRIPE_SECRET_KEY:
+> @test  default
+>   ✓ DATABASE_URL  stored
+>   ✗ STRIPE_SECRET_KEY  skipped
+> ```
+
+A leading `@profile` walks that profile instead, one at a time; `@test,production`
+is refused. `--all` prompts for every key, and a key that already has a secret
+shows its mask in the prompt so Enter keeps it:
+
+```sh
+monkeys set --all
+```
+
+> ```
+> DATABASE_URL (al...e 18, Enter keeps):
+> STRIPE_SECRET_KEY (br...e 18, Enter keeps):
+> @test  default
+>   ✓ DATABASE_URL  kept
+>   ✓ STRIPE_SECRET_KEY  stored
+> ```
+
+The walk reads from the terminal only. With standard input piped, or with
+`--clipboard`, it says so and stores nothing; both of those take one key.
+Outside a project there is nothing to walk, and `monkeys set` with no key says
+a key is required.
 
 Storing is a human's job. An agent that types a secret puts it in its own
 context before it reaches the vault, so the skill tells it to ask instead.

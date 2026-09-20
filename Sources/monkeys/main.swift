@@ -79,9 +79,26 @@ func spendHint(_ scope: Scope, _ name: String) -> String {
     return "monkeys run \(scope.profileArgument)\(name) <command>"
 }
 
+private func rejectingProfileList(_ arguments: [String]) throws {
+    guard let first = arguments.first, first.hasPrefix("@"), first.contains(",") else { return }
+    let one = first.dropFirst().split(separator: ",").first.map(String.init) ?? ""
+    throw StoreFailure.bundleFailed("set walks one profile at a time: monkeys set @\(one)")
+}
+
 func runSet(_ arguments: [String]) throws {
     let readsClipboard = arguments.contains("--clipboard")
-    let (scope, rest) = try resolveScope(arguments.filter { $0 != "--clipboard" })
+    let walksAll = arguments.contains("--all")
+    let positional = arguments.filter { $0 != "--clipboard" && $0 != "--all" }
+    try rejectingProfileList(positional)
+    let (scope, rest) = try resolveScope(positional)
+    guard !rest.isEmpty else {
+        guard !readsClipboard else {
+            throw StoreFailure.bundleFailed("--clipboard stores one key: monkeys set <KEY> --clipboard")
+        }
+        try walkProfile(scope, walksAll: walksAll)
+        return
+    }
+    guard !walksAll else { throw StoreFailure.badInvocation(walkForm) }
     let name = try requireKey(rest)
     let value = readsClipboard ? try readSecretFromClipboard() : readSecretFromInput()
     guard !value.isEmpty else { throw StoreFailure.emptySecret }
