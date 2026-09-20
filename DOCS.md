@@ -214,12 +214,14 @@ secret-tool lookup service monkeys account foo.test/OPENROUTER_API_KEY
 
 ### The keychain prompt on macOS
 
-A binary built from source carries an ad-hoc
-code signature,
-whose identity is a hash of the binary itself. A rebuild changes that
-identity, so the keychain may ask you to allow access once when the new build
-first reads an item the old one stored. The release builds are what `brew`
-and the install script give you.
+A keychain item remembers which program stored it, and asks before another
+one reads it. The release builds, which `brew` and the install script give
+you, are signed with one Developer ID identity, so an upgrade is the same
+program to the keychain and it asks once ever.
+
+A binary you build yourself is signed ad-hoc, and an ad-hoc identity is the
+binary's own hash, so every rebuild is a new program and the first read after
+one asks again.
 
 ### The Secret Service on Linux
 
