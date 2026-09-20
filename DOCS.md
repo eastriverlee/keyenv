@@ -212,16 +212,17 @@ On Linux the same attributes go through `secret-tool`:
 secret-tool lookup service monkeys account foo.test/OPENROUTER_API_KEY
 ```
 
-### The keychain prompt on macOS
+### What the keychain asks
 
-A keychain item remembers which program stored it, and asks before another
-one reads it. The release builds, which `brew` and the install script give
-you, are signed with one Developer ID identity, so an upgrade is the same
-program to the keychain and it asks once ever.
+Nothing. An item carries no per-application restriction, so a release build, a
+build of your own and `security` itself all read it without a prompt. That is
+what lets `export` work at all: the line it writes into a startup file is a
+`security` lookup, run by your shell rather than by `monkeys`.
 
-A binary you build yourself is signed ad-hoc, and an ad-hoc identity is the
-binary's own hash, so every rebuild is a new program and the first read after
-one asks again.
+The boundary is the user account. Whatever runs as you can read what you can
+read, here as in the startup files themselves. What the vault gives is that
+the secret is in none of the places a tool stumbles on: not a file in the
+repository, not one beside it, and not a command line.
 
 ### The Secret Service on Linux
 
