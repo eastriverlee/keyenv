@@ -98,7 +98,7 @@ function firstParagraph(markdown: string) {
 			continue;
 		}
 		if (inFence) continue;
-		const isProse = line.trim() && !/^(#|>|\||-|\d+\.)/.test(line);
+		const isProse = line.trim() && !/^(#|>|\||-|\d+\.|<)/.test(line);
 		if (isProse) paragraph.push(line);
 		else if (paragraph.length) break;
 	}
@@ -156,9 +156,15 @@ order.push('index');
 
 const readme = readFileSync(join(repository, 'README.md'), 'utf8');
 const readmeSections = splitOn(readme.slice(readme.indexOf('\n## ') + 1), 2).chunks;
+function asSteps(text: string) {
+	const { intro, chunks } = splitOn(text, 3);
+	const steps = chunks.map((step) => `<Step>\n\n### ${step.title}\n${step.text}\n\n</Step>`).join('\n\n');
+	return `${intro}\n<Steps>\n\n${steps}\n\n</Steps>\n`;
+}
+
 for (const section of readmeSections.filter(({ title }) => title === 'Quickstart' || title === 'Install')) {
 	const slug = slugOf(section.title);
-	writePage(slug, section.title, section.text);
+	writePage(slug, section.title, section.title === 'Quickstart' ? asSteps(section.text) : section.text);
 	order.push(slug);
 }
 

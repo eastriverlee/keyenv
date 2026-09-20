@@ -39,12 +39,16 @@ is nothing to read.
 
 ## Quickstart
 
+### Install and store a secret
+
 ```sh
 curl -fsSL https://monk3ys.dev/install | sh
 monkeys set SUPER_SECRET
 ```
 
-Type `sesame` at the prompt. Now open the door:
+Type `sesame` at the prompt.
+
+### Open the door
 
 ```sh
 monkeys run SUPER_SECRET sh -c '
@@ -59,7 +63,10 @@ monkeys run SUPER_SECRET sh -c '
 > ```
 
 The right word reached the command, and what the command printed came back
-with the secret taken out. Without monkeys the door stays shut:
+with the secret taken out. `run` becomes the command once the secret is set,
+so the exit status, the output and the signals are the command's own.
+
+### Try it without monkeys
 
 ```sh
 sh -c 'test "$SUPER_SECRET" = sesame && echo opened || echo closed'
@@ -69,7 +76,7 @@ sh -c 'test "$SUPER_SECRET" = sesame && echo opened || echo closed'
 > closed
 > ```
 
-Take the word away and try the door again:
+### Take the word away
 
 ```sh
 monkeys remove SUPER_SECRET
@@ -88,11 +95,17 @@ monkeys run SUPER_SECRET sh -c '
 Nothing ran at all: a missing secret stops `run` before the command starts,
 and the message says what to do, which is what an agent passes on.
 
-`run` becomes the command once the secret is set, so the exit status, the
-output and the signals are the command's own. A real key is the same two
-lines: `monkeys set OPENROUTER_API_KEY`, then `monkeys run OPENROUTER_API_KEY
-./hello.sh`, with `hello.sh` reading `$OPENROUTER_API_KEY` the way any program
-reads a variable.
+### Use a real key
+
+The same two lines:
+
+```sh
+monkeys set OPENROUTER_API_KEY
+monkeys run OPENROUTER_API_KEY ./hello.sh
+```
+
+with `hello.sh` reading `$OPENROUTER_API_KEY` the way any program reads a
+variable.
 
 ## Install
 
