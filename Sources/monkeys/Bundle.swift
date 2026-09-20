@@ -15,13 +15,13 @@ private let scryptRounds = 1 << 17
 private let scryptBlockSize = 8
 private let scryptParallelism = 1
 
-struct ProfileValues {
-    let profile: String
-    let values: [(name: String, value: String)]
+struct BundleBlock {
+    let profiles: [String]
+    let entries: [(name: String, values: [String])]
 }
 
 struct ProfileBundle {
-    let profiles: [ProfileValues]
+    let blocks: [BundleBlock]
 }
 
 func bundlePath(_ argument: String) -> String {
@@ -57,31 +57,39 @@ private func randomSalt() -> Data {
 }
 
 private func serialized(_ bundle: ProfileBundle) -> Data {
-    let lines = bundle.profiles.flatMap { block in
-        ["@" + block.profile] + block.values.map { "\($0.name)=\(Data($0.value.utf8).base64EncodedString())" }
+    let lines = bundle.blocks.flatMap { block in
+        ["@" + block.profiles.joined(separator: ",")] + block.entries.map { entry in
+            entry.name + "=" + entry.values.map { Data($0.utf8).base64EncodedString() }.joined(separator: ",")
+        }
     }
     return Data(lines.joined(separator: "\n").utf8)
 }
 
 private func deserialized(_ plaintext: Data) throws -> ProfileBundle {
-    var profiles: [ProfileValues] = []
+    var blocks: [BundleBlock] = []
     for line in String(decoding: plaintext, as: UTF8.self).split(separator: "\n") {
         if line.hasPrefix("@") {
-            let profile = String(line.dropFirst())
-            guard isValidProfileName(profile) else { throw StoreFailure.bundleFailed("the bundle names no profile") }
-            profiles.append(ProfileValues(profile: profile, values: []))
+            let profiles = line.dropFirst().split(separator: ",").map(String.init)
+            guard !profiles.isEmpty, profiles.allSatisfy(isValidProfileName) else {
+                throw StoreFailure.bundleFailed("the bundle names no profile")
+            }
+            blocks.append(BundleBlock(profiles: profiles, entries: []))
             continue
         }
         let parts = line.split(separator: "=", maxSplits: 1)
-        guard let current = profiles.popLast(), parts.count == 2, isValidVariableName(String(parts[0])),
-              let raw = Data(base64Encoded: String(parts[1])) else {
+        guard let current = blocks.popLast(), parts.count == 2, isValidVariableName(String(parts[0])) else {
             throw StoreFailure.bundleFailed("a line in the bundle is not NAME=value")
         }
-        let value = (String(parts[0]), String(decoding: raw, as: UTF8.self))
-        profiles.append(ProfileValues(profile: current.profile, values: current.values + [value]))
+        let encoded = parts[1].split(separator: ",", omittingEmptySubsequences: false)
+        let decoded = encoded.compactMap { Data(base64Encoded: String($0)) }
+        guard decoded.count == encoded.count, decoded.count == current.profiles.count else {
+            throw StoreFailure.bundleFailed("a line in the bundle is not NAME=value")
+        }
+        let entry = (String(parts[0]), decoded.map { String(decoding: $0, as: UTF8.self) })
+        blocks.append(BundleBlock(profiles: current.profiles, entries: current.entries + [entry]))
     }
-    guard !profiles.isEmpty else { throw StoreFailure.bundleFailed("the bundle names no profile") }
-    return ProfileBundle(profiles: profiles)
+    guard !blocks.isEmpty else { throw StoreFailure.bundleFailed("the bundle names no profile") }
+    return ProfileBundle(blocks: blocks)
 }
 
 func writeBundle(_ bundle: ProfileBundle, to path: String) throws {
@@ -114,6 +122,8 @@ func readBundle(from path: String) throws -> ProfileBundle {
     }
 }
 
-func projectFileContents(profile: String, names: [String]) -> String {
-    (["@" + profile] + names).joined(separator: "\n") + "\n"
+func projectFileContents(_ blocks: [Block]) -> String {
+    blocks.map { block in
+        (["@" + block.profiles.joined(separator: ",")] + block.names).joined(separator: "\n")
+    }.joined(separator: "\n") + "\n"
 }

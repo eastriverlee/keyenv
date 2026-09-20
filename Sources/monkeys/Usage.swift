@@ -115,11 +115,13 @@ var usage: String {
       \(outputStyle("monkeys export", .argument))                the project's names
 
     Share the project's profiles as one encrypted file: every profile the
-    file declares and every name, unless --only says which. After it, each
-    @profile opens a block and the names after it belong to that block, the
-    way the file is written; names with no @ before them apply to every
-    profile. The file is named after the first profile it carries unless
-    you name it, before --only.
+    file declares and every name, unless --only says which. After it, a
+    @profile (or @a,b, several at once) opens a block and the names after
+    it belong to every profile in that block, the way the file is written;
+    names with no @ before them come from the default profile, the first
+    the file mentions. The bundle keeps that shape, and unpack writes it
+    back as the project file. The file is named after the first profile it
+    carries unless you name it, before --only.
     pack asks for a passphrase; unpack asks again, stores the values, and
     writes the names into .monkeys at the root of the git checkout you are
     in, here when there is none, or in the directory you name:
@@ -127,6 +129,7 @@ var usage: String {
       \(outputStyle("monkeys pack", .argument))                   writes test.foo.monkeys
       \(outputStyle("monkeys pack --only @foo", .argument))       writes foo.monkeys
       \(outputStyle("monkeys pack --only OPENROUTER_API_KEY", .argument))
+      \(outputStyle("monkeys pack --only @test.foo,foo OPENROUTER_API_KEY", .argument))
       \(outputStyle("monkeys pack shared --only @test.foo @foo SENTRY_DSN", .argument))
       \(outputStyle("monkeys unpack test.foo", .argument))
 

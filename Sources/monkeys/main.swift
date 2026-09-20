@@ -91,12 +91,7 @@ func runPreview(_ arguments: [String]) throws {
     }
 }
 
-private let packForm = "monkeys pack [@profile] [name] [--only @a NAME,NAME @b ...]"
-
-private struct PackBlock {
-    let profile: String
-    let names: [String]?
-}
+private let packForm = "monkeys pack [@profile] [name] [--only @a,b NAME,NAME @c ...]"
 
 private let profileNeeded = "a bundle carries a profile: run this in a project with a \(projectFileName) file, or name one with @profile"
 
@@ -106,37 +101,88 @@ private func namesIn(_ token: String) throws -> [String] {
     return names
 }
 
-private func resolvedProfile(_ argument: String, in project: Project?) throws -> String {
-    guard argument.count > 1 else { throw StoreFailure.badInvocation(packForm) }
-    let name = String(argument.dropFirst())
-    guard let project else {
-        guard isValidProfileName(name) else { throw StoreFailure.invalidProfileName(argument) }
-        return name
+private func resolvedProfiles(_ argument: String, in project: Project?) throws -> [String] {
+    let pieces = argument.dropFirst().split(separator: ",").map { $0.hasPrefix("@") ? String($0.dropFirst()) : String($0) }
+    guard !pieces.isEmpty, pieces.allSatisfy({ !$0.isEmpty }) else { throw StoreFailure.badInvocation(packForm) }
+    return try pieces.map { name in
+        guard let project else {
+            guard isValidProfileName(name) else { throw StoreFailure.invalidProfileName("@" + name) }
+            return name
+        }
+        return try project.profile(matching: name)
     }
-    return try project.profile(matching: name)
 }
 
-private func selectedBlocks(_ tokens: [String], defaults: [String], project: Project?) throws -> [PackBlock] {
-    var blocks: [PackBlock] = []
+private func coalesced(_ blocks: [Block]) -> [Block] {
+    blocks.reduce(into: []) { result, block in
+        if let last = result.last, last.profiles == block.profiles {
+            result[result.count - 1] = Block(profiles: last.profiles, names: last.names + block.names)
+        } else {
+            result.append(block)
+        }
+    }
+}
+
+private func restricted(_ blocks: [Block], toProfiles profiles: [String]) -> [Block] {
+    coalesced(blocks.compactMap { block in
+        let kept = block.profiles.filter(profiles.contains)
+        return kept.isEmpty ? nil : Block(profiles: kept, names: block.names)
+    })
+}
+
+private func restricted(_ blocks: [Block], toNames names: [String]) -> [Block] {
+    blocks.compactMap { block in
+        let kept = block.names.filter(names.contains)
+        return kept.isEmpty ? nil : Block(profiles: block.profiles, names: kept)
+    }
+}
+
+private func storedBlocks(for profiles: [String]) throws -> [Block] {
+    try profiles.map { Block(profiles: [$0], names: try namesInScope(Scope(profile: $0, project: nil))) }
+}
+
+private func selectedBlocks(_ tokens: [String], from written: [Block], defaultingTo scope: [String], project: Project?) throws -> [Block] {
+    var blocks: [Block] = []
+    var open: [String]?
+    var openNames: [String] = []
     var leading: [String] = []
+    func closeOpen() throws {
+        guard let profiles = open else { return }
+        if !openNames.isEmpty {
+            blocks.append(Block(profiles: profiles, names: openNames))
+        } else if project == nil {
+            blocks += try storedBlocks(for: profiles)
+        } else {
+            blocks += restricted(written, toProfiles: profiles)
+        }
+        open = nil
+        openNames = []
+    }
     for token in tokens {
         if token.hasPrefix("@") {
-            blocks.append(PackBlock(profile: try resolvedProfile(token, in: project), names: nil))
+            try closeOpen()
+            open = try resolvedProfiles(token, in: project)
             continue
         }
         let names = try namesIn(token)
-        guard let last = blocks.popLast() else {
+        guard open != nil else {
+            guard blocks.isEmpty else { throw StoreFailure.badInvocation(packForm) }
             leading += names
             continue
         }
-        blocks.append(PackBlock(profile: last.profile, names: (last.names ?? []) + names))
+        openNames += names
     }
-    guard blocks.isEmpty || leading.isEmpty else { throw StoreFailure.badInvocation(packForm) }
-    guard blocks.isEmpty else { return blocks }
-    return defaults.map { PackBlock(profile: $0, names: leading.isEmpty ? nil : leading) }
+    try closeOpen()
+    guard leading.isEmpty || blocks.isEmpty else { throw StoreFailure.badInvocation(packForm) }
+    guard !leading.isEmpty else { return blocks.isEmpty ? written : blocks }
+    let base = restricted(written, toProfiles: scope)
+    for name in leading where !base.contains(where: { $0.names.contains(name) }) {
+        throw StoreFailure.bundleFailed("\(name) is not listed for @\(scope.joined(separator: ",")), so there is nothing to pack under that name")
+    }
+    return restricted(base, toNames: leading)
 }
 
-private func packedBlocks(_ arguments: [String]) throws -> (blocks: [PackBlock], project: Project?, fileName: String?) {
+private func packedBlocks(_ arguments: [String]) throws -> (blocks: [Block], project: Project?, fileName: String?) {
     let (chosen, afterProfile) = try takeProfileArgument(arguments)
     let project = try locateProject()
     var rest = afterProfile
@@ -146,50 +192,63 @@ private func packedBlocks(_ arguments: [String]) throws -> (blocks: [PackBlock],
         rest.removeSubrange(flag...)
     }
     guard rest.count <= 1 else { throw StoreFailure.badInvocation(packForm) }
-    let defaults: [String]
     switch chosen {
     case .personal:
         throw StoreFailure.bundleFailed(profileNeeded)
     case .named(let name):
         guard !selection.contains(where: { $0.hasPrefix("@") }) else { throw StoreFailure.badInvocation(packForm) }
-        defaults = [try resolvedProfile("@" + name, in: project)]
+        let profiles = try resolvedProfiles("@" + name, in: project)
+        let written = try project.map { restricted($0.blocks, toProfiles: profiles) } ?? storedBlocks(for: profiles)
+        return (try selectedBlocks(selection, from: written, defaultingTo: profiles, project: project), project, rest.first)
     case .none:
         guard let project else {
             guard selection.contains(where: { $0.hasPrefix("@") }) else { throw StoreFailure.bundleFailed(profileNeeded) }
-            defaults = []
-            return (try selectedBlocks(selection, defaults: defaults, project: nil), nil, rest.first)
+            return (try selectedBlocks(selection, from: [], defaultingTo: [], project: nil), nil, rest.first)
         }
-        defaults = project.profiles
+        return (try selectedBlocks(selection, from: project.blocks, defaultingTo: [project.defaultProfile], project: project), project, rest.first)
     }
-    return (try selectedBlocks(selection, defaults: defaults, project: project), project, rest.first)
 }
 
-private func collectedValues(_ scope: Scope, keeping only: [String]?) throws -> ProfileValues {
-    let listed = try namesInScope(scope)
-    if let only, let stray = only.first(where: { !listed.contains($0) }) {
-        throw StoreFailure.bundleFailed("\(stray) is not listed for @\(scope.profile ?? ""), so there is nothing to pack under that name")
-    }
-    var values: [(name: String, value: String)] = []
-    var missing: [String] = []
-    for name in listed where only?.contains(name) ?? true {
-        do {
-            values.append((name, try secretStore.read(forName: scope.storedName(name))))
-        } catch StoreFailure.nameNotStored {
-            missing.append(name)
+private func filledBlock(_ block: Block, project: Project?) throws -> BundleBlock {
+    if let project {
+        for profile in block.profiles {
+            let listed = project.names(for: profile)
+            if let stray = block.names.first(where: { !listed.contains($0) }) {
+                throw StoreFailure.bundleFailed("\(stray) is not listed for @\(profile), so there is nothing to pack under that name")
+            }
         }
     }
-    guard missing.isEmpty else { throw StoreFailure.namesNotStored(missing, scope.profileArgument) }
-    return ProfileValues(profile: scope.profile ?? "", values: values)
+    var entries: [(name: String, values: [String])] = []
+    var missing: [String: [String]] = [:]
+    for name in block.names {
+        var values: [String] = []
+        for profile in block.profiles {
+            do {
+                values.append(try secretStore.read(forName: profile + "/" + name))
+            } catch StoreFailure.nameNotStored {
+                missing[profile, default: []].append(name)
+            }
+        }
+        entries.append((name, values))
+    }
+    if let profile = block.profiles.first(where: { missing[$0] != nil }) {
+        throw StoreFailure.namesNotStored(missing[profile]!, "@" + profile)
+    }
+    return BundleBlock(profiles: block.profiles, entries: entries)
+}
+
+private func blockLines(_ profiles: [[String]]) -> String {
+    profiles.map { "@" + $0.joined(separator: ",") }.joined(separator: " ")
 }
 
 func runPack(_ arguments: [String]) throws {
     let (blocks, project, fileName) = try packedBlocks(arguments)
-    let filled = try blocks.map { try collectedValues(Scope(profile: $0.profile, project: project), keeping: $0.names) }
-    let path = bundlePath(fileName ?? filled[0].profile)
-    try writeBundle(ProfileBundle(profiles: filled), to: path)
-    let count = filled.reduce(0) { $0 + $1.values.count }
-    let listed = filled.map { "@" + $0.profile }.joined(separator: ", ")
-    printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(path, .bold) + ": \(listed), \(count) value\(count == 1 ? "" : "s")")
+    guard !blocks.isEmpty else { throw StoreFailure.bundleFailed("nothing to pack: no names are listed for that") }
+    let filled = try blocks.map { try filledBlock($0, project: project) }
+    let path = bundlePath(fileName ?? filled[0].profiles[0])
+    try writeBundle(ProfileBundle(blocks: filled), to: path)
+    let count = filled.reduce(0) { $0 + $1.entries.count * $1.profiles.count }
+    printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(path, .bold) + ": \(blockLines(filled.map(\.profiles))), \(count) value\(count == 1 ? "" : "s")")
 }
 
 func gitRoot(above directory: String) -> String? {
@@ -212,28 +271,42 @@ func unpackDestination(_ given: String?) throws -> String {
     return directory
 }
 
-func reconcileProjectFile(profile: String, names: [String], in directory: String) throws {
+func reconcileProjectFile(_ blocks: [Block], in directory: String) throws {
     let path = directory + "/" + projectFileName
     let shown = directory == FileManager.default.currentDirectoryPath ? projectFileName : abbreviatingHome(path)
-    let counted = "\(names.count) name\(names.count == 1 ? "" : "s")"
+    func counted(_ blocks: [Block]) -> String {
+        let total = blocks.reduce(0) { $0 + $1.names.count }
+        return "\(total) name\(total == 1 ? "" : "s")"
+    }
     guard FileManager.default.fileExists(atPath: path) else {
-        try projectFileContents(profile: profile, names: names).write(toFile: path, atomically: true, encoding: .utf8)
-        printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(shown, .bold) + ": @\(profile), \(counted)")
+        try projectFileContents(blocks).write(toFile: path, atomically: true, encoding: .utf8)
+        printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(shown, .bold) + ": \(blockLines(blocks.map(\.profiles))), \(counted(blocks))")
         return
     }
     let existing = try parseProject(at: path, directory: directory)
-    let listed = existing.names(for: profile)
-    let missing = names.filter { !listed.contains($0) }
-    guard !missing.isEmpty else {
-        printToStandardError("\(shown) already lists these names under @\(profile)")
+    var additions: [Block] = []
+    for block in blocks {
+        var order: [[String]] = []
+        var profilesMissing: [[String]: [String]] = [:]
+        for profile in block.profiles {
+            let listed = existing.names(for: profile)
+            let missing = block.names.filter { !listed.contains($0) }
+            guard !missing.isEmpty else { continue }
+            if profilesMissing[missing] == nil { order.append(missing) }
+            profilesMissing[missing, default: []].append(profile)
+        }
+        additions += order.map { Block(profiles: profilesMissing[$0]!, names: $0) }
+    }
+    guard !additions.isEmpty else {
+        printToStandardError("\(shown) already lists these names")
         return
     }
     let current = try String(contentsOfFile: path, encoding: .utf8)
     let separator = current.hasSuffix("\n") ? "" : "\n"
-    try (current + separator + projectFileContents(profile: profile, names: missing)).write(toFile: path, atomically: true, encoding: .utf8)
-    let added = "\(missing.count) name\(missing.count == 1 ? "" : "s")"
-    printToStandardError(messageStyle("added", .good) + " " + messageStyle("@\(profile)", .bold) + " with \(added) to \(shown)")
+    try (current + separator + projectFileContents(additions)).write(toFile: path, atomically: true, encoding: .utf8)
+    printToStandardError(messageStyle("added", .good) + " " + messageStyle(blockLines(additions.map(\.profiles)), .bold) + " with \(counted(additions)) to \(shown)")
 }
+
 
 private func mark(_ isStored: Bool) -> String {
     isStored ? outputStyle("✓", .good) : outputStyle("✗", .bad)
@@ -268,14 +341,16 @@ func runUnpack(_ arguments: [String]) throws {
     }
     let destination = try unpackDestination(arguments.dropFirst().first)
     let bundle = try readBundle(from: bundlePath(name))
-    for block in bundle.profiles {
-        let names = block.values.map(\.name)
-        try reconcileProjectFile(profile: block.profile, names: names, in: destination)
-        for entry in block.values {
-            try secretStore.store(entry.value, forName: block.profile + "/" + entry.name)
+    try reconcileProjectFile(bundle.blocks.map { Block(profiles: $0.profiles, names: $0.entries.map(\.name)) }, in: destination)
+    for block in bundle.blocks {
+        var stored: [String] = []
+        for entry in block.entries {
+            for (profile, value) in zip(block.profiles, entry.values) {
+                try secretStore.store(value, forName: profile + "/" + entry.name)
+                stored.append(profile + "/" + entry.name)
+            }
         }
-        let stored = names.map { messageStyle(block.profile + "/" + $0, .bold) }.joined(separator: ", ")
-        printToStandardError(messageStyle("stored", .good) + " " + stored)
+        printToStandardError(messageStyle("stored", .good) + " " + stored.map { messageStyle($0, .bold) }.joined(separator: ", "))
     }
 }
 

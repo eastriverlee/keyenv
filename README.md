@@ -461,32 +461,37 @@ monkeys pack
 > ```
 > Passphrase:
 > Again:
-> wrote test.foo.monkeys: @test.foo, @foo, 5 values
+> wrote test.foo.monkeys: @test.foo,foo @foo, 5 values
 > ```
 
-`--only` says which, and reads the way the file is written: each `@profile`
-opens a block, and the names after it belong to that block. A profile with
-no names after it goes whole; names with no `@` before them apply to every
-profile. That is how a teammate gets test and never production, or one key
-on its own:
+`--only` says which, and reads the way the file is written: a `@profile`
+line opens a block, `@a,b` opens one for several profiles at once, and the
+names after it belong to every profile in that block. A block with no names
+after it goes whole; names before any `@` come from the default profile, the
+first the file mentions. That is how a teammate gets test and never
+production, or one key on its own:
 
 ```sh
 monkeys pack --only @test.foo
 monkeys pack shared --only @test.foo @foo
-monkeys pack --only OPENROUTER_API_KEY
-monkeys pack --only @test.foo OPENROUTER_API_KEY @foo SENTRY_DSN
+monkeys pack --only DATABASE_URL
+monkeys pack --only @test.foo,foo DATABASE_URL
+monkeys pack --only @test.foo DATABASE_URL @foo SENTRY_DSN
 ```
 
 > ```
 > wrote test.foo.monkeys: @test.foo, 2 values
-> wrote shared.monkeys: @test.foo, @foo, 5 values
-> wrote test.foo.monkeys: @test.foo, @foo, 2 values
-> wrote test.foo.monkeys: @test.foo, @foo, 2 values
+> wrote shared.monkeys: @test.foo @foo, 5 values
+> wrote test.foo.monkeys: @test.foo, 1 value
+> wrote test.foo.monkeys: @test.foo,foo, 2 values
+> wrote test.foo.monkeys: @test.foo @foo, 2 values
 > ```
 
-A leading `@profile` before `--only` means that one profile, with the names
-that follow. The file name goes before `--only`, which takes the rest of the
-line. A name a profile does not list is refused rather than left out.
+The bundle keeps that shape, block for block, and `unpack` writes it back as
+the project file. A leading `@profile` before `--only` means that one profile,
+with the names that follow. The file name goes before `--only`, which takes
+the rest of the line. A name a profile does not list is refused rather than
+left out.
 
 The file takes the first profile's name unless a word after `pack` names it. It carries each profile's name, the names the project lists for
 it, and their values, sealed with ChaCha20-Poly1305 under a key scrypt
@@ -503,10 +508,9 @@ monkeys unpack test.foo
 
 > ```
 > Passphrase:
-> wrote .monkeys: @test.foo, 2 names
-> stored test.foo/DATABASE_URL, test.foo/STRIPE_SECRET_KEY
-> added @foo with 3 names to .monkeys
-> stored foo/DATABASE_URL, foo/STRIPE_SECRET_KEY, foo/SENTRY_DSN
+> wrote .monkeys: @test.foo,foo @foo, 3 names
+> stored test.foo/DATABASE_URL, foo/DATABASE_URL, test.foo/STRIPE_SECRET_KEY, foo/STRIPE_SECRET_KEY
+> stored foo/SENTRY_DSN
 > ```
 
 The values go into that person's keyring under each bundle's profile, and
@@ -514,8 +518,8 @@ the profiles and names become a `.monkeys` file at the root of the git
 checkout, the way `.gitignore` sits at the root, so `monkeys run ./hello.sh` works
 from any directory in it. Outside a checkout the file goes in the current
 directory, and a second argument names the directory outright. When a
-`.monkeys` file is already there, `unpack` adds each of the bundle's profiles
-as a block at the end, with the names the file does not yet list for it, and
+`.monkeys` file is already there, `unpack` adds a block at the end for the
+names the file does not yet list, grouped the way the bundle groups them, and
 leaves the rest of the file alone.
 
 `run` looks for the file from the current directory upward, nearest first, and
