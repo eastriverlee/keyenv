@@ -37,64 +37,6 @@ file. C had a memory problem too, and being careful didn't fix it. Rust did.
 time. Nothing prints a stored secret, the command you hand it to included, so there
 is nothing to read.
 
-## Quickstart
-
-### Install and store a secret
-
-```sh
-curl -fsSL https://monk3ys.dev/install | sh
-monkeys set SUPER_SECRET
-```
-
-Type `sesame` at the prompt.
-
-### Open the door
-
-```sh
-monkeys run SUPER_SECRET sh -c '
-  test "$SUPER_SECRET" = sesame && echo opened || echo closed
-  echo "the word was $SUPER_SECRET"
-'
-```
-
-> ```
-> opened
-> the word was [redacted SUPER_SECRET]
-> ```
-
-The right word reached the command, and what the command printed came back
-with the secret taken out. `run` becomes the command once the secret is set,
-so the exit status, the output and the signals are the command's own.
-
-### Try it without monkeys
-
-```sh
-sh -c 'test "$SUPER_SECRET" = sesame && echo opened || echo closed'
-```
-
-> ```
-> closed
-> ```
-
-### Take the word away
-
-```sh
-monkeys remove SUPER_SECRET
-monkeys run SUPER_SECRET sh -c '
-  test "$SUPER_SECRET" = sesame && echo opened || echo closed
-'
-```
-
-> ```
-> removed SUPER_SECRET
-> monkeys: SUPER_SECRET is not stored yet
-> nothing ran. a human has to store it, then try again:
->   monkeys set SUPER_SECRET
-> ```
-
-Nothing ran at all: a missing secret stops `run` before the command starts,
-and the message says what to do, which is what an agent passes on.
-
 ## Install
 
 On macOS or Linux, from the latest release:
@@ -160,10 +102,73 @@ The skill restates a few invocations so an agent knows them before it runs
 anything. `make check` holds that copy to the binary, failing when the skill
 names a command `monkeys help` does not list.
 
+## Quickstart
+
+### Store a secret
+
+```sh
+monkeys set SUPER_SECRET
+```
+
+Type `sesame` at the prompt.
+
+### Open the door
+
+```sh
+monkeys run SUPER_SECRET sh -c '
+  test "$SUPER_SECRET" = sesame && echo opened || echo closed
+  echo "the word was $SUPER_SECRET"
+'
+```
+
+> ```
+> opened
+> the word was [redacted SUPER_SECRET]
+> ```
+
+The right word reached the command, and what the command printed came back
+with the secret taken out. `run` becomes the command once the secret is set,
+so the exit status, the output and the signals are the command's own.
+
+### Try it without monkeys
+
+```sh
+sh -c 'test "$SUPER_SECRET" = sesame && echo opened || echo closed'
+```
+
+> ```
+> closed
+> ```
+
+### Take the word away
+
+```sh
+monkeys remove SUPER_SECRET
+monkeys run SUPER_SECRET sh -c '
+  test "$SUPER_SECRET" = sesame && echo opened || echo closed
+'
+```
+
+> ```
+> removed SUPER_SECRET
+> monkeys: SUPER_SECRET is not stored yet
+> nothing ran. a human has to store it, then try again:
+>   monkeys set SUPER_SECRET
+> ```
+
+Nothing ran at all: a missing secret stops `run` before the command starts,
+and the message says what to do, which is what an agent passes on.
+
 ## Documentation
 
 Everything else, from the command list to what `run` hands back, is
 [DOCS.md](DOCS.md), rendered with search at <https://docs.monk3ys.dev>.
+
+## Contributing
+
+Bugs and proposals go through the issue templates, which ask for what a fix
+or a decision needs. A pull request runs `make check` first: it holds the help
+text, the skill and the docs to the binary.
 
 ## Sponsoring
 
