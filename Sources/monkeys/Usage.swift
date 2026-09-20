@@ -25,8 +25,6 @@ let commandSummaries = [
                    summary: "run a command with those secrets set"),
     CommandSummary(verb: "run", arguments: "--all <command>",
                    summary: "the same, with every stored secret"),
-    CommandSummary(verb: "run", arguments: "--no-redact <command>",
-                   summary: "the same, output untouched"),
     CommandSummary(verb: "run", arguments: "<command>",
                    summary: "the same, keys read from .monkeys"),
     CommandSummary(verb: "pack", arguments: "[path] [--only ...]",

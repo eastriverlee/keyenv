@@ -221,7 +221,3 @@ func runRedacted(_ command: [String], _ values: [SpentValue]) -> Never {
     if isTerminal(STDOUT_FILENO) { runThroughTerminal(command, values) }
     runThroughPipes(command, values)
 }
-
-func runUnredacted(_ command: [String], _ values: [SpentValue]) -> Never {
-    execute(command, values)
-}

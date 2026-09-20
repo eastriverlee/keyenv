@@ -954,15 +954,33 @@ A short secret is redacted wherever it appears, so store secrets here and keep
 `PORT=3000` as a value line in `.monkeys`, which is public and passes through
 untouched.
 
-### --no-redact
+### Writing a secret into a file
 
-`--no-redact` turns redaction off and runs the command in `monkeys`'s place,
-for the one case that needs the secret in the output, such as writing it into
-a file a program will read:
+A file that has to end up with the secret in it takes the redirect inside the
+command, where the secret goes from the child straight into the file and
+never passes `monkeys`:
 
 ```sh
-monkeys run --no-redact OPENROUTER_API_KEY envsubst < template > config
+monkeys run OPENROUTER_API_KEY sh -c 'envsubst < template > config'
 ```
+
+> ```
+> token = <the secret>
+> ```
+
+Written the way a shell reads it first, with the redirect outside, the file
+is `monkeys`'s own output and the redaction lands in it:
+
+```sh
+monkeys run OPENROUTER_API_KEY envsubst < template > config
+```
+
+> ```
+> token = [redacted OPENROUTER_API_KEY]
+> ```
+
+A secret leaves through a command's own file descriptor, so which side of
+`monkeys` the redirect sits on decides what the file gets.
 
 ### A shell with a profile
 

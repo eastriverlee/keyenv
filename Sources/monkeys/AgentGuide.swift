@@ -47,9 +47,15 @@ nowhere else:
 Nothing on that line holds a secret, so nothing an agent writes can spill
 one. The exit status and the signals are the command's own. Its output comes
 back through monkeys, and a stored secret in it comes back as [redacted KEY],
-so echo $KEY says which secret was there and never the secret. --no-redact is
-for a human writing a secret into a file on purpose; an agent does not add
-it.
+so echo $KEY says which secret was there and never the secret. A file that
+has to end up with the secret in it takes the redirect inside the command,
+where the secret goes from the child straight into the file and never passes
+monkeys:
+
+  monkeys run OPENROUTER_API_KEY sh -c 'envsubst < template > config'
+
+Written with the redirect outside, the file is monkeys's own output and the
+redaction lands in it.
 
 A project that has a .monkeys file has already listed the keys it needs, and
 run there takes only the command:

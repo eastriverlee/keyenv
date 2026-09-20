@@ -48,6 +48,14 @@ monkeys run OPENROUTER_API_KEY sh -c 'curl -H "Authorization: Bearer $OPENROUTER
 # the single quotes reach the child intact
 ```
 
+A file that has to end up with the secret in it takes the redirect inside the
+command for the same reason: the secret goes from the child straight into the
+file and never passes `monkeys`, which would redact it on the way out.
+
+```sh
+monkeys run OPENROUTER_API_KEY sh -c 'envsubst < template > config'
+```
+
 ## Inside a project
 
 A `.monkeys` file lists the keys the project needs. Read it before adding a
@@ -140,12 +148,11 @@ before it reaches the vault. Say what is needed and stop.
   passphrase and deletes the bundle.
 - `monkeys fill @production --with @test` copies what is missing between
   profiles, which may put a test secret into production.
-- `--no-redact` is for a human writing a secret into a file on purpose.
 
 ## Never
 
 - `echo "$SOME_KEY"`, `env`, `printenv`
-- writing a secret into a file, a log, a commit, or a bug report
+- writing a secret out yourself, into a file, a log, a commit or a bug report
 
 Where a config file wants the secret, write whatever reference its format
 offers, such as `${OPENROUTER_API_KEY}`, and let the program expand it.
