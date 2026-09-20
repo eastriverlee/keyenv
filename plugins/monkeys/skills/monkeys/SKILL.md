@@ -55,7 +55,7 @@ or a prefix that fits just one of them.
 `monkeys doctor --short` prints one `missing @profile: A,B` line per profile
 with a gap, nothing when there is none, and exits non-zero while any remains.
 When another profile of the same project holds a missing name,
-`monkeys copy @test.foo --to @foo` fills the gap without printing a value; a
+`monkeys fill @foo --with @test.foo` fills the gap without printing a value; a
 human decides that, since it may put a test value into production.
 
 Read the file before adding a name; it is the list. A profile never falls back

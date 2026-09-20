@@ -372,7 +372,7 @@ do {
     case "unpack": try runUnpack(rest)
     case "export": try runExport(rest)
     case "doctor": try runDoctor(rest)
-    case "copy": try runCopy(rest)
+    case "fill": try runFill(rest)
     case "help", "-h", "--help": print(usage)
     default:
         printToStandardError(messageStyle("unknown command:", .bad) + " \(command)")

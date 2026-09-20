@@ -161,7 +161,7 @@ names a command `monkeys help` does not list.
 | `monkeys export [NAME...]` | keyring lookup lines, to paste into a startup file |
 | `monkeys pack [name] [--only ...]` | the profiles as one encrypted `name.monkeys` |
 | `monkeys unpack <name> [directory]` | store its values, write its `.monkeys` |
-| `monkeys copy @a --to @b` | give `@b` the names it lacks, from `@a` |
+| `monkeys fill @a --with @b` | give `@a` the names it lacks, from `@b` |
 | `monkeys doctor` | what each profile has and lacks |
 | `monkeys doctor --short` | one `missing @profile: A,B` line per gap, for a script or an agent |
 
@@ -373,16 +373,16 @@ Two profiles of one project usually share most of their values, and the
 second is filled from the first:
 
 ```sh
-monkeys copy @test.foo --to @foo
+monkeys fill @foo --with @test.foo
 ```
 
 > ```
-> copied to @foo from @test.foo: STRIPE_SECRET_KEY
+> filled @foo from @test.foo: STRIPE_SECRET_KEY
 > kept 1 @foo already had
 > still missing in @foo: SENTRY_DSN
 > ```
 
-`copy` moves only the names the target lacks and never touches a value it
+`fill` moves only the names the target lacks and never touches a value it
 already holds, so it is safe to run twice. It names every value it moved,
 since a production profile filled from test is a decision to see written
 down, and it exits non-zero while anything is still missing. No value is
