@@ -47,7 +47,7 @@ struct BundleBlock {
 }
 
 struct ProfileBundle {
-    let namespace: String
+    let namespace: String?
     let blocks: [BundleBlock]
 }
 
@@ -88,12 +88,14 @@ private func encodedEntry(_ entry: (name: String, values: [String])) -> String {
     return entry.name + "=" + encoded.joined(separator: ",")
 }
 
-private func serializedBlock(_ block: BundleBlock) -> [String] {
-    ["@" + block.profiles.joined(separator: ",")] + block.entries.map(encodedEntry)
+private func serializedBlock(_ block: BundleBlock, in namespace: String?) -> [String] {
+    let written = block.profiles.map { shortened($0, in: namespace) }
+    return ["@" + written.joined(separator: ",")] + block.entries.map(encodedEntry)
 }
 
 private func serialized(_ bundle: ProfileBundle) -> Data {
-    let lines = ["+" + bundle.namespace] + bundle.blocks.flatMap(serializedBlock)
+    let header = bundle.namespace.map { ["+" + $0] } ?? []
+    let lines = header + bundle.blocks.flatMap { serializedBlock($0, in: bundle.namespace) }
     return Data(lines.joined(separator: "\n").utf8)
 }
 
@@ -104,18 +106,17 @@ private func deserialized(_ plaintext: Data) throws -> ProfileBundle {
         if line.hasPrefix("+") {
             let name = String(line.dropFirst())
             guard namespace == nil, blocks.isEmpty, isValidProfileName(name) else {
-                throw StoreFailure.bundleFailed("the bundle carries no project")
+                throw StoreFailure.bundleFailed("the bundle's +namespace line is not first, or not a name")
             }
             namespace = name
             continue
         }
-        guard namespace != nil else { throw StoreFailure.bundleFailed("the bundle carries no project") }
         if line.hasPrefix("@") {
             let profiles = line.dropFirst().split(separator: ",").map(String.init)
             guard !profiles.isEmpty, profiles.allSatisfy(isValidProfileName) else {
                 throw StoreFailure.bundleFailed("the bundle carries no profile")
             }
-            blocks.append(BundleBlock(profiles: profiles, entries: []))
+            blocks.append(BundleBlock(profiles: profiles.map { prefixed($0, with: namespace) }, entries: []))
             continue
         }
         let parts = line.split(separator: "=", maxSplits: 1)
@@ -130,7 +131,7 @@ private func deserialized(_ plaintext: Data) throws -> ProfileBundle {
         let entry = (String(parts[0]), decoded.map { String(decoding: $0, as: UTF8.self) })
         blocks.append(BundleBlock(profiles: current.profiles, entries: current.entries + [entry]))
     }
-    guard let namespace, !blocks.isEmpty else { throw StoreFailure.bundleFailed("the bundle carries no profile") }
+    guard !blocks.isEmpty else { throw StoreFailure.bundleFailed("the bundle carries no profile") }
     return ProfileBundle(namespace: namespace, blocks: blocks)
 }
 
@@ -165,12 +166,14 @@ func readBundle(from path: String) throws -> ProfileBundle {
     }
 }
 
-func blockText(_ blocks: [Block]) -> String {
+func blockText(_ blocks: [Block], in namespace: String?) -> String {
     blocks.map { block in
-        (["@" + block.profiles.joined(separator: ",")] + block.keys).joined(separator: "\n")
+        let written = block.profiles.map { shortened($0, in: namespace) }
+        return (["@" + written.joined(separator: ",")] + block.keys).joined(separator: "\n")
     }.joined(separator: "\n") + "\n"
 }
 
-func projectFileContents(namespace: String, _ blocks: [Block]) -> String {
-    "+" + namespace + "\n" + blockText(blocks)
+func projectFileContents(namespace: String?, _ blocks: [Block]) -> String {
+    let header = namespace.map { "+" + $0 + "\n" } ?? ""
+    return header + blockText(blocks, in: namespace)
 }

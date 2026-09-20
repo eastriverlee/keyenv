@@ -10,7 +10,7 @@ private func fillScopes(_ arguments: [String]) throws -> (source: Scope, target:
     let (target, targetRest) = try resolveScope([arguments[0]])
     let (source, sourceRest) = try resolveScope([arguments[2]])
     guard sourceRest.isEmpty, targetRest.isEmpty else { throw StoreFailure.badInvocation(fillForm) }
-    guard source.qualifiedProfile != target.qualifiedProfile else {
+    guard source.profile != target.profile else {
         throw StoreFailure.badInvocation(fillForm + ", with two different profiles")
     }
     return (source, target)

@@ -33,7 +33,7 @@ the command reads.
 
 A project with a `.monkeys` file has already listed the keys it needs:
 
-```
+```monkeys
 +foo
 @test,production
 DATABASE_URL

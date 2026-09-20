@@ -124,7 +124,7 @@ func runPreview(_ arguments: [String]) throws {
 
 private let packForm = "monkeys pack [path] [--open] [--only [KEY[,KEY...]] [@profile[,profile...] [KEY[,KEY...]]]...]"
 
-private let profileNeeded = "a bundle carries a project: run this in a project with a \(projectFileName) file, or name profiles with --only @namespace.profile"
+private let profileNeeded = "a bundle carries a profile: run this in a project with a \(projectFileName) file, or name one with --only @profile"
 
 private func keysIn(_ token: String) throws -> [String] {
     let keys = token.split(separator: ",").map(String.init)
@@ -132,33 +132,16 @@ private func keysIn(_ token: String) throws -> [String] {
     return keys
 }
 
-private struct ProfileSelection {
-    let namespace: String
-    let profiles: [String]
-}
-
-private func twoProjects(_ first: String, _ second: String) -> StoreFailure {
-    .bundleFailed("a bundle carries one project: +\(first) and +\(second) go in two")
-}
-
-private func resolvedProfiles(_ argument: String, in project: Project?) throws -> ProfileSelection {
+private func resolvedProfiles(_ argument: String, in project: Project?) throws -> [String] {
     let pieces = argument.dropFirst().split(separator: ",").map { $0.hasPrefix("@") ? String($0.dropFirst()) : String($0) }
     guard !pieces.isEmpty, pieces.allSatisfy({ !$0.isEmpty }) else { throw StoreFailure.badInvocation(packForm) }
-    if let project {
-        return ProfileSelection(namespace: project.namespace, profiles: try pieces.map { try project.profile(matching: $0) })
+    return try pieces.map { name in
+        guard let project else {
+            guard isValidProfileName(name) else { throw StoreFailure.invalidProfileName("@" + name) }
+            return name
+        }
+        return try project.profile(matching: name)
     }
-    var namespace: String?
-    var profiles: [String] = []
-    for piece in pieces {
-        let parts = piece.split(separator: ".", omittingEmptySubsequences: false).map(String.init)
-        guard parts.count <= 2, parts.allSatisfy(isValidProfileName) else { throw StoreFailure.invalidProfileName("@" + piece) }
-        guard let space = parts.count == 2 ? parts[0] : namespace else { throw StoreFailure.profileNeedsNamespace(parts[0]) }
-        if let known = namespace, known != space { throw twoProjects(known, space) }
-        namespace = space
-        profiles.append(parts.count == 2 ? parts[1] : parts[0])
-    }
-    guard let chosen = namespace else { throw StoreFailure.badInvocation(packForm) }
-    return ProfileSelection(namespace: chosen, profiles: profiles)
 }
 
 private func coalesced(_ blocks: [Block]) -> [Block] {
@@ -185,26 +168,23 @@ private func restricted(_ blocks: [Block], toNames keys: [String]) -> [Block] {
     }
 }
 
-private func storedBlocks(for profiles: [String], in namespace: String) throws -> [Block] {
-    try profiles.map { profile in
-        Block(profiles: [profile], keys: try storedKeysInScope(Scope(namespace: namespace, profile: profile, project: nil)))
-    }
+private func storedBlocks(for profiles: [String]) throws -> [Block] {
+    try profiles.map { Block(profiles: [$0], keys: try storedKeysInScope(Scope(profile: $0, project: nil))) }
 }
 
-private func selectedBlocks(_ tokens: [String], from written: [Block], defaultingTo scope: [String], project: Project?) throws -> (blocks: [Block], namespace: String?) {
+private func selectedBlocks(_ tokens: [String], from written: [Block], defaultingTo scope: [String], project: Project?) throws -> [Block] {
     var blocks: [Block] = []
-    var namespace = project?.namespace
-    var open: ProfileSelection?
+    var open: [String]?
     var openNames: [String] = []
     var leading: [String] = []
     func closeOpen() throws {
-        guard let selection = open else { return }
+        guard let profiles = open else { return }
         if !openNames.isEmpty {
-            blocks.append(Block(profiles: selection.profiles, keys: openNames))
+            blocks.append(Block(profiles: profiles, keys: openNames))
         } else if project == nil {
-            blocks += try storedBlocks(for: selection.profiles, in: selection.namespace)
+            blocks += try storedBlocks(for: profiles)
         } else {
-            blocks += restricted(written, toProfiles: selection.profiles)
+            blocks += restricted(written, toProfiles: profiles)
         }
         open = nil
         openNames = []
@@ -212,10 +192,7 @@ private func selectedBlocks(_ tokens: [String], from written: [Block], defaultin
     for token in tokens {
         if token.hasPrefix("@") {
             try closeOpen()
-            let selection = try resolvedProfiles(token, in: project)
-            if let known = namespace, known != selection.namespace { throw twoProjects(known, selection.namespace) }
-            namespace = selection.namespace
-            open = selection
+            open = try resolvedProfiles(token, in: project)
             continue
         }
         let keys = try keysIn(token)
@@ -228,15 +205,16 @@ private func selectedBlocks(_ tokens: [String], from written: [Block], defaultin
     }
     try closeOpen()
     guard leading.isEmpty || blocks.isEmpty else { throw StoreFailure.badInvocation(packForm) }
-    guard !leading.isEmpty else { return (blocks.isEmpty ? written : blocks, namespace) }
+    guard !leading.isEmpty else { return blocks.isEmpty ? written : blocks }
     let base = restricted(written, toProfiles: scope)
     for name in leading where !base.contains(where: { $0.keys.contains(name) }) {
-        throw StoreFailure.bundleFailed("\(name) is not listed for @\(scope.joined(separator: ",")), so there is nothing to pack under that key")
+        let shown = scope.map { shortened($0, in: project?.namespace) }.joined(separator: ",")
+        throw StoreFailure.bundleFailed("\(name) is not listed for @\(shown), so there is nothing to pack under that key")
     }
-    return (restricted(base, toNames: leading), namespace)
+    return restricted(base, toNames: leading)
 }
 
-private func packedBlocks(_ arguments: [String]) throws -> (blocks: [Block], namespace: String, project: Project?, fileName: String?) {
+private func packedBlocks(_ arguments: [String]) throws -> (blocks: [Block], project: Project?, fileName: String?) {
     let (chosen, afterProfile) = try takeProfileArgument(arguments)
     let project = try locateProject()
     var rest = afterProfile
@@ -251,26 +229,21 @@ private func packedBlocks(_ arguments: [String]) throws -> (blocks: [Block], nam
         throw StoreFailure.bundleFailed(profileNeeded)
     case .named(let name):
         throw StoreFailure.bundleFailed("pack picks profiles after --only: monkeys pack --only @\(name)")
-    case .qualified(let namespace, let profile):
-        throw StoreFailure.bundleFailed("pack picks profiles after --only: monkeys pack --only @\(namespace).\(profile)")
     case .none:
         guard let project else {
             guard selection.contains(where: { $0.hasPrefix("@") }) else { throw StoreFailure.bundleFailed(profileNeeded) }
-            let (blocks, namespace) = try selectedBlocks(selection, from: [], defaultingTo: [], project: nil)
-            guard let namespace else { throw StoreFailure.bundleFailed(profileNeeded) }
-            return (blocks, namespace, nil, rest.first)
+            return (try selectedBlocks(selection, from: [], defaultingTo: [], project: nil), nil, rest.first)
         }
-        let (blocks, _) = try selectedBlocks(selection, from: project.blocks, defaultingTo: [project.defaultProfile], project: project)
-        return (blocks, project.namespace, project, rest.first)
+        return (try selectedBlocks(selection, from: project.blocks, defaultingTo: [project.defaultProfile], project: project), project, rest.first)
     }
 }
 
-private func filledBlock(_ block: Block, namespace: String, project: Project?) throws -> BundleBlock {
+private func filledBlock(_ block: Block, project: Project?) throws -> BundleBlock {
     if let project {
         for profile in block.profiles {
             let listed = project.keys(for: profile)
             if let stray = block.keys.first(where: { !listed.contains($0) }) {
-                throw StoreFailure.bundleFailed("\(stray) is not listed for @\(profile), so there is nothing to pack under that key")
+                throw StoreFailure.bundleFailed("\(stray) is not listed for @\(project.shortName(profile)), so there is nothing to pack under that key")
             }
         }
     }
@@ -280,7 +253,7 @@ private func filledBlock(_ block: Block, namespace: String, project: Project?) t
         var values: [String] = []
         for profile in block.profiles {
             do {
-                values.append(try secretStore.read(forName: namespace + "/" + profile + "/" + name))
+                values.append(try secretStore.read(forName: profile + "/" + name))
             } catch StoreFailure.keyNotStored {
                 missing[profile, default: []].append(name)
             }
@@ -288,24 +261,26 @@ private func filledBlock(_ block: Block, namespace: String, project: Project?) t
         entries.append((name, values))
     }
     for profile in block.profiles {
-        if let keys = missing[profile] { throw StoreFailure.keysNotStored(keys, "@\(namespace).\(profile) ") }
+        if let keys = missing[profile] { throw StoreFailure.keysNotStored(keys, "@\(profile) ") }
     }
     return BundleBlock(profiles: block.profiles, entries: entries)
 }
 
-private func blockLines(_ profiles: [[String]]) -> String {
-    profiles.map { "@" + $0.joined(separator: ",") }.joined(separator: " ")
+private func blockLines(_ profiles: [[String]], in namespace: String?) -> String {
+    let header = namespace.map { "+" + $0 + " " } ?? ""
+    return header + profiles.map { "@" + $0.map { shortened($0, in: namespace) }.joined(separator: ",") }.joined(separator: " ")
 }
 
 func runPack(_ arguments: [String]) throws {
     let opens = arguments.contains("--open")
-    let (blocks, namespace, project, fileName) = try packedBlocks(arguments.filter { $0 != "--open" })
+    let (blocks, project, fileName) = try packedBlocks(arguments.filter { $0 != "--open" })
     guard !blocks.isEmpty else { throw StoreFailure.bundleFailed("nothing to pack: no keys are listed for that") }
-    let filled = try blocks.map { try filledBlock($0, namespace: namespace, project: project) }
+    let filled = try blocks.map { try filledBlock($0, project: project) }
     let path = bundleDestination(fileName)
+    let namespace = project?.namespace
     try writeBundle(ProfileBundle(namespace: namespace, blocks: filled), to: path)
     let count = filled.reduce(0) { $0 + $1.entries.count * $1.profiles.count }
-    printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(abbreviatingHome(path), .bold) + ": +\(namespace) \(blockLines(filled.map(\.profiles))), \(count) secret\(count == 1 ? "" : "s")")
+    printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(abbreviatingHome(path), .bold) + ": \(blockLines(filled.map(\.profiles), in: namespace)), \(count) secret\(count == 1 ? "" : "s")")
     if opens { revealInFileManager(path) }
 }
 
@@ -360,7 +335,11 @@ func unpackDestination(_ given: String?) throws -> String {
     return directory
 }
 
-func reconcileProjectFile(namespace: String, _ blocks: [Block], in directory: String) throws {
+private func described(namespace: String?) -> String {
+    namespace.map { "+" + $0 } ?? "no +namespace line"
+}
+
+func reconcileProjectFile(namespace: String?, _ blocks: [Block], in directory: String) throws {
     let path = directory + "/" + projectFileName
     let shown = directory == FileManager.default.currentDirectoryPath ? projectFileName : abbreviatingHome(path)
     func counted(_ blocks: [Block]) -> String {
@@ -369,12 +348,12 @@ func reconcileProjectFile(namespace: String, _ blocks: [Block], in directory: St
     }
     guard FileManager.default.fileExists(atPath: path) else {
         try projectFileContents(namespace: namespace, blocks).write(toFile: path, atomically: true, encoding: .utf8)
-        printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(shown, .bold) + ": +\(namespace) \(blockLines(blocks.map(\.profiles))), \(counted(blocks))")
+        printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(shown, .bold) + ": \(blockLines(blocks.map(\.profiles), in: namespace)), \(counted(blocks))")
         return
     }
     let existing = try parseProject(at: path, directory: directory)
     guard existing.namespace == namespace else {
-        throw StoreFailure.bundleFailed("\(shown) is +\(existing.namespace); the bundle is +\(namespace), another project")
+        throw StoreFailure.bundleFailed("\(shown) has \(described(namespace: existing.namespace)); the bundle has \(described(namespace: namespace)), so its profiles are another project's")
     }
     var additions: [Block] = []
     for block in blocks {
@@ -395,8 +374,8 @@ func reconcileProjectFile(namespace: String, _ blocks: [Block], in directory: St
     }
     let current = try String(contentsOfFile: path, encoding: .utf8)
     let separator = current.hasSuffix("\n") ? "" : "\n"
-    try (current + separator + blockText(additions)).write(toFile: path, atomically: true, encoding: .utf8)
-    printToStandardError(messageStyle("added", .good) + " " + messageStyle(blockLines(additions.map(\.profiles)), .bold) + " with \(counted(additions)) to \(shown)")
+    try (current + separator + blockText(additions, in: namespace)).write(toFile: path, atomically: true, encoding: .utf8)
+    printToStandardError(messageStyle("added", .good) + " " + messageStyle(blockLines(additions.map(\.profiles), in: nil), .bold) + " with \(counted(additions)) to \(shown)")
 }
 
 
@@ -414,14 +393,14 @@ func runDoctor(_ arguments: [String]) throws {
     var isComplete = true
     for profile in project.profiles {
         let keys = project.keys(for: profile)
-        let missing = keys.filter { !stored.contains(project.qualified(profile) + "/" + $0) }
+        let missing = keys.filter { !stored.contains(profile + "/" + $0) }
         isComplete = isComplete && missing.isEmpty
         if isShort {
-            if !missing.isEmpty { print("missing @\(profile): " + missing.joined(separator: ",")) }
+            if !missing.isEmpty { print("missing @\(project.shortName(profile)): " + missing.joined(separator: ",")) }
             continue
         }
         let label = profile == project.defaultProfile ? outputStyle("  default", .dim) : ""
-        print(outputStyle("@" + profile, .bold) + label)
+        print(outputStyle("@" + project.shortName(profile), .bold) + label)
         for name in keys { print("  " + mark(!missing.contains(name)) + " " + name) }
     }
     guard isComplete else { exit(1) }
@@ -441,7 +420,7 @@ func runUnpack(_ arguments: [String]) throws {
         var stored: [String] = []
         for entry in block.entries {
             for (profile, value) in zip(block.profiles, entry.values) {
-                let name = bundle.namespace + "/" + profile + "/" + entry.name
+                let name = profile + "/" + entry.name
                 try secretStore.store(value, forName: name)
                 stored.append(name)
             }

@@ -8,8 +8,6 @@ enum StoreFailure: Error {
     case emptySecret
     case badInvocation(String)
     case invalidProfileName(String)
-    case profileNeedsNamespace(String)
-    case namespaceMismatch(String, String, String)
     case badProjectFile(String, String)
     case profileNotDeclared(String, [String], String)
     case profileAmbiguous(String, [String])
@@ -32,11 +30,7 @@ extension StoreFailure: CustomStringConvertible {
         case .badInvocation(let form):
             return "expected \(form)"
         case .invalidProfileName(let argument):
-            return "\(argument) is not a profile: @name in a project, @namespace.name anywhere, with letters, digits, _ -"
-        case .profileNeedsNamespace(let name):
-            return "@\(name) outside a project needs its namespace: @namespace.\(name)"
-        case .namespaceMismatch(let given, let expected, let path):
-            return "+\(given) is another project; \(path) is +\(expected)"
+            return "\(argument) is not a profile: letters, digits, _ - after the @, with a dot between parts"
         case .badProjectFile(let path, let problem):
             return "\(path): \(problem)"
         case .profileNotDeclared(let name, let declared, let path):

@@ -77,7 +77,7 @@ var usage: String {
     command, and set, preview and remove read and write the first profile:
 
       \(outputStyle("monkeys run ./hello.sh", .argument))
-      \(outputStyle("monkeys set STRIPE_SECRET_KEY", .argument))      stored as foo/test/STRIPE_SECRET_KEY
+      \(outputStyle("monkeys set STRIPE_SECRET_KEY", .argument))      stored as foo.test/STRIPE_SECRET_KEY
 
     Each profile gets the keys of every block that lists it, and the first
     profile in the file is the one run uses when none is given:
@@ -95,7 +95,7 @@ var usage: String {
     only one of them is enough. From outside the project, or for another
     project's profile, say the namespace too, @namespace.profile:
 
-      \(outputStyle("monkeys set @production SENTRY_DSN", .argument))   stored as foo/production/SENTRY_DSN
+      \(outputStyle("monkeys set @production SENTRY_DSN", .argument))   stored as foo.production/SENTRY_DSN
       \(outputStyle("monkeys set @foo.production SENTRY_DSN", .argument))    the same, from anywhere
 
     A key stored outside any project has no profile and needs no @; those
