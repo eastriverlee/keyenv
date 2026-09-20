@@ -52,7 +52,7 @@ struct ProfileBundle {
     let values: [ValueBlock]
 }
 
-private let valuesMarker = valuesFileName
+private let valuesMarker = "values"
 
 func bundlePath(_ argument: String) -> String {
     argument.hasSuffix(bundleSuffix) ? argument : argument + bundleSuffix
@@ -135,7 +135,7 @@ private func deserialized(_ plaintext: Data) throws -> ProfileBundle {
     var blocks: [BundleBlock] = []
     var lines = String(decoding: plaintext, as: UTF8.self).split(separator: "\n")[...]
     var valueLines: [Substring] = []
-    if let marker = lines.firstIndex(of: Substring(valuesMarker)) {
+    if let marker = lines.firstIndex(where: { $0 == valuesMarker || $0 == retiredValuesFileName }) {
         valueLines = Array(lines[(marker + 1)...])
         lines = lines[..<marker]
     }

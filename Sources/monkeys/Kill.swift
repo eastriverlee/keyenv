@@ -58,7 +58,7 @@ private func unquoted(_ raw: String, at place: String) throws -> String {
     let value = raw.trimmingCharacters(in: .whitespaces)
     for quote in ["\"", "'"] where value.hasPrefix(quote) {
         guard value.count >= 2, value.hasSuffix(quote) else {
-            throw StoreFailure.badDotenvLine(place, "the quote never closes; a value that spans lines has no place in \(valuesFileName)")
+            throw StoreFailure.badDotenvLine(place, "the quote never closes; a value that spans lines has no place in \(projectFileName)")
         }
         return String(value.dropFirst().dropLast())
     }
@@ -150,13 +150,12 @@ private func occurrences(in files: [DotenvFile], defaultProfile: String) -> [(ke
 
 private struct Existing {
     let project: Project?
-    let values: ProjectValues?
     let stored: Set<String>
 
     func kind(of key: String, for fullProfile: String, shortProfile: String) -> (Destination, String)? {
         if stored.contains(fullProfile + "/" + key) { return (.secret, "already has a secret in @\(shortProfile)") }
         if let project, project.keys(for: fullProfile).contains(key) { return (.secret, "already a key of @\(shortProfile) in \(projectFileName)") }
-        if values?.value(of: key, for: fullProfile) != nil { return (.value, "already a value in \(valuesFileName) for @\(shortProfile)") }
+        if let project, project.value(of: key, for: fullProfile) != nil { return (.value, "already a value in \(projectFileName) for @\(shortProfile)") }
         return nil
     }
 }
@@ -180,7 +179,7 @@ private func decided(_ occurrences: [(key: String, occurrence: KeyOccurrence)], 
                 }
             }
             if destination == .value {
-                printToStandardError("  " + messageStyle("public", .good) + " " + messageStyle(key + "=" + value, .bold) + " for @\(profile), into \(valuesFileName)")
+                printToStandardError("  " + messageStyle("public", .good) + " " + messageStyle(key + "=" + value, .bold) + " for @\(profile), into \(projectFileName)")
             }
             choices.append(Choice(key: key, profile: full, value: value, destination: destination))
         }
@@ -261,7 +260,7 @@ func runKill(_ arguments: [String]) throws {
     let namespace = project == nil ? askedNamespace() : project?.namespace
     let defaultProfile = project.map { $0.shortName($0.defaultProfile) } ?? askedDefaultProfile()
     try rejectingNames(defaultProfile, namespace, files)
-    let existing = Existing(project: project, values: try project.map(loadValues), stored: Set(try secretStore.storedKeys()))
+    let existing = Existing(project: project, stored: Set(try secretStore.storedKeys()))
     let (choices, kept) = decided(occurrences(in: files, defaultProfile: defaultProfile), existing: existing, namespace: namespace)
     let profiles = Array(Set(choices.map(\.profile))).sorted()
     try reconcileProjectFile(namespace: namespace, secretBlocks(choices, profiles: profiles), in: directory)

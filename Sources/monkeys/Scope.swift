@@ -16,6 +16,7 @@ func abbreviatingHome(_ path: String) -> String {
 struct Block {
     let profiles: [String]
     let keys: [String]
+    var values: [ValueEntry] = []
 }
 
 func prefixed(_ profile: String, with namespace: String?) -> String {
@@ -45,6 +46,14 @@ struct Project {
 
     func keys(for profile: String) -> [String] {
         blocks.filter { $0.profiles.contains(profile) }.flatMap(\.keys)
+    }
+
+    func values(for profile: String) -> [ValueEntry] {
+        blocks.filter { $0.profiles.contains(profile) }.flatMap(\.values)
+    }
+
+    func value(of key: String, for profile: String) -> String? {
+        values(for: profile).first { $0.key == key }?.value
     }
 
     func shortName(_ profile: String) -> String {
@@ -141,6 +150,7 @@ func locateProject() throws -> Project? {
     for directory in directoriesOfThisCheckout() {
         let path = directory + "/" + projectFileName
         if FileManager.default.fileExists(atPath: path) {
+            try rejectingRetiredValuesFile(in: directory)
             return try parseProject(at: path, directory: directory)
         }
     }
@@ -172,7 +182,7 @@ private func rejectingDuplicates(_ blocks: [Block], in shown: String, namespace:
     var seen: [String: Set<String>] = [:]
     for block in blocks {
         for profile in block.profiles {
-            for name in block.keys {
+            for name in block.keys + block.values.map(\.key) {
                 guard seen[profile, default: []].insert(name).inserted else {
                     throw StoreFailure.badProjectFile(shown, "\(name) is listed twice for @\(shortened(profile, in: namespace))")
                 }
@@ -188,9 +198,11 @@ func parseProject(at path: String, directory: String) throws -> Project {
     var blocks: [Block] = []
     var profiles: [String]?
     var keys: [String] = []
+    var values: [ValueEntry] = []
     func closeBlock() {
-        if let open = profiles { blocks.append(Block(profiles: open, keys: keys)) }
+        if let open = profiles { blocks.append(Block(profiles: open, keys: keys, values: values)) }
         keys = []
+        values = []
     }
     for rawLine in contents.split(separator: "\n", omittingEmptySubsequences: false) {
         let line = rawLine.trimmingCharacters(in: .whitespaces)
@@ -214,8 +226,12 @@ func parseProject(at path: String, directory: String) throws -> Project {
         guard profiles != nil else {
             throw StoreFailure.badProjectFile(shown, "\(line) comes before any @profile line; a project's keys live in a named profile")
         }
+        if let entry = splitValueLine(line) {
+            values.append(entry)
+            continue
+        }
         guard isValidKey(line) else {
-            throw StoreFailure.badProjectFile(shown, "\(line) is not a key (an environment variable name)")
+            throw StoreFailure.badProjectFile(shown, "\(line) is not a key (an environment variable name), nor KEY=value")
         }
         keys.append(line)
     }
@@ -237,4 +253,17 @@ func storedKeysInScope(_ scope: Scope) throws -> [String] {
 func keysInScope(_ scope: Scope) throws -> [String] {
     if let keys = scope.projectKeys { return keys }
     return try storedKeysInScope(scope)
+}
+
+func splitValueLine(_ line: String) -> ValueEntry? {
+    guard let equals = line.firstIndex(of: "=") else { return nil }
+    let key = String(line[..<equals])
+    guard isValidKey(key) else { return nil }
+    return ValueEntry(key: key, value: String(line[line.index(after: equals)...]))
+}
+
+private func rejectingRetiredValuesFile(in directory: String) throws {
+    let path = directory + "/" + retiredValuesFileName
+    guard FileManager.default.fileExists(atPath: path) else { return }
+    throw StoreFailure.retiredValuesFile(abbreviatingHome(path))
 }
