@@ -21,10 +21,8 @@
 
 ## Overview
 
-`monkeys` keeps each secret in your operating system's vault and hands it to
-one command at a time. The keys a project needs are listed in a committed
-`.monkeys` file, the secrets never leave the vault, and nothing prints a
-stored secret, the command you hand it to included.
+`.monkeys` is a `.env` you can commit. The keys stay in the file, the secrets
+stay in your vault, and nothing, the command you run included, can print one.
 
 It exists for two reasons, and either would have been enough.
 
