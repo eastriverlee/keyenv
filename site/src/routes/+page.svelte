@@ -46,11 +46,11 @@ give it to a command with:
 	const spendOutput = `opened
 the word was [redacted SUPER_SECRET]`;
 	const withoutLine = `sh -c 'test "${'$'}SUPER_SECRET" = sesame && echo opened || echo closed'`;
-	const againLine = `monkeys remove SUPER_SECRET
+	const againLine = `monkeys forget SUPER_SECRET
 monkeys run SUPER_SECRET sh -c '
   test "${'$'}SUPER_SECRET" = sesame && echo opened || echo closed
 '`;
-	const againOutput = `removed SUPER_SECRET
+	const againOutput = `forgot SUPER_SECRET
 monkeys: SUPER_SECRET is not stored yet
 nothing ran. a human has to store it, then try again:
   monkeys set SUPER_SECRET`;

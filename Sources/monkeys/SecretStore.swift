@@ -18,7 +18,7 @@ enum StoreFailure: Error {
     case keyIsSecret(String, String)
     case valuesNeedProject
     case renameRefused(String)
-    case removeRefused(String)
+    case forgetRefused(String)
     case badDotenvLine(String, String)
     case bundleFailed(String)
     case backendUnavailable(String)
@@ -63,14 +63,14 @@ extension StoreFailure: CustomStringConvertible {
         case .emptyValue:
             return "no value was given"
         case .keyIsValue(let key, let profile):
-            return "\(key) is a value in \(projectFileName) for @\(profile); replace it with monkeys set --public \(key), or remove it first"
+            return "\(key) is a value in \(projectFileName) for @\(profile); replace it with monkeys set --public \(key), or forget it first"
         case .keyIsSecret(let key, let profile):
             return "\(key) is a key in \(projectFileName) for @\(profile), with its secret in the vault; remove it first"
         case .valuesNeedProject:
             return "a value has nowhere to go without a project: run this next to a \(projectFileName) file"
         case .renameRefused(let reason):
             return reason
-        case .removeRefused(let reason):
+        case .forgetRefused(let reason):
             return reason
         case .badDotenvLine(let place, let problem):
             return "\(place): \(problem); nothing was written"

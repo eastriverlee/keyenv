@@ -11,11 +11,11 @@ let commandSummaries = [
                    summary: "write a plain value into .monkeys"),
     CommandSummary(verb: "set", arguments: "[@profile] [--all]",
                    summary: "prompt for each key the profile lacks"),
-    CommandSummary(verb: "remove", arguments: "<KEY>",
+    CommandSummary(verb: "forget", arguments: "<KEY>",
                    summary: "delete one stored secret"),
-    CommandSummary(verb: "remove", arguments: "@profile[,profile...]",
+    CommandSummary(verb: "forget", arguments: "@profile[,profile...]",
                    summary: "delete every secret of those profiles"),
-    CommandSummary(verb: "remove", arguments: "+namespace",
+    CommandSummary(verb: "forget", arguments: "+namespace",
                    summary: "the same for every profile under it"),
     CommandSummary(verb: "rename", arguments: "@old @new",
                    summary: "a profile's new name, vault and file"),
@@ -88,7 +88,7 @@ var usage: String {
       \(outputStyle("SENTRY_DSN", .argument))
 
     In that directory or below it within the checkout, run takes only the
-    command, and set, preview and remove read and write the first profile:
+    command, and set, preview and forget read and write the first profile:
 
       \(outputStyle("monkeys run ./hello.sh", .argument))
       \(outputStyle("monkeys set STRIPE_SECRET_KEY", .argument))      stored as foo.test/STRIPE_SECRET_KEY

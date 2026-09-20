@@ -5,7 +5,7 @@ Every line in the picture is produced by running the command shown above it,
 so the image cannot drift from what monkeys prints. The one exception is the
 answer the demo script gives back, which replays a real OpenRouter reply rather
 than calling out, so anyone can render this without a key. The demo names are
-stored first and removed afterwards, and a name you already hold is left
+stored first and forgotten afterwards, and a name you already hold is left
 alone.
 
 The window is drawn by freeze: brew install charmbracelet/tap/freeze.
@@ -91,7 +91,7 @@ def seeded():
 
 def cleaned(names):
     for name in names:
-        subprocess.run(["monkeys", "remove", name], capture_output=True)
+        subprocess.run(["monkeys", "forget", name], capture_output=True)
 
 
 def captured(command, directory):

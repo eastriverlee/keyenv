@@ -132,19 +132,19 @@ func runSet(_ arguments: [String]) throws {
     printHintToTerminal("  " + messageStyle(spendHint(scope, name), .argument))
 }
 
-func runRemove(_ arguments: [String]) throws {
+func runForget(_ arguments: [String]) throws {
     if arguments.count == 1, let only = arguments.first, only.hasPrefix("@") || only.hasPrefix("+") {
-        return try runRemoveProfiles(only)
+        return try runForgetProfiles(only)
     }
     let (scope, rest) = try resolveScope(arguments)
     let name = try requireKey(rest)
     if let project = scope.project, let profile = scope.profile, project.value(of: name, for: profile) != nil {
         _ = try removeValue(forKey: name, profile: profile, in: project)
-        printToStandardError(messageStyle("removed", .good) + " " + messageStyle(name, .bold) + " from \(projectFileName) for @\(project.shortName(profile))")
+        printToStandardError(messageStyle("forgot", .good) + " " + messageStyle(name, .bold) + " from \(projectFileName) for @\(project.shortName(profile))")
         return
     }
     try secretStore.remove(forName: scope.storedName(name))
-    printToStandardError(messageStyle("removed", .good) + " " + messageStyle(scope.storedName(name), .bold))
+    printToStandardError(messageStyle("forgot", .good) + " " + messageStyle(scope.storedName(name), .bold))
     guard isSetInThisEnvironment(name) else { return }
     printHintToTerminal(messageStyle("this shell still carries it; clear it with:", .dim))
     printHintToTerminal("  " + messageStyle("unset \(name)", .argument))
@@ -573,7 +573,7 @@ do {
     case "set": try runSet(rest)
     case "list": try runList()
     case "preview": try runPreview(rest)
-    case "remove": try runRemove(rest)
+    case "forget": try runForget(rest)
     case "pack": try runPack(rest)
     case "run": try runCommandWithSecrets(rest)
     case "unpack": try runUnpack(rest)

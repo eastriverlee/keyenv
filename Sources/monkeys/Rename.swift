@@ -101,7 +101,7 @@ private func renameProfile(_ oldArgument: String, _ newArgument: String) throws 
     }
     let taken = try storedKeys(under: new)
     guard taken.isEmpty else {
-        throw StoreFailure.renameRefused("\(shownProfile(new, in: project)) already holds \(taken.joined(separator: ", ")); a rename never merges two profiles. To merge, fill \(shownProfile(new, in: project)) --with \(shownProfile(old, in: project)), then remove what \(shownProfile(old, in: project)) still holds")
+        throw StoreFailure.renameRefused("\(shownProfile(new, in: project)) already holds \(taken.joined(separator: ", ")); a rename never merges two profiles. To merge, fill \(shownProfile(new, in: project)) --with \(shownProfile(old, in: project)), then forget what \(shownProfile(old, in: project)) still holds")
     }
     if isDeclared, let project {
         guard fileCanName(new, in: project) else {
@@ -134,7 +134,7 @@ private func renameNamespace(_ oldArgument: String, _ newArgument: String) throw
     let taken = storedProfiles(under: new, in: stored)
     guard taken.isEmpty else {
         let listed = taken.map { "@" + $0 }.joined(separator: ", ")
-        throw StoreFailure.renameRefused("+\(new) already has \(listed); a rename never merges two namespaces. To merge, fill each profile of +\(new) --with the one of +\(old), then remove what +\(old) still holds")
+        throw StoreFailure.renameRefused("+\(new) already has \(listed); a rename never merges two namespaces. To merge, fill each profile of +\(new) --with the one of +\(old), then forget what +\(old) still holds")
     }
     for profile in profiles {
         let renamed = new + profile.dropFirst(old.count)

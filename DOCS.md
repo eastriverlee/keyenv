@@ -167,7 +167,7 @@ profile a key is one or the other, never both.
 
 `run` puts a value into the command's environment straight from the file,
 alongside the secrets from the vault, and never redacts it. `preview` and
-`doctor` show it as it is. `set --public` writes one, `remove` deletes the
+`doctor` show it as it is. `set --public` writes one, `forget` deletes the
 line, and `kill` writes one for every `.env` line answered as public.
 
 ## Vault
@@ -504,9 +504,9 @@ the fix is to delete it and change the passphrase you would have sent.
 | `monkeys set <KEY> [--clipboard]` | read a secret and store it |
 | `monkeys set --public <KEY>` | write a plain value into `.monkeys` |
 | `monkeys set [@profile] [--all]` | prompt for each key the profile lacks |
-| `monkeys remove <KEY>` | delete one secret |
-| `monkeys remove @profile[,profile...]` | delete every secret of those profiles |
-| `monkeys remove +namespace` | the same for every profile under a namespace |
+| `monkeys forget <KEY>` | delete one secret |
+| `monkeys forget @profile[,profile...]` | delete every secret of those profiles |
+| `monkeys forget +namespace` | the same for every profile under a namespace |
 | `monkeys rename @old @new` | move a profile to a new name, in the vault and the file |
 | `monkeys rename +old +new` | the same for every profile under a namespace |
 | `monkeys run <KEY[,KEY...]> <command>` | run a command with those secrets in its environment |
@@ -657,26 +657,26 @@ monkeys set PORT
 ```
 
 > ```
-> monkeys: PORT is a value in .monkeys for @test; replace it with monkeys set --public PORT, or remove it first
+> monkeys: PORT is a value in .monkeys for @test; replace it with monkeys set --public PORT, or forget it first
 > ```
 
-Turning one into the other is `remove` and then `set`, so a secret never
+Turning one into the other is `forget` and then `set`, so a secret never
 becomes a committed line by accident.
 
-## remove
+## forget
 
 ```sh
-monkeys remove [@profile] <KEY>
-monkeys remove @profile[,profile...]
-monkeys remove +namespace
+monkeys forget [@profile] <KEY>
+monkeys forget @profile[,profile...]
+monkeys forget +namespace
 ```
 
 Deletes one secret from the vault. Inside a project the key is the project's;
 `@` reaches one with no profile from there:
 
 ```sh
-monkeys remove OPENROUTER_API_KEY
-monkeys remove @ TYPESAFE_API_KEY
+monkeys forget OPENROUTER_API_KEY
+monkeys forget @ TYPESAFE_API_KEY
 ```
 
 The `.monkeys` file is not touched: a project still lists the key, and
@@ -686,38 +686,38 @@ A key that `.monkeys` holds as a value for the profile has its line deleted
 instead, since the file says which of the two it is:
 
 ```sh
-monkeys remove API_URL
+monkeys forget API_URL
 ```
 
 > ```
-> removed API_URL from .monkeys for @test
+> forgot API_URL from .monkeys for @test
 > ```
 
 A value the file sets for several profiles together is refused, the way
 `set --public` refuses it.
 
-A profile on its own, with no key, removes every secret stored under it, and a
-comma list removes several. The names are all resolved before anything is
+A profile on its own, with no key, forgets every secret stored under it, and a
+comma list forgets several. The names are all resolved before anything is
 deleted, so a typo in the second name leaves the first untouched:
 
 ```sh
-monkeys remove @test,production
+monkeys forget @test,production
 ```
 
 > ```
-> removed @test: DATABASE_URL, STRIPE_SECRET_KEY
-> removed @production: DATABASE_URL, SENTRY_DSN, STRIPE_SECRET_KEY
+> forgot @test: DATABASE_URL, STRIPE_SECRET_KEY
+> forgot @production: DATABASE_URL, SENTRY_DSN, STRIPE_SECRET_KEY
 > ```
 
-A namespace removes every profile under it, declared in a file or not:
+A namespace forgets every profile under it, declared in a file or not:
 
 ```sh
-monkeys remove +foo
+monkeys forget +foo
 ```
 
 > ```
-> removed @foo.production: DATABASE_URL, SENTRY_DSN, STRIPE_SECRET_KEY
-> removed @foo.test: DATABASE_URL, STRIPE_SECRET_KEY
+> forgot @foo.production: DATABASE_URL, SENTRY_DSN, STRIPE_SECRET_KEY
+> forgot @foo.test: DATABASE_URL, STRIPE_SECRET_KEY
 > ```
 
 Neither form touches `.monkeys`: a project still declares the
@@ -768,7 +768,7 @@ A target that already holds a key is refused, so a rename never merges two
 profiles:
 
 > ```
-> monkeys: @preview already holds DATABASE_URL; a rename never merges two profiles. To merge, fill @preview --with @staging, then remove what @staging still holds
+> monkeys: @preview already holds DATABASE_URL; a rename never merges two profiles. To merge, fill @preview --with @staging, then forget what @staging still holds
 > ```
 
 The vault has no transaction, so the secrets move one key at a time, stored
@@ -1140,7 +1140,7 @@ that gets committed. A key the project already has, as a secret in the vault,
 a key or a value in `.monkeys`, asks before it is replaced,
 and Enter keeps what is there; asked for the other kind, it is kept without
 asking and named in the summary, since turning one kind into the other is
-`remove` and then `set`.
+`forget` and then `set`.
 
 The grammar is the part of dotenv every library reads the same way: `KEY=value`,
 `export KEY=value`, a value in single or double quotes with the quotes
