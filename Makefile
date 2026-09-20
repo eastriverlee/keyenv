@@ -9,6 +9,7 @@ install: build
 
 check: build
 	python3 tools/check-skill.py .build/release/monkeys
+	python3 tools/check-examples.py .build/release/monkeys
 	python3 tools/check-plugin.py
 	claude plugin validate .
 

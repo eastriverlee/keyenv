@@ -1,6 +1,6 @@
 ---
 name: monkeys
-description: Give a command an API key, token or password held in the OS vault, without the secret entering the conversation. Use when a command needs a credential, when one fails for a missing or empty credential, when asked where a secret is kept, or when asked to store one.
+description: Give a command an API key, token or password held in the OS vault, without the secret entering the conversation. Use when a command needs a credential, when one fails for a missing or empty credential, when a project needs a new environment variable, when asked where a secret is kept, or when asked to store one.
 ---
 
 # monkeys
@@ -25,59 +25,9 @@ monkeys run OPENROUTER_API_KEY,GITHUB_TOKEN ./deploy
 
 Nothing in that line holds a secret, so nothing you write can spill one. The
 exit status and the signals are the command's own. Its output comes back
-through `monkeys`, and a stored secret in it comes back as `[redacted KEY]`,
-so `echo $KEY` tells you which secret was there and never the secret. Never
-add `--no-redact`; it is for a human writing a secret into a file on purpose.
+through `monkeys`, and a stored secret in it comes back as `[redacted KEY]`.
 Reach for `monkeys run --all <command>` only when you cannot tell which keys
 the command reads.
-
-A project with a `.monkeys` file has already listed the keys it needs:
-
-```monkeys
-+foo
-@test,production
-DATABASE_URL
-STRIPE_SECRET_KEY
-```
-
-The `+` line is the namespace, the part of every profile's name that belongs
-to the project: `@test` here is the profile `foo.test`. A `KEY=value` line
-in it is a value that is not secret, `PORT=3000` and the like, and `run`
-puts those in the environment too. A value goes in with
-`monkeys set --public PORT`, which you may run yourself, since nothing in
-it is secret.
-In that directory or below it within the git checkout, `run` takes only the
-command, and every key is scoped to that profile, so `monkeys set
-STRIPE_SECRET_KEY` there stores into the same profile the command reads from:
-
-```sh
-monkeys run ./hello.sh
-monkeys run @production ./deploy    # another profile the file declares
-```
-
-A `@` line may name several profiles, and a file may hold several blocks; a
-profile's keys are those of every block listing it, the first profile in the
-file is the default, and `run @name` takes only a profile the file declares,
-or a prefix that fits just one of them. From outside the project a profile is
-`@namespace.profile`, `@foo.production`. `monkeys doctor --short` prints one
-`missing @profile: A,B` line per profile with a gap, nothing when there is
-none, and exits non-zero while any remains. When another profile of the same
-project holds a missing key, `monkeys fill @production --with @test` fills
-the gap without printing a secret; a human decides that, since it may put a
-test secret into production.
-
-Read the file before adding a key; it is the list. A profile never falls back
-to the keys with no profile: a key missing in `@production` is missing there
-even when a copy with no profile exists. A key stored outside any project has
-no profile; inside
-a project a bare `@` means no profile and reaches it, with the key given
-again: `monkeys run @ TYPESAFE_API_KEY claude`.
-
-A shared `<name>.monsecrets` bundle fills a profile with `monkeys unpack`, which
-writes `.monkeys` at the git root, asks for a passphrase and deletes the bundle. A human runs it;
-do not run it yourself. The same goes for `monkeys kill`, which moves a
-project's `.env` files into monkeys: it asks a question per key and deletes
-the files.
 
 The command you start is what expands the variable, since that is where it
 exists. `$KEY` written into the `monkeys run` line is expanded by the shell
@@ -91,7 +41,64 @@ monkeys run OPENROUTER_API_KEY sh -c 'curl -H "Authorization: Bearer $OPENROUTER
 # the single quotes reach the child intact
 ```
 
-## When a secret is missing
+## Inside a project
+
+A `.monkeys` file lists the keys the project needs. Read it before adding a
+key; it is the list.
+
+```monkeys
++foo
+@test,production
+DATABASE_URL
+STRIPE_SECRET_KEY
+PORT=3000
+```
+
+In that directory or below it within the git checkout, `run` takes only the
+command, and every key is scoped to the file's first profile:
+
+```sh
+monkeys run ./hello.sh
+monkeys run @production ./deploy    # another profile the file declares
+```
+
+The `+` line is the namespace, so `@test` here is the profile `foo.test`, and
+from outside the project it is `@foo.test`. A `@` line may name several
+profiles and a file may hold several blocks; a profile's keys are those of
+every block listing it. A `KEY=value` line is a value that is not secret, and
+`run` puts those in the environment too.
+
+A profile never falls back to the keys with no profile: a key missing in
+`@production` is missing there even when a copy with no profile exists.
+Inside a project a bare `@` reaches the keys with no profile, with the key
+given again: `monkeys run @ TYPESAFE_API_KEY claude`.
+
+## Never write a .env
+
+Every environment variable a project needs belongs in `.monkeys`, secret or
+not. Do not create a `.env`, do not add a line to one, and do not tell someone
+to put a variable there.
+
+- A variable that is not secret goes in as `KEY=value`, which you write
+  yourself: `monkeys set --public PORT`.
+- A secret goes in as a bare key, and a human stores it.
+
+## Eat a .env you find
+
+A project that still has `.env` files is one command away. Name the keys that
+are not secret; every other key becomes a secret in the vault, and the files
+are deleted once everything is stored:
+
+```sh
+monkeys eat --public PORT,NODE_ENV
+```
+
+Run this yourself when you find a `.env` in a project you are working in.
+`eat` reads the files, so no secret passes through you, and `--public` answers
+every question before it is asked. Without it `eat` asks one question per key
+and needs a terminal, which is a human's run.
+
+## When a key is missing
 
 `run` stops before anything happens and names what to ask for:
 
@@ -101,14 +108,28 @@ nothing ran. a human has to store it, then try again:
   monkeys set @foo.test ANTHROPIC_API_KEY
 ```
 
-Pass that on. Storing is a human's job: typing a secret yourself puts it in the
-conversation before it reaches the vault.
+Pass that on. `monkeys doctor --short` prints one `missing @profile: A,B` line
+per profile with a gap, nothing when there is none, and exits non-zero while
+any remains.
 
 ## Check without reading
 
-`monkeys list` gives the keys, as blocks by profile. `monkeys preview` gives each secret masked,
-with its length, which is enough to tell one pasted whole from one that lost a
-character.
+`monkeys list` gives the keys, as blocks by profile. `monkeys preview` gives
+each secret masked, with its length, which is enough to tell one pasted whole
+from one that lost a character.
+
+## Leave to a human
+
+Storing is a human's job: typing a secret yourself puts it in the conversation
+before it reaches the vault. Say what is needed and stop.
+
+- `monkeys set` stores a secret, and `monkeys set --public PORT` stores a
+  value that is not secret, which you may run yourself.
+- `monkeys unpack` fills a profile from a shared bundle. It asks for a
+  passphrase and deletes the bundle.
+- `monkeys fill @production --with @test` copies what is missing between
+  profiles, which may put a test secret into production.
+- `--no-redact` is for a human writing a secret into a file on purpose.
 
 ## Never
 

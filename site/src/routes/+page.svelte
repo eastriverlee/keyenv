@@ -35,8 +35,8 @@ give it to a command with:
 			code: 'codex plugin marketplace add eastriverlee/monkeys\ncodex plugin add monkeys@eastriverlee'
 		},
 		{
-			label: 'Anywhere else',
-			code: 'mkdir -p skills/monkeys\ncurl -fsSL https://monk3ys.dev/skill -o skills/monkeys/SKILL.md'
+			label: 'Other agents',
+			code: 'mkdir -p .agents/skills/monkeys\ncurl -fsSL https://monk3ys.dev/skill -o .agents/skills/monkeys/SKILL.md'
 		}
 	];
 	const spendLine = `monkeys run SUPER_SECRET sh -c '
@@ -185,16 +185,20 @@ SENTRY_DSN`;
 			everything else.
 		</p>
 		<CommandTabs tabs={installTabs} />
+	</section>
+
+	<section class="flex flex-col gap-4">
+		<h2 class="text-2xl font-bold tracking-tight">Plugin</h2>
 		<p class="max-w-prose">
-			For a coding agent, install the skill as well. It is what makes the agent reach for
-			<code>monkeys</code> on its own instead of asking you to paste a secret; a key it needs but
-			you have not stored comes back as a message that says what to ask you for.
+			The plugin adds the skill. It makes an agent reach for <code>monkeys</code> instead of asking
+			you to paste a secret, and a key you have not stored comes back as a message saying what to
+			ask for.
 		</p>
 		<CommandTabs tabs={agentTabs} />
 		<p class="text-muted-foreground max-w-prose text-sm">
-			The plugin follows the <a href="https://agent-plugins.org" class="underline underline-offset-4">Agent Plugins</a>
-			layout, and the third tab is the one file any other agent needs, in whatever directory it
-			reads skills from.
+			The package follows the <a href="https://agent-plugins.org" class="underline underline-offset-4">Agent Plugins</a>
+			layout around an <a href="https://agentskills.io" class="underline underline-offset-4">Agent Skills</a>
+			skill, and <code>.agents/skills</code> is the directory its clients share.
 		</p>
 	</section>
 
@@ -221,9 +225,9 @@ SENTRY_DSN`;
 		</p>
 		<CodeFile code={spendLine} output={spendOutput} />
 		<p class="max-w-prose">
-			The right word reached the command, and what the command printed came back with the secret taken
-			out. The single quotes matter: the shell <code>run</code> starts is the one that has the secret,
-			so it has to be the one that expands <code>$SUPER_SECRET</code>.
+			The right word reached the command, and what it printed came back with the secret taken out.
+			The single quotes matter: the shell <code>run</code> starts is the one with the secret, so it
+			has to be the one that expands <code>$SUPER_SECRET</code>.
 		</p>
 		<p class="max-w-prose">Without monkeys the door stays shut:</p>
 		<CodeFile code={withoutLine} output="closed" />
@@ -238,10 +242,9 @@ SENTRY_DSN`;
 	<section class="flex flex-col gap-4">
 		<h2 class="text-2xl font-bold tracking-tight">Let the project list the keys it needs</h2>
 		<p class="max-w-prose">
-			A <code>.monkeys</code> file next to the code names its namespace on the first line and lists
-			the keys under a profile. Commit it. In that directory, <code>run</code> takes only the
-			command, and the script reads the variable the way any program does. A value that was
-			never secret, <code>PORT=3000</code> and the like, sits in it as <code>KEY=value</code>.
+			A <code>.monkeys</code> file names its namespace on the first line and lists the keys under a
+			profile. Commit it. In that directory <code>run</code> takes only the command. A value that
+			was never secret sits in the same file as <code>KEY=value</code>.
 		</p>
 		<div class="grid gap-3 sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)]">
 			<TreeView.Root class="rounded-lg border p-2">
@@ -257,10 +260,9 @@ SENTRY_DSN`;
 		</div>
 		<CodeFile code={runInProject} output="200" />
 		<p class="max-w-prose">
-			A profile line can name several profiles, and a file can hold several blocks. A profile's
-			keys are those of every block that lists it; the first profile in the file is the one
-			<code>run</code> uses when none is given, and one the file does not declare is refused. A
-			prefix that fits only one declared profile is enough, the way a short git hash is.
+			A profile line can name several profiles, and a file can hold several blocks; a profile's
+			keys are those of every block that lists it. The first profile is the default, and a prefix
+			that fits one of them is enough, the way a short git hash is.
 		</p>
 		<CodeFile name=".monkeys" lang="monkeys" code={profilesFile} />
 		<CodeFile code={runStaging} />
@@ -275,14 +277,15 @@ SENTRY_DSN`;
 	<section class="flex flex-col gap-4">
 		<h2 class="text-2xl font-bold tracking-tight">Hand the profile to a teammate</h2>
 		<p class="max-w-prose">
-			<code>pack</code> asks for a passphrase and writes <code>/tmp/a.monsecrets</code>, outside the repository: every profile the file declares, or the ones <code>--only @test</code> names, with their
-			keys and secrets, sealed. Send the file however you like, and the passphrase another way.
+			<code>pack</code> asks for a passphrase and writes <code>/tmp/a.monsecrets</code>, outside the
+			repository: every profile the file declares, or the ones <code>--only @test</code> names,
+			sealed. Send the file however you like, the passphrase another way.
 		</p>
 		<CodeFile code={packLine} />
 		<p class="max-w-prose">
 			On the other machine, <code>unpack</code> asks for the passphrase, stores the secrets, writes
-			<code>.monsecrets</code> at the root of the checkout, wherever inside it you run it, and deletes the bundle.
-			That is the only way a secret leaves the vault.
+			<code>.monkeys</code> at the root of the checkout, and deletes the bundle. That is the only
+			way a secret leaves the vault.
 		</p>
 		<CodeFile code={unpackLine} />
 	</section>

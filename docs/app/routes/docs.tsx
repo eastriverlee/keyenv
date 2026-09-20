@@ -2,7 +2,6 @@ import type { Route } from './+types/docs';
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import {
   DocsBody,
-  DocsDescription,
   DocsPage,
   DocsTitle,
   MarkdownCopyButton,
@@ -14,21 +13,34 @@ import { useFumadocsLoader } from 'fumadocs-core/source/client';
 import { useMDXComponents } from '@/components/mdx';
 import { use } from 'react';
 import { appName, docsOrigin, getPageMarkdownUrl, gitConfig, siteOrigin } from '@/lib/shared';
+import sources from '../../content/docs/sources.json';
 
 export async function loader({ params }: Route.LoaderArgs) {
   const slugs = params['*'].split('/').filter((v) => v.length > 0);
   const page = source.getPage(slugs);
   if (!page) throw new Response('Not found', { status: 404 });
 
+  const top = page.path.split('/')[0].replace(/\.mdx$/, '');
   return {
     path: page.path,
     url: page.url,
     markdownUrl: getPageMarkdownUrl(page).url,
+    sourceFile: (sources as Record<string, string>)[top] ?? 'DOCS.md',
     pageTree: await source.serializePageTree(source.getPageTree()),
   };
 }
 
-function Content({ path, url, markdownUrl }: { path: string; url: string; markdownUrl: string }) {
+function Content({
+  path,
+  url,
+  markdownUrl,
+  sourceFile,
+}: {
+  path: string;
+  url: string;
+  markdownUrl: string;
+  sourceFile: string;
+}) {
   const page = docs.getPage(path);
   if (!page) throw new Error(`unknown page: ${path}`);
 
@@ -54,12 +66,11 @@ function Content({ path, url, markdownUrl }: { path: string; url: string; markdo
       <meta name="twitter:description" content={page.description} />
       <meta name="twitter:image" content={`${siteOrigin}/og.png`} />
       <DocsTitle>{page.title}</DocsTitle>
-      <DocsDescription>{page.description}</DocsDescription>
       <div className="flex flex-row gap-2 items-center border-b -mt-4 pb-6">
         <MarkdownCopyButton markdownUrl={markdownUrl} />
         <ViewOptionsPopover
           markdownUrl={markdownUrl}
-          githubUrl={`https://github.com/${gitConfig.user}/${gitConfig.repo}/blob/${gitConfig.branch}/README.md`}
+          githubUrl={`https://github.com/${gitConfig.user}/${gitConfig.repo}/blob/${gitConfig.branch}/${sourceFile}`}
         />
       </div>
       <DocsBody>
@@ -70,11 +81,11 @@ function Content({ path, url, markdownUrl }: { path: string; url: string; markdo
 }
 
 export default function Page({ loaderData }: Route.ComponentProps) {
-  const { pageTree, path, url, markdownUrl } = useFumadocsLoader(loaderData);
+  const { pageTree, path, url, markdownUrl, sourceFile } = useFumadocsLoader(loaderData);
 
   return (
     <DocsLayout {...baseOptions()} tree={pageTree}>
-      <Content path={path} url={url} markdownUrl={markdownUrl} />
+      <Content path={path} url={url} markdownUrl={markdownUrl} sourceFile={sourceFile} />
     </DocsLayout>
   );
 }

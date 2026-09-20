@@ -1,4 +1,6 @@
 import { llms, loader } from 'fumadocs-core/source';
+import * as lucide from 'lucide-react';
+import { createElement } from 'react';
 import { applyMdxPreset } from 'fumadocs-mdx/config';
 import { defineDocs } from 'fumadocs-mdx/macro';
 import { monkeysGrammar } from '../../../tools/monkeys-grammar';
@@ -20,6 +22,10 @@ export const docs = defineDocs({
 export const source = loader({
   source: docs.toFumadocsSource(),
   baseUrl: docsRoute,
+  icon(name) {
+    const icon = name && (lucide as Record<string, unknown>)[name];
+    if (icon) return createElement(icon as React.ComponentType);
+  },
 });
 
 export const docsLlms = llms(source, {

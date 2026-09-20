@@ -20,11 +20,78 @@ const slugOf = (title: string) =>
 
 const cleanTitle = (heading: string) => heading.replace(/^#+ /, '').replace(/`/g, '');
 
-const asMdx = (markdown: string) =>
-	markdown.replace(/^### /gm, '## ').replace(/<(https?:\/\/[^>\s]+)>/g, '[$1]($1)');
+/** A ```tree fence becomes a fumadocs file tree; on GitHub it stays a code block. */
+function asFileTree(block: string) {
+	const rows = block
+		.split('\n')
+		.filter((line) => line.trim())
+		.map((line) => {
+			const connector = line.search(/[├└]── /);
+			const depth = connector < 0 ? 0 : line.slice(0, connector).length / 4 + 1;
+			const name = connector < 0 ? line.trim() : line.slice(connector + 4).trim();
+			return { depth, name };
+		});
+	const render = (start: number, depth: number): [string, number] => {
+		let index = start;
+		let out = '';
+		while (index < rows.length && rows[index].depth === depth) {
+			const { name } = rows[index];
+			const isFolder = name.endsWith('/');
+			const pad = '\t'.repeat(depth + 1);
+			index += 1;
+			if (!isFolder) {
+				out += `${pad}<File name="${name}" />\n`;
+				continue;
+			}
+			const [children, next] = render(index, depth + 1);
+			index = next;
+			out += `${pad}<Folder name="${name.slice(0, -1)}" defaultOpen>\n${children}${pad}</Folder>\n`;
+		}
+		return [out, index];
+	};
+	const [body] = render(0, 0);
+	return `<Files>\n${body}</Files>`;
+}
 
-const frontmatter = (title: string, description?: string) =>
-	['---', `title: ${JSON.stringify(title)}`, ...(description ? [`description: ${JSON.stringify(description)}`] : []), '---', ''].join('\n');
+function asMdx(markdown: string, shift: number) {
+	let inFence = false;
+	const lines = markdown.split('\n').map((line) => {
+		if (line.startsWith('```')) {
+			inFence = !inFence;
+			return line;
+		}
+		if (inFence) return line;
+		const heading = /^(#{1,6}) /.exec(line);
+		if (!heading) return line;
+		return '#'.repeat(Math.max(2, heading[1].length - shift)) + line.slice(heading[1].length);
+	});
+	return lines
+		.join('\n')
+		.replace(/```tree\n([\s\S]*?)```/g, (_, block: string) => asFileTree(block))
+		.replace(/<(https?:\/\/[^>\s]+)>/g, '[$1]($1)');
+}
+
+const sidebarIcons: Record<string, string> = {
+	index: 'Compass',
+	install: 'Download',
+	quickstart: 'Rocket',
+	plugin: 'Puzzle',
+	concepts: 'Shapes',
+	commands: 'SquareTerminal',
+	'sharing-a-profile': 'Share2',
+	caveats: 'TriangleAlert',
+	skill: 'Bot'
+};
+
+const frontmatter = (title: string, description?: string, icon?: string) =>
+	[
+		'---',
+		`title: ${JSON.stringify(title)}`,
+		...(description ? [`description: ${JSON.stringify(description)}`] : []),
+		...(icon ? [`icon: ${icon}`] : []),
+		'---',
+		''
+	].join('\n');
 
 const conceptsRoute = `${docsRoute}/concepts`;
 
@@ -109,13 +176,16 @@ function firstParagraph(markdown: string) {
 
 const written: string[] = [];
 
-function writePage(path: string, title: string, text: string, description?: string) {
+function writePage(path: string, title: string, text: string, description?: string, shift = 1) {
 	mkdirSync(join(content, path, '..'), { recursive: true });
 	const ownSlug = path.startsWith('concepts/') ? path.slice('concepts/'.length) : undefined;
 	const linked = path === 'index';
-	const body = asMdx(text).trim();
+	const body = asMdx(text, shift).trim();
 	const summary = description ?? firstParagraph(body);
-	writeFileSync(join(content, `${path}.mdx`), frontmatter(title, summary) + (linked ? linkingConcepts(body, ownSlug) : body) + '\n');
+	writeFileSync(
+		join(content, `${path}.mdx`),
+		frontmatter(title, summary, sidebarIcons[path]) + (linked ? linkingConcepts(body, ownSlug) : body) + '\n'
+	);
 	written.push(path);
 }
 
@@ -147,12 +217,20 @@ function splitOn(markdown: string, level: number) {
 
 rmSync(content, { recursive: true, force: true });
 mkdirSync(content, { recursive: true });
-const order: string[] = [];
+
+/** The sidebar reads as four sections: where to start, handing it to an agent, what to look up, everything else. */
+const gettingStarted: string[] = [];
+const agent: string[] = [];
+/** Which repository file each top-level page is generated from. */
+const sources: Record<string, string> = {};
+const lookup: string[] = [];
+const rest: string[] = [];
 
 const reference = readFileSync(join(repository, 'DOCS.md'), 'utf8');
 const [overview, ...groups] = splitOn(reference, 1).chunks;
 writePage('index', overview.title, overview.text, description);
-order.push('index');
+gettingStarted.push('index');
+sources.index = 'DOCS.md';
 
 const readme = readFileSync(join(repository, 'README.md'), 'utf8');
 const readmeSections = splitOn(readme.slice(readme.indexOf('\n## ') + 1), 2).chunks;
@@ -162,50 +240,86 @@ function asSteps(text: string) {
 	return `${intro}\n<Steps>\n\n${steps}\n\n</Steps>\n`;
 }
 
-for (const section of readmeSections.filter(({ title }) => title === 'Quickstart' || title === 'Install')) {
-	const slug = slugOf(section.title);
-	const isQuickstart = section.title === 'Quickstart';
-	writePage(
-		slug,
-		section.title,
-		isQuickstart ? asSteps(section.text) : section.text,
-		isQuickstart ? 'Store a secret, run with it and without it, then forget it, in four steps.' : undefined
+function writeGroup(slug: string, title: string, text: string, level: number) {
+	const { intro, chunks: pages } = splitOn(text, level);
+	const shift = level - 1;
+	mkdirSync(join(content, slug), { recursive: true });
+	if (intro.trim()) writePage(join(slug, 'index'), title, intro, undefined, shift);
+	for (const page of pages)
+		writePage(join(slug, slugOf(page.title)), page.title, page.text, undefined, shift);
+	writeFileSync(
+		join(content, slug, 'meta.json'),
+		JSON.stringify(
+			{
+				title,
+				...(sidebarIcons[slug] ? { icon: sidebarIcons[slug] } : {}),
+				pages: pages.map((page) => slugOf(page.title))
+			},
+			null,
+			2
+		) + '\n'
 	);
-	order.push(slug);
+}
+
+for (const section of readmeSections.filter(({ title }) => ['Install', 'Quickstart', 'Plugin'].includes(title))) {
+	const slug = slugOf(section.title);
+	if (section.title === 'Quickstart')
+		writePage(
+			slug,
+			section.title,
+			asSteps(section.text),
+			'Store a secret, run with it and without it, then forget it, in four steps.'
+		);
+	else writePage(slug, section.title, section.text);
+	(slug === 'plugin' ? agent : gettingStarted).push(slug);
+	sources[slug] = 'README.md';
 }
 
 for (const group of groups) {
 	const slug = slugOf(group.title);
 	const { intro, chunks: pages } = splitOn(group.text, 2);
+	sources[slug] = 'DOCS.md';
 	if (pages.length === 0) {
 		writePage(slug, group.title, intro);
-		order.push(slug);
+		rest.push(slug);
 		continue;
 	}
-	mkdirSync(join(content, slug), { recursive: true });
-	if (intro.trim()) writePage(join(slug, 'index'), group.title, intro);
-	for (const page of pages) writePage(join(slug, slugOf(page.title)), page.title, page.text);
-	writeFileSync(
-		join(content, slug, 'meta.json'),
-		JSON.stringify({ title: group.title, pages: pages.map((page) => slugOf(page.title)) }, null, 2) + '\n'
-	);
-	order.push(slug);
+	writeGroup(slug, group.title, group.text, 2);
+	lookup.push(slug);
 }
 
-const skill = readFileSync(join(repository, 'plugins', 'monkeys', 'skills', 'monkeys', 'SKILL.md'), 'utf8');
+const skillFile = 'plugins/monkeys/skills/monkeys/SKILL.md';
+const skill = readFileSync(join(repository, skillFile), 'utf8');
 writePage(
 	'skill',
-	'The skill',
-	'\nThis is `plugins/monkeys/skills/monkeys/SKILL.md`, the file a coding agent reads before it runs anything. Copy it as is: [monk3ys.dev/skill](https://monk3ys.dev/skill).\n\n' +
-		skill.replace(/^---[\s\S]*?---\n/, ''),
-	'The file a coding agent loads, verbatim.'
+	'Skill',
+	skill.replace(/^---[\s\S]*?---\n/, ''),
+	'plugins/monkeys/skills/monkeys/SKILL.md, the file a coding agent loads, served verbatim at monk3ys.dev/skill.'
 );
-order.push('skill');
+agent.push('skill');
+sources.skill = skillFile;
 
-writeFileSync(join(content, 'meta.json'), JSON.stringify({ title: 'monkeys', pages: order }, null, 2) + '\n');
+const sidebar = [
+	'---Getting started---',
+	...gettingStarted,
+	'---Agent---',
+	...agent,
+	'---Reference---',
+	...lookup,
+	'---More---',
+	...rest
+];
+writeFileSync(join(content, 'meta.json'), JSON.stringify({ title: 'monkeys', pages: sidebar }, null, 2) + '\n');
+
+const listed = new Set(sidebar.filter((entry) => !entry.startsWith('---')));
+const missing = [...new Set(written.map((path) => path.split('/')[0]))].filter(
+	(slug) => !listed.has(slug)
+);
+if (missing.length) throw new Error(`not in the sidebar: ${missing.join(', ')}`);
+writeFileSync(join(content, 'sources.json'), JSON.stringify(sources, null, 2) + '\n');
 writeSitemap();
 
 for (const name of ['favicon.svg', 'favicon.png']) cpSync(join(siteStatic, name), join(assets, name));
 cpSync(join(siteStatic, 'fonts'), join(assets, 'fonts'), { recursive: true });
 
-console.log(`wrote ${order.join(', ')}`);
+console.log(`wrote ${[...gettingStarted, ...agent, ...lookup, ...rest].join(', ')}`);

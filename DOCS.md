@@ -1,87 +1,89 @@
 # Overview
 
-`.monkeys` is a `.env` you can commit. The keys a project needs are listed in
-that file, the secrets stay in each person's vault, and `monkeys run` hands
-them to the command that needs them. Even that command cannot print one.
+`.monkeys` is a `.env` you can commit. Keys stay in the file, secrets stay in
+each person's vault, and `monkeys run` hands them to the command that needs
+them. Even that command cannot print one.
 
 ## Why it exists
 
 Two reasons, and either would have been enough.
 
-1. **LLMs read `.env`.** A variable was empty, the task was stuck, and
-   `cat .env` was the shortest way back; the secret is then in the
-   transcript for good. `monkeys` takes that path away and gives the agent a
-   shorter one: the secret goes from the vault into the process, a missing
-   one comes back as a message saying what to ask for, and the output comes
-   back redacted.
+1. **LLMs read `.env`.** `cat .env` is just too tempting, and once it's in
+   the transcript, it's there for good. `monkeys` takes that path away and
+   gives a shorter one: the secret goes from the vault into the process, a
+   missing one comes back as a message saying what to ask for, and the
+   output comes back redacted.
 
 2. **`.env` was never good, even for people.** Sharing it means pasting the
-   whole file into a chat, or hand-picking lines for the one person who
-   needs three of them. Test and production values mean `.env.test`,
-   `.env.production` and a loader that picks one. Keeping it out of git
-   means an `.env.example` that drifts and a `.gitignore` line that guards
-   it. `monkeys` folds that into one committed file: profiles for test and
-   production, `pack` for the whole thing or the part a teammate needs, and
-   nothing in the repository to keep secret.
+   whole file into a chat. Test and production mean two more files and a
+   loader. Staying out of git means an `.env.example` that drifts. `monkeys`
+   folds all of it into one committed file, and `pack` shares the whole thing
+   or the part a teammate needs.
 
 ## What it is
 
-The same project, the way it is kept today and the way `monkeys` keeps it.
-With `.env`, the secrets sit in a file next to the code, and the file is what
-you protect, copy and share:
+The same project, kept both ways. With `.env`, three files have to stay in
+step, and the one with the secrets is the one you must not commit:
 
-```sh
-$ cat .env                          # secrets, on disk, never committed
-OPENROUTER_API_KEY=sk-or...
-STRIPE_SECRET_KEY=sk_li...
-
-$ cat .env.example                  # the same keys again, kept in step by hand
-OPENROUTER_API_KEY=
-STRIPE_SECRET_KEY=
-
-$ cat .gitignore                    # so the first file stays out of git
-.env
-
-$ ./hello.sh                        # a library loads .env, or you source it
-$ cat .env | pbcopy                 # to share it: paste into a chat
+```tree
+foo/
+├── .env
+├── .env.example
+├── .gitignore
+└── hello.sh
 ```
 
-With `monkeys`, the file holds keys and the vault holds secrets, and each
-command gets only what it names:
+```ini title=".env"
+OPENROUTER_API_KEY=sk-or...
+STRIPE_SECRET_KEY=sk_li...
+```
 
-```sh
-$ cat .monkeys                      # keys under a profile, committed
+```ini title=".env.example"
+OPENROUTER_API_KEY=
+STRIPE_SECRET_KEY=
+```
+
+```text title=".gitignore"
+.env
+```
+
+With `monkeys`, one file holds the keys, the vault holds the secrets, and the
+file is the one you commit:
+
+```tree
+foo/
+├── .monkeys
+└── hello.sh
+```
+
+```monkeys title=".monkeys"
 +foo
 @test
 OPENROUTER_API_KEY
 STRIPE_SECRET_KEY
-
-$ monkeys set OPENROUTER_API_KEY    # the secret goes into the vault, once
-Secret:
-
-$ monkeys run ./hello.sh            # the command gets them, and nothing else does
-$ monkeys pack                      # to share: one encrypted file
-$ monkeys unpack a.monsecrets       # on their machine, into their vault
 ```
 
-The `.monkeys` file replaces all three of `.env`, `.env.example` and the
-`.gitignore` line, and it is the one that is committed; a line that was
-never secret, `PORT=3000` and the like, sits in it as `KEY=value`. One binary
-for macOS and Linux does the rest: no runtime, no service, and no vault of its own,
-since the login keychain and the Secret Service are already there.
+```sh
+monkeys set OPENROUTER_API_KEY    # the secret goes into the vault, once
+monkeys run ./hello.sh            # the command gets them, nothing else does
+monkeys pack                      # to share: one encrypted file
+```
+
+One file replaces three. A line that was never secret sits in it as
+`KEY=value`. One binary for macOS and Linux does the rest: no runtime, no
+service, no vault of its own.
 
 ## What it is not
 
 Not a secret manager with a server or an audit log. Not a wall against an
 agent that sets out to read a secret; it removes the reflex, which is the
-everyday problem. Not a vault for `PORT=3000`, which stays in the repository,
-as a `KEY=value` line in `.monkeys`.
+everyday problem.
 
 ## Where to go next
 
-[Quickstart](/docs/quickstart) spends a first secret in three commands,
-[Concepts](/docs/concepts/profile) defines the six words the reference uses,
-and [Commands](/docs/commands) has one page per command.
+[Quickstart](/docs/quickstart) stores a secret and spends it,
+[Concepts](/docs/concepts/key) defines the words the reference uses, and
+[Commands](/docs/commands) has one page per command.
 
 # Concepts
 
@@ -166,7 +168,7 @@ profile a key is one or the other, never both.
 `run` puts a value into the command's environment straight from the file,
 alongside the secrets from the vault, and never redacts it. `preview` and
 `doctor` show it as it is. `set --public` writes one, `forget` deletes the
-line, and `kill` writes one for every `.env` line answered as public.
+line, and `eat` writes one for every `.env` line answered as public.
 
 ## Vault
 
@@ -433,7 +435,7 @@ committed, and the secrets are somewhere a repository cannot reach.
 ### Who writes it
 
 You, or `unpack`, which writes it at the root of the checkout from a bundle;
-`set --public` adds a value line, and `kill` fills it from a `.env`. `doctor`
+`set --public` adds a value line, and `eat` fills it from a `.env`. `doctor`
 reads it whole and says what each profile still lacks.
 
 ## *.monsecrets
@@ -511,7 +513,7 @@ the fix is to delete it and change the passphrase you would have sent.
 | `monkeys run <command>` | the same, with the keys a `.monkeys` file lists |
 | `monkeys pack [path] [--open] [--only ...]` | the profiles as one encrypted `a.monsecrets` |
 | `monkeys unpack <name> [directory]` | store its secrets, write its `.monkeys` |
-| `monkeys kill` | move the `.env` files here into the vault and `.monkeys` |
+| `monkeys eat [--public KEY[,KEY...]]` | move the `.env` files here into the vault and `.monkeys` |
 | `monkeys fill @a --with @b` | give `@a` the keys it lacks, from `@b` |
 | `monkeys list` | the whole vault, as blocks by profile |
 | `monkeys preview [KEY[,KEY...]]` | print each secret masked, with its length |
@@ -1071,10 +1073,10 @@ has:
 
 The passphrase is read from standard input when it is not a terminal.
 
-## kill
+## eat
 
 ```sh
-monkeys kill
+monkeys eat [+namespace] [@profile] [--public KEY[,KEY...]]
 ```
 
 Moves a project's dotenv files into monkeys and deletes them. It reads `.env`,
@@ -1082,10 +1084,6 @@ Moves a project's dotenv files into monkeys and deletes them. It reads `.env`,
 question per key, secret or public, and writes the answers where they belong:
 a secret's key into `.monkeys` with the secret in the vault, a public line
 into `.monkeys` as it is.
-
-```sh
-monkeys kill
-```
 
 > ```
 > Namespace, +name (Enter for none): foo
@@ -1105,7 +1103,7 @@ monkeys kill
 > a .gitignore line for them is dead now and can go; monkeys leaves that file alone
 > ```
 
-That run started from `.env` and `.env.production` and left this behind:
+That run started from `.env` and `.env.production` and left one file behind:
 
 ```monkeys
 +foo
@@ -1113,14 +1111,9 @@ That run started from `.env` and `.env.production` and left this behind:
 DATABASE_URL
 @test
 STRIPE_SECRET_KEY
-@production
-SENTRY_DSN
-```
-
-```monkeys
-@test
 PORT=3000
 @production
+SENTRY_DSN
 PORT=80
 ```
 
@@ -1151,14 +1144,43 @@ file parses:
 > monkeys: .env:2: DATABASE_URL expands another variable; monkeys keeps a value as it is; nothing was written
 > ```
 
-When no `.monkeys` exists yet, `kill` asks for a namespace once, Enter for
+When no `.monkeys` exists yet, `eat` asks for a namespace once, Enter for
 none, and writes the file at the root of the git checkout, where `unpack`
 writes it. When one exists, its `+` line and its profiles stand, and the
 keys are added to it the way `unpack` adds them. The dotenv files are
-deleted only after every secret is stored and both files are written. The
+deleted only after every secret is stored and the file is written. The
 `.gitignore` lines that kept them out of git are left for you, and the last
-line says so. `kill` asks its questions on the terminal, so it refuses to run
-with its input piped.
+line says so.
+
+### Without the questions
+
+`--public` names the keys that are not secret, which answers every question
+before it is asked: those keys become `KEY=value` lines, every other key
+becomes a secret in the vault, and an existing entry is kept rather than
+replaced. Nothing is asked, so no terminal is needed and an agent can run it
+on a project it finds:
+
+```sh
+monkeys eat +foo --public PORT
+```
+
+> ```
+>   public PORT=3000 for @test, into .monkeys
+>   public PORT=80 for @production, into .monkeys
+> wrote .monkeys: +foo @test,production @test @production, 3 keys
+> stored @test: DATABASE_URL, STRIPE_SECRET_KEY
+> stored @production: DATABASE_URL, SENTRY_DSN
+> public @test: PORT
+> public @production: PORT
+> removed .env, .env.production
+> a .gitignore line for them is dead now and can go; monkeys leaves that file alone
+> ```
+
+The secrets go from the files into the vault without passing through whatever
+ran the command. `+namespace` and `@profile` stand in for the two questions a
+first run would otherwise ask; a project that already has a `.monkeys` file
+takes both from it. Without `--public` there are questions to ask, so `eat`
+refuses to run with its input piped and says which flag to use.
 
 ## fill
 

@@ -160,11 +160,18 @@ private struct Existing {
     }
 }
 
-private func decided(_ occurrences: [(key: String, occurrence: KeyOccurrence)], existing: Existing, namespace: String?) -> (choices: [Choice], kept: [Kept]) {
+private func decided(
+    _ occurrences: [(key: String, occurrence: KeyOccurrence)],
+    existing: Existing,
+    namespace: String?,
+    publicKeys: Set<String>?
+) -> (choices: [Choice], kept: [Kept]) {
     var choices: [Choice] = []
     var kept: [Kept] = []
     for (key, occurrence) in occurrences {
-        let destination = askedDestination(for: key, in: occurrence.profiles)
+        let destination =
+            publicKeys.map { $0.contains(key) ? Destination.value : .secret }
+            ?? askedDestination(for: key, in: occurrence.profiles)
         for profile in occurrence.profiles {
             let value = occurrence.values[profile]!
             let full = prefixed(profile, with: namespace)
@@ -173,7 +180,10 @@ private func decided(_ occurrences: [(key: String, occurrence: KeyOccurrence)], 
                     kept.append(Kept(key: key, profile: profile, reason: reason))
                     continue
                 }
-                guard askYesOrNo("  " + messageStyle(key, .bold) + " " + reason + "; replace it?") else {
+                let replaces =
+                    publicKeys == nil
+                    && askYesOrNo("  " + messageStyle(key, .bold) + " " + reason + "; replace it?")
+                guard replaces else {
                     kept.append(Kept(key: key, profile: profile, reason: reason))
                     continue
                 }
@@ -244,24 +254,64 @@ private func removedFiles(_ files: [DotenvFile]) {
     printToStandardError("a .gitignore line for them is dead now and can go; monkeys leaves that file alone")
 }
 
-func runKill(_ arguments: [String]) throws {
-    guard arguments.isEmpty else { throw StoreFailure.badInvocation("monkeys kill") }
+private let eatForm = "monkeys eat [+namespace] [@profile] [--public KEY[,KEY...]]"
+
+private struct EatArguments {
+    var namespace: String?
+    var profile: String?
+    var publicKeys: Set<String>?
+}
+
+private func eatArguments(_ arguments: [String]) throws -> EatArguments {
+    var parsed = EatArguments()
+    var rest = arguments[...]
+    while let argument = rest.first {
+        rest = rest.dropFirst()
+        switch argument {
+        case "--public":
+            guard let list = rest.first else { throw StoreFailure.badInvocation(eatForm) }
+            rest = rest.dropFirst()
+            let keys = list.split(separator: ",").map(String.init)
+            for key in keys where !isValidKey(key) { throw StoreFailure.invalidKey(key) }
+            parsed.publicKeys = Set(keys)
+        case let argument where argument.hasPrefix("+"):
+            parsed.namespace = String(argument.dropFirst())
+        case let argument where argument.hasPrefix("@"):
+            parsed.profile = String(argument.dropFirst())
+        default:
+            throw StoreFailure.badInvocation(eatForm)
+        }
+    }
+    return parsed
+}
+
+func runEat(_ arguments: [String]) throws {
+    let given = try eatArguments(arguments)
     let here = FileManager.default.currentDirectoryPath
     let names = try dotenvNames(in: here)
     guard !names.isEmpty else {
-        throw StoreFailure.bundleFailed("no \(dotenvName) file here; kill reads \(dotenvName), \(dotenvName).local and \(dotenvName).<profile> from the current directory")
+        throw StoreFailure.bundleFailed("no \(dotenvName) file here; eat reads \(dotenvName), \(dotenvName).local and \(dotenvName).<profile> from the current directory")
     }
     let files = try names.map { try parsedDotenv(named: $0, in: here) }
-    guard isTerminal(STDIN_FILENO), isTerminal(STDERR_FILENO) else {
-        throw StoreFailure.bundleFailed("kill asks a question per key, so it needs a terminal")
+    let asks = given.publicKeys == nil
+    guard !asks || (isTerminal(STDIN_FILENO) && isTerminal(STDERR_FILENO)) else {
+        throw StoreFailure.bundleFailed("eat asks a question per key, so it needs a terminal; name the public keys with --public KEY,KEY and it asks nothing")
     }
     let project = try locateProject()
     let directory = project?.directory ?? (gitRoot(above: here) ?? here)
-    let namespace = project == nil ? askedNamespace() : project?.namespace
-    let defaultProfile = project.map { $0.shortName($0.defaultProfile) } ?? askedDefaultProfile()
+    let namespace =
+        given.namespace ?? project?.namespace ?? (asks ? askedNamespace() : nil)
+    let defaultProfile =
+        given.profile ?? project.map { $0.shortName($0.defaultProfile) }
+        ?? (asks ? askedDefaultProfile() : "test")
     try rejectingNames(defaultProfile, namespace, files)
     let existing = Existing(project: project, stored: Set(try secretStore.storedKeys()))
-    let (choices, kept) = decided(occurrences(in: files, defaultProfile: defaultProfile), existing: existing, namespace: namespace)
+    let (choices, kept) = decided(
+        occurrences(in: files, defaultProfile: defaultProfile),
+        existing: existing,
+        namespace: namespace,
+        publicKeys: given.publicKeys
+    )
     let profiles = Array(Set(choices.map(\.profile))).sorted()
     try reconcileProjectFile(namespace: namespace, secretBlocks(choices, profiles: profiles), in: directory)
     let declared = try declaringMissingProfiles(profiles, in: directory)
