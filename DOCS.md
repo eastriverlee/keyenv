@@ -324,18 +324,20 @@ the fix is to delete it and change the passphrase you would have sent.
 | --- | --- |
 | `monkeys set <KEY>` | read a secret and store it |
 | `monkeys list` | print every stored key |
-| `monkeys preview [KEY...]` | print each secret masked, with its length |
+| `monkeys preview [KEY[,KEY]]` | print each secret masked, with its length |
 | `monkeys remove <KEY>` | delete one secret |
 | `monkeys run <KEY>[,<KEY>] <command>` | run a command with those secrets in its environment |
 | `monkeys run <command>` | the same, with the keys a `.monkeys` file lists |
-| `monkeys export [KEY...]` | vault lookup lines, to paste into a startup file |
+| `monkeys export [KEY[,KEY]]` | vault lookup lines, to paste into a startup file |
 | `monkeys pack [path] [--only ...]` | the profiles as one encrypted `a.monkeys` |
 | `monkeys unpack <name> [directory]` | store its secrets, write its `.monkeys` |
 | `monkeys fill @a --with @b` | give `@a` the keys it lacks, from `@b` |
 | `monkeys doctor [--short]` | what each profile has and lacks |
 
 Every command takes a leading `@profile`; a bare `@` means no profile, the
-global keys. Giving no key means every key for `preview` and `export`, or the
+global keys. Where several keys or profiles go, they are joined with commas,
+`DATABASE_URL,STRIPE_SECRET_KEY` and `@test.foo,foo`, so one word is one
+list. Giving no key means every key for `preview` and `export`, or the
 project's keys inside a project. `run` asks to be told, since the keys are how
 it knows what to check for and what to leave out.
 
@@ -410,7 +412,7 @@ output is never coloured, since a script reads it.
 ## preview
 
 ```sh
-monkeys preview [@profile] [KEY...]
+monkeys preview [@profile] [KEY[,KEY]]
 ```
 
 Answers the question you usually have, which is whether the right secret is in
@@ -609,7 +611,7 @@ into every shell you open.
 ## export
 
 ```sh
-monkeys export [@profile] [KEY...]
+monkeys export [@profile] [KEY[,KEY]]
 ```
 
 For a secret that every shell should carry from startup, `export` writes the
@@ -646,7 +648,7 @@ quiet.
 ## pack
 
 ```sh
-monkeys pack [path] [--only [KEY...] [@profile[,profile] [KEY...]]...]
+monkeys pack [path] [--only [KEY[,KEY]] [@profile[,profile] [KEY[,KEY]]]...]
 ```
 
 Writes a project's secrets as one encrypted file, the only way they leave the

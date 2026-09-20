@@ -76,7 +76,8 @@ func runList() throws {
 }
 
 func validatedKeys(_ scope: Scope, _ rest: [String]) throws -> [String] {
-    let keys = rest.isEmpty ? try keysInScope(scope) : rest
+    let given = rest.flatMap { $0.split(separator: ",").map(String.init) }
+    let keys = given.isEmpty ? try keysInScope(scope) : given
     for name in keys where !isValidKey(name) { throw StoreFailure.invalidKey(name) }
     return keys
 }
@@ -91,7 +92,7 @@ func runPreview(_ arguments: [String]) throws {
     }
 }
 
-private let packForm = "monkeys pack [path] [--only [KEY...] [@profile[,profile] [KEY...]]...]"
+private let packForm = "monkeys pack [path] [--only [KEY[,KEY]] [@profile[,profile] [KEY[,KEY]]]...]"
 
 private let profileNeeded = "a bundle carries a profile: run this in a project with a \(projectFileName) file, or name one with @profile"
 
