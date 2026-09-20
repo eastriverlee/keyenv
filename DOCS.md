@@ -474,7 +474,8 @@ work is done, so a crafted file cannot make `unpack` run for hours.
 The file is safe to send over whatever you already use, and the passphrase
 goes another way. `unpack` deletes the bundle once it has done its job; `pack`
 writes it to `/tmp`, outside any repository. [Sharing a
-profile](/docs/sharing-a-profile) walks through it.
+profile](/docs/sharing-a-profile) walks through it. A bundle written before a
+`rename` still carries the old name, and unpacks to it.
 
 ### If one is committed
 
@@ -489,6 +490,8 @@ the fix is to delete it and change the passphrase you would have sent.
 | --- | --- |
 | `monkeys set <KEY> [--clipboard]` | read a secret and store it |
 | `monkeys remove <KEY>` | delete one secret |
+| `monkeys rename @old @new` | move a profile to a new name, in the vault and the file |
+| `monkeys rename +old +new` | the same for every profile under a namespace |
 | `monkeys run <KEY[,KEY...]> <command>` | run a command with those secrets in its environment |
 | `monkeys run <command>` | the same, with the keys a `.monkeys` file lists |
 | `monkeys pack [path] [--open] [--only ...]` | the profiles as one encrypted `a.monsecrets` |
@@ -633,6 +636,59 @@ monkeys remove API_URL
 A value the file sets for several profiles together is refused, the way
 `set --public` refuses it, and a key that is in both files is refused until
 it is in one.
+## rename
+
+```sh
+monkeys rename @old @new
+monkeys rename +old +new
+```
+
+Moves every secret stored under a profile to a new name, and inside a project
+rewrites the `@` lines of `.monkeys` to match, so the vault and the file change
+together. Old name first, then new, the way `mv` reads:
+
+```sh
+monkeys rename @staging @preview
+```
+
+> ```
+> moved @staging to @preview: DATABASE_URL, STRIPE_SECRET_KEY, SENTRY_DSN
+> rewrote .monkeys: @staging is now @preview
+> ```
+
+Inside a project both names are the project's, and a prefix that fits only one
+declared profile is enough for the old one, `@stag`. From anywhere, by full
+name, `monkeys rename @foo.staging @foo.preview` moves the secrets and leaves
+every file alone, since none is in reach; a project that names the old profile
+then has `doctor` report it missing until its file is edited or the name is
+moved back.
+
+A namespace is renamed the same way, for every profile under it, declared in
+the file or not, and the `+` line of the project's file with it:
+
+```sh
+monkeys rename +foo +bar
+```
+
+> ```
+> moved @foo.production to @bar.production: DATABASE_URL, STRIPE_SECRET_KEY, SENTRY_DSN
+> moved @foo.test to @bar.test: DATABASE_URL, STRIPE_SECRET_KEY
+> rewrote .monkeys: +foo is now +bar
+> ```
+
+A target that already holds a key is refused, so a rename never merges two
+profiles:
+
+> ```
+> monkeys: @preview already holds DATABASE_URL; a rename never merges two profiles. To merge, fill @preview --with @staging, then remove what @staging still holds
+> ```
+
+The vault has no transaction, so the secrets move one key at a time, stored
+under the new name and then removed from the old. At the first failure it
+stops, names the keys that moved and the one that did not, and leaves the file
+as it was; the file is rewritten only after the last key moved. A bare `@` is
+no profile and is neither a source nor a target; a key moves into or out of
+the keys with no profile through `fill` or `set`. No secret is printed.
 
 ## run
 

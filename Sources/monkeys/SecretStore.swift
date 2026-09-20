@@ -19,6 +19,7 @@ enum StoreFailure: Error {
     case keyIsValue(String, String)
     case keyIsSecret(String, String)
     case valuesNeedProject
+    case renameRefused(String)
     case bundleFailed(String)
     case backendUnavailable(String)
     case backendFailed(String)
@@ -75,6 +76,8 @@ extension StoreFailure: CustomStringConvertible {
             return "\(key) is a key in \(projectFileName) for @\(profile), with its secret in the vault; remove it there first"
         case .valuesNeedProject:
             return "a value has nowhere to go without a project: run this next to a \(projectFileName) file"
+        case .renameRefused(let reason):
+            return reason
         case .bundleFailed(let reason):
             return reason
         case .backendUnavailable(let reason):
