@@ -97,10 +97,28 @@ private func setPublicValue(_ scope: Scope, _ name: String, readsClipboard: Bool
     printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(name + "=" + value, .bold) + " to \(valuesFileName) for @\(project.shortName(profile))")
 }
 
+private func rejectingProfileList(_ arguments: [String]) throws {
+    guard let first = arguments.first, first.hasPrefix("@"), first.contains(",") else { return }
+    let one = first.dropFirst().split(separator: ",").first.map(String.init) ?? ""
+    throw StoreFailure.bundleFailed("set walks one profile at a time: monkeys set @\(one)")
+}
+
 func runSet(_ arguments: [String]) throws {
     let readsClipboard = arguments.contains("--clipboard")
     let isPublic = arguments.contains("--public")
-    let (scope, rest) = try resolveScope(arguments.filter { $0 != "--clipboard" && $0 != "--public" })
+    let walksAll = arguments.contains("--all")
+    let positional = arguments.filter { $0 != "--clipboard" && $0 != "--public" && $0 != "--all" }
+    try rejectingProfileList(positional)
+    let (scope, rest) = try resolveScope(positional)
+    guard !rest.isEmpty else {
+        guard !readsClipboard else {
+            throw StoreFailure.bundleFailed("--clipboard stores one key: monkeys set <KEY> --clipboard")
+        }
+        guard !isPublic else { throw StoreFailure.badInvocation("monkeys set --public [@profile] <KEY>") }
+        try walkProfile(scope, walksAll: walksAll)
+        return
+    }
+    guard !walksAll else { throw StoreFailure.badInvocation(walkForm) }
     let name = try requireKey(rest)
     if isPublic { return try setPublicValue(scope, name, readsClipboard: readsClipboard) }
     if let project = scope.project, let profile = scope.profile,

@@ -9,6 +9,8 @@ let commandSummaries = [
                    summary: "store a secret typed, piped or pasted"),
     CommandSummary(verb: "set", arguments: "--public <KEY>",
                    summary: "write a plain value into .monvalues"),
+    CommandSummary(verb: "set", arguments: "[@profile] [--all]",
+                   summary: "prompt for each key the profile lacks"),
     CommandSummary(verb: "remove", arguments: "<KEY>",
                    summary: "delete one stored secret"),
     CommandSummary(verb: "rename", arguments: "@old @new",
@@ -84,6 +86,7 @@ var usage: String {
 
       \(outputStyle("monkeys run ./hello.sh", .argument))
       \(outputStyle("monkeys set STRIPE_SECRET_KEY", .argument))      stored as foo.test/STRIPE_SECRET_KEY
+      \(outputStyle("monkeys set", .argument))                        each key it lacks, one prompt each
 
     A value that is not secret, PORT=3000 and the like, goes in \(valuesFileName)
     next to it, in the same blocks with the value after the key. Commit it
