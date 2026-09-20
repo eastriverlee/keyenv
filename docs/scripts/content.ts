@@ -83,11 +83,14 @@ const sidebarIcons: Record<string, string> = {
 	skill: 'Bot'
 };
 
-const frontmatter = (title: string, description?: string, icon?: string) =>
+type Frontmatter = { title: string; description?: string; icon?: string; lead?: string };
+
+const frontmatter = ({ title, description, icon, lead }: Frontmatter) =>
 	[
 		'---',
 		`title: ${JSON.stringify(title)}`,
 		...(description ? [`description: ${JSON.stringify(description)}`] : []),
+		...(lead ? [`lead: ${JSON.stringify(lead)}`] : []),
 		...(icon ? [`icon: ${icon}`] : []),
 		'---',
 		''
@@ -176,15 +179,26 @@ function firstParagraph(markdown: string) {
 
 const written: string[] = [];
 
-function writePage(path: string, title: string, text: string, description?: string, shift = 1) {
+type PageOptions = { description?: string; shift?: number; lead?: boolean };
+
+/** A reference page opens with one line saying what it is; that line becomes the page's subtitle. */
+function takeLead(markdown: string) {
+	const end = markdown.indexOf('\n\n');
+	return { lead: plainText(markdown.slice(0, end)), rest: markdown.slice(end).trim() };
+}
+
+function writePage(path: string, title: string, text: string, { description, shift = 1, lead }: PageOptions = {}) {
 	mkdirSync(join(content, path, '..'), { recursive: true });
 	const ownSlug = path.startsWith('concepts/') ? path.slice('concepts/'.length) : undefined;
 	const linked = path === 'index';
-	const body = asMdx(text, shift).trim();
-	const summary = description ?? firstParagraph(body);
+	const page = asMdx(text, shift).trim();
+	const { lead: subtitle, rest: body } = lead ? takeLead(page) : { lead: undefined, rest: page };
+	const summary = description ?? subtitle ?? firstParagraph(body);
 	writeFileSync(
 		join(content, `${path}.mdx`),
-		frontmatter(title, summary, sidebarIcons[path]) + (linked ? linkingConcepts(body, ownSlug) : body) + '\n'
+		frontmatter({ title, description: summary, icon: sidebarIcons[path], lead: subtitle }) +
+			(linked ? linkingConcepts(body, ownSlug) : body) +
+			'\n'
 	);
 	written.push(path);
 }
@@ -228,7 +242,7 @@ const rest: string[] = [];
 
 const reference = readFileSync(join(repository, 'DOCS.md'), 'utf8');
 const [overview, ...groups] = splitOn(reference, 1).chunks;
-writePage('index', overview.title, overview.text, description);
+writePage('index', overview.title, overview.text, { description });
 gettingStarted.push('index');
 sources.index = 'DOCS.md';
 
@@ -244,9 +258,9 @@ function writeGroup(slug: string, title: string, text: string, level: number) {
 	const { intro, chunks: pages } = splitOn(text, level);
 	const shift = level - 1;
 	mkdirSync(join(content, slug), { recursive: true });
-	if (intro.trim()) writePage(join(slug, 'index'), title, intro, undefined, shift);
+	if (intro.trim()) writePage(join(slug, 'index'), title, intro, { shift });
 	for (const page of pages)
-		writePage(join(slug, slugOf(page.title)), page.title, page.text, undefined, shift);
+		writePage(join(slug, slugOf(page.title)), page.title, page.text, { shift, lead: true });
 	writeFileSync(
 		join(content, slug, 'meta.json'),
 		JSON.stringify(
@@ -268,7 +282,7 @@ for (const section of readmeSections.filter(({ title }) => ['Install', 'Quicksta
 			slug,
 			section.title,
 			asSteps(section.text),
-			'Store a secret, run with it and without it, then forget it, in four steps.'
+			{ description: 'Store a secret, run with it and without it, then forget it, in four steps.' }
 		);
 	else writePage(slug, section.title, section.text);
 	(slug === 'plugin' ? agent : gettingStarted).push(slug);
@@ -294,7 +308,10 @@ writePage(
 	'skill',
 	'Skill',
 	skill.replace(/^---[\s\S]*?---\n/, ''),
-	'plugins/monkeys/skills/monkeys/SKILL.md, the file a coding agent loads, served verbatim at monk3ys.dev/skill.'
+	{
+		description:
+			'plugins/monkeys/skills/monkeys/SKILL.md, the file a coding agent loads, served verbatim at monk3ys.dev/skill.'
+	}
 );
 agent.push('skill');
 sources.skill = skillFile;

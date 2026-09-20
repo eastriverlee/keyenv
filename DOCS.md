@@ -89,9 +89,10 @@ everyday problem.
 
 ## Key
 
-A key is the name of an environment variable, the `KEY` of `KEY=secret`. It
-is what a program reads, what a `.monkeys` file lists, and what every command
-takes on its line:
+A key is the name of an environment variable, the `KEY` of `KEY=secret`.
+
+It is what a program reads, what a `.monkeys` file lists, and what every
+command takes on its line:
 
 ```sh
 monkeys set OPENROUTER_API_KEY
@@ -120,8 +121,10 @@ Which one a command gets is decided by the profile, never by the key.
 
 ## Secret
 
-A secret is what a key holds: the API key, token or password itself. It is the
-only thing `monkeys` exists to keep, and the only thing it never prints.
+A secret is what a key holds: the API key, token or password itself.
+
+It is the only thing `monkeys` exists to keep, and the only thing it never
+prints.
 
 ### Where it goes
 
@@ -144,11 +147,11 @@ where the decision to look at one is yours and deliberate.
 
 ## Value
 
-A value is the other thing a key can hold: a setting that is fine for anyone
-with the repository to read. `PORT=3000`, `API_URL=https://api.example.com`,
-`NODE_ENV=development`. In a `.env` file these sat on the same lines as the
-secrets; here they sit in `.monkeys` as `KEY=value` and the vault never sees
-them.
+A value is the other thing a key can hold: a setting that is safe to commit.
+
+`PORT=3000`, `API_URL=https://api.example.com`, `NODE_ENV=development`. In a
+`.env` file these sat on the same lines as the secrets; here they sit in
+`.monkeys` as `KEY=value` and the vault never sees them.
 
 ### Where it lives
 
@@ -172,9 +175,11 @@ line, and `eat` writes one for every `.env` line answered as public.
 
 ## Vault
 
-The vault is the operating system's own secret store, and `monkeys` keeps
-nothing anywhere else. There is no file of `monkeys`'s own to back up, leak
-or forget, and the desktop's own tools see everything `monkeys` stores.
+The vault is the operating system's own secret store.
+
+`monkeys` keeps nothing anywhere else. There is no file of `monkeys`'s own to
+back up, leak or forget, and the desktop's own tools see everything `monkeys`
+stores.
 
 | platform | vault | reached through |
 | --- | --- | --- |
@@ -224,9 +229,10 @@ saying so. Machines like that want a different mechanism, not this one.
 
 ## Profile
 
-A profile is a named set of secrets. Every secret `monkeys` stores sits under
-one, as `<profile>/<KEY>`, and a project's `.monkeys` file lists its keys
-under the profiles they belong to:
+A profile is a named set of secrets.
+
+Every secret `monkeys` stores sits under one, as `<profile>/<KEY>`, and a
+project's `.monkeys` file lists its keys under the profiles they belong to:
 
 ```monkeys
 +foo
@@ -329,8 +335,9 @@ when a file would otherwise decide.
 
 ## Namespace
 
-A namespace is the part of a profile's name that belongs to the project. The
-`+` line of a `.monkeys` file sets it, and every `@` line in that file is
+A namespace is the part of a profile's name that belongs to the project.
+
+The `+` line of a `.monkeys` file sets it, and every `@` line in that file is
 read with it in front: in a file that starts with `+foo`, `@test` is the
 profile `foo.test`, and its secrets are stored as `foo.test/DATABASE_URL`.
 
@@ -369,9 +376,10 @@ also says `@test` would share it.
 
 ## .monkeys
 
-A project lists the keys it needs once, in a `.monkeys` file next to the
-code. It is `.env.example` with the secrets left out: every key the program
-reads, and the values that were never secret. Commit it.
+A project lists the keys it needs once, in a `.monkeys` file next to the code.
+
+It is `.env.example` with the secrets left out: every key the program reads,
+and the values that were never secret. Commit it.
 
 ### Format
 
@@ -440,9 +448,10 @@ reads it whole and says what each profile still lacks.
 
 ## *.monsecrets
 
-A bundle, `a.monsecrets` unless you name it, is one or more profiles with
-their keys and secrets in a single encrypted file. `pack` writes one and
-`unpack` reads it, and that is the only way a secret leaves the vault.
+A bundle is profiles, keys and secrets in one encrypted file.
+
+`pack` writes one, `a.monsecrets` unless you name it, and `unpack` reads it.
+That is the only way a secret leaves the vault.
 
 ### Format
 
@@ -540,6 +549,8 @@ and a bundle cannot carry half of a profile.
 
 ## set
 
+Put a secret into the vault, or a value into `.monkeys`.
+
 ```sh
 monkeys set [@profile] <KEY> [--clipboard]
 monkeys set --public [@profile] <KEY> [--clipboard]
@@ -568,6 +579,12 @@ copied from a provider's console goes straight in:
 monkeys set GITHUB_TOKEN --clipboard
 ```
 
+> ```
+> stored GITHUB_TOKEN
+> give it to a command with:
+>   monkeys run GITHUB_TOKEN <command>
+> ```
+
 When standard input is not a terminal, the secret is read from there, which
 is how a script stores one:
 
@@ -578,7 +595,18 @@ cat token.txt | monkeys set GITHUB_TOKEN
 Inside a project the key is stored under the project's profile, so `monkeys
 set STRIPE_SECRET_KEY` there writes `foo.test/STRIPE_SECRET_KEY`. A leading
 `@profile` picks another, `@namespace.profile` one of another project, and a
-bare `@` no profile.
+bare `@` no profile:
+
+```sh
+monkeys set @production DATABASE_URL
+```
+
+> ```
+> Secret:
+> stored foo.production/DATABASE_URL
+> give it to a command with:
+>   monkeys run <command>
+> ```
 
 A key you already stored is replaced, and nothing says so.
 
@@ -665,6 +693,8 @@ becomes a committed line by accident.
 
 ## forget
 
+Take a secret out of the vault: one key, a whole profile, or a namespace.
+
 ```sh
 monkeys forget [@profile] <KEY>
 monkeys forget @profile[,profile...]
@@ -726,6 +756,8 @@ and is refused, so the secrets with no profile go one key at a time.
 
 ## rename
 
+Give a profile or a namespace another name, in the vault and the file.
+
 ```sh
 monkeys rename @old @new
 monkeys rename +old +new
@@ -779,6 +811,8 @@ no profile and is neither a source nor a target; a key moves into or out of
 the keys with no profile through `fill` or `set`. No secret is printed.
 
 ## run
+
+Give a command the secrets it needs, and nothing else.
 
 ```sh
 monkeys run [@profile] <KEY[,KEY...]> <command> [argument...]
@@ -938,6 +972,8 @@ into every shell you open.
 
 ## pack
 
+Send a project's secrets to someone, as one encrypted file.
+
 ```sh
 monkeys pack [path] [--open] [--only [KEY[,KEY...]] [@profile[,profile...] [KEY[,KEY...]]]...]
 ```
@@ -1027,6 +1063,8 @@ rare script that needs to.
 
 ## unpack
 
+Take a bundle someone sent you and put it into your own vault.
+
 ```sh
 monkeys unpack <name> [directory] [--keep]
 ```
@@ -1050,7 +1088,18 @@ monkeys unpack a
 too. The bundle is deleted only once every secret is stored and the file is
 written, since by then it has done its job and a copy left behind is one more
 thing to lose. `--keep` leaves it where it was, for a bundle you are handing
-on to someone else.
+on to someone else, and the run says nothing about removing it:
+
+```sh
+monkeys unpack a --keep
+```
+
+> ```
+> Passphrase:
+> wrote .monkeys: +foo @test,production @production, 3 keys
+> stored foo.test/DATABASE_URL, foo.production/DATABASE_URL
+> stored foo.production/SENTRY_DSN
+> ```
 
 The file goes at the root of the git checkout, the way `.gitignore` sits at
 the root, so `monkeys run` works from any directory in it. Outside a checkout
@@ -1074,6 +1123,8 @@ has:
 The passphrase is read from standard input when it is not a terminal.
 
 ## eat
+
+Convert a project that still keeps its secrets in dotenv files.
 
 ```sh
 monkeys eat [+namespace] [@profile] [--public KEY[,KEY...]]
@@ -1152,7 +1203,7 @@ deleted only after every secret is stored and the file is written. The
 `.gitignore` lines that kept them out of git are left for you, and the last
 line says so.
 
-### Without the questions
+### --public
 
 `--public` names the keys that are not secret, which answers every question
 before it is asked: those keys become `KEY=value` lines, every other key
@@ -1184,6 +1235,8 @@ refuses to run with its input piped and says which flag to use.
 
 ## fill
 
+Give a profile the secrets another profile already has.
+
 ```sh
 monkeys fill @profile --with @profile
 ```
@@ -1213,6 +1266,8 @@ project's profile, `@bar.test`, which is how a secret shared by two projects
 is stored once and copied.
 
 ## list
+
+See every key the vault holds, by profile.
 
 ```sh
 monkeys list
@@ -1245,6 +1300,8 @@ vault, so it shows every project at once, and prints nothing when the vault
 is empty.
 
 ## preview
+
+Check that a secret is the right one, without reading it.
 
 ```sh
 monkeys preview [@profile] [KEY[,KEY...]]
@@ -1292,7 +1349,21 @@ monkeys preview
 > API_URL            http://localhost:8080
 > ```
 
+A leading `@profile` shows another one the file declares, which is how you
+tell a production secret from the test one that shares its key:
+
+```sh
+monkeys preview @production
+```
+
+> ```
+> DATABASE_URL  po...p 43
+> SENTRY_DSN    ht...9 44
+> ```
+
 ## doctor
+
+See what a project still needs before anything runs.
 
 ```sh
 monkeys doctor [--short]
@@ -1338,9 +1409,12 @@ monkeys doctor --short
 > missing @production: STRIPE_SECRET_KEY,SENTRY_DSN
 > ```
 
-A key in both files gets its own line, `both files @test: PORT`.
+The keys are joined with commas, one word per profile, so a line reads back
+as the `set` that would fix it.
 
 ## export
+
+Put a secret into every shell you open.
 
 ```sh
 monkeys export [@profile] [KEY[,KEY...]]
@@ -1368,7 +1442,15 @@ On Linux:
 No secret is in either line. Each asks the vault when the shell starts, the
 way you would have written it by hand, so a startup file written on one
 machine is for that machine's vault. With no keys, inside a project, it writes
-one line per key the file lists.
+one line per key the file lists, each under the profile's full name:
+
+```sh
+monkeys export
+```
+
+> ```
+> export DATABASE_URL="$(security find-generic-password -s monkeys -a foo.test/DATABASE_URL -w)"
+> ```
 
 `monkeys` writes nothing into your startup file for you: a secret that every
 process on the machine inherits is a decision to make with the file open.

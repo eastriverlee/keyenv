@@ -1,18 +1,22 @@
 import { llms, loader } from 'fumadocs-core/source';
 import * as lucide from 'lucide-react';
 import { createElement } from 'react';
-import { applyMdxPreset } from 'fumadocs-mdx/config';
+import { applyMdxPreset, frontmatterSchema } from 'fumadocs-mdx/config';
+import { z } from 'zod';
 import { defineDocs } from 'fumadocs-mdx/macro';
 import { monkeysGrammar } from '../../../tools/monkeys-grammar';
 import { docsContentRoute, docsRoute } from './shared';
+
+const mdxOptions = applyMdxPreset({
+  rehypeCodeOptions: { langs: ['bash', monkeysGrammar] },
+});
 
 export const docs = defineDocs({
   dir: 'content/docs',
   docs: {
     async: true,
-    mdxOptions: applyMdxPreset({
-      rehypeCodeOptions: { langs: ['bash', monkeysGrammar] },
-    }),
+    mdxOptions,
+    schema: frontmatterSchema.extend({ lead: z.string().optional() }),
     postprocess: {
       includeProcessedMarkdown: true,
     },

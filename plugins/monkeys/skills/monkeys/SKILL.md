@@ -1,14 +1,21 @@
 ---
 name: monkeys
-description: Give a command an API key, token or password held in the OS vault, without the secret entering the conversation. Use when a command needs a credential, when one fails for a missing or empty credential, when a project needs a new environment variable, when asked where a secret is kept, or when asked to store one.
+description: Give a command an API key, token or password held in the OS vault, without the secret entering the conversation. Use whenever a command needs a credential, when one fails for a missing or empty credential, when a project needs a new environment variable, when a `.env` file turns up in a project, when asked where a secret is kept, or when asked to store one.
 ---
 
 # monkeys
 
-`monkeys` keeps secrets in the macOS keychain or the Linux Secret Service and
-spends them on one command at a time, by key: `KEY=secret`, where the key is
-the environment variable's name. Nothing it offers prints a stored secret, so
-the only thing to get right is how you spend one.
+When a command needs an API key, token or password, `monkeys` gives it one
+without showing it to you:
+
+```sh
+monkeys run OPENROUTER_API_KEY ./hello.sh
+```
+
+Each secret sits in the operating system's own vault, the macOS keychain or
+the Linux Secret Service, under the name of the environment variable that
+carries it. No command prints a stored secret, and none should: one that
+reaches you is in this transcript for good, and a vault cannot take it back.
 
 If `monkeys` is not on `PATH`, say so and point at
 <https://github.com/eastriverlee/monkeys>. Do not work around it by asking for
@@ -54,24 +61,28 @@ STRIPE_SECRET_KEY
 PORT=3000
 ```
 
-In that directory or below it within the git checkout, `run` takes only the
-command, and every key is scoped to the file's first profile:
+In that directory, or below it within the git checkout, `run` takes only the
+command and reads the file's first profile. A leading `@profile` picks
+another one the file declares, and a `KEY=value` line is a value that is not
+secret, which `run` puts in the environment too:
 
 ```sh
 monkeys run ./hello.sh
-monkeys run @production ./deploy    # another profile the file declares
+monkeys run @production ./deploy
 ```
 
-The `+` line is the namespace, so `@test` here is the profile `foo.test`, and
-from outside the project it is `@foo.test`. A `@` line may name several
-profiles and a file may hold several blocks; a profile's keys are those of
-every block listing it. A `KEY=value` line is a value that is not secret, and
-`run` puts those in the environment too.
-
 A profile never falls back to the keys with no profile: a key missing in
-`@production` is missing there even when a copy with no profile exists.
-Inside a project a bare `@` reaches the keys with no profile, with the key
-given again: `monkeys run @ TYPESAFE_API_KEY claude`.
+`@production` stays missing there even when a copy with no profile exists, so
+one project never quietly reads another's secret. Reaching those keys from
+inside a project is a bare `@`, with the key named again:
+
+```sh
+monkeys run @ TYPESAFE_API_KEY claude
+```
+
+The rest of the file's grammar, namespaces and several profiles among it, is
+in `monkeys help`. Reach for it when a file surprises you; the file is
+usually written already, and reading it is enough.
 
 ## Never write a .env
 

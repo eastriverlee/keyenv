@@ -66,7 +66,10 @@ function Content({
       <meta name="twitter:description" content={page.description} />
       <meta name="twitter:image" content={`${siteOrigin}/og.png`} />
       <DocsTitle>{page.title}</DocsTitle>
-      <div className="flex flex-row gap-2 items-center border-b -mt-4 pb-6">
+      {page.lead ? <p className="-mt-4 text-lg text-fd-muted-foreground">{page.lead}</p> : null}
+      <div
+        className={`flex flex-row gap-2 items-center border-b pb-6 ${page.lead ? 'mt-2' : '-mt-4'}`}
+      >
         <MarkdownCopyButton markdownUrl={markdownUrl} />
         <ViewOptionsPopover
           markdownUrl={markdownUrl}
