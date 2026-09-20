@@ -15,7 +15,7 @@ func abbreviatingHome(_ path: String) -> String {
 
 struct Block {
     let profiles: [String]
-    let names: [String]
+    let keys: [String]
 }
 
 struct Project {
@@ -32,8 +32,8 @@ struct Project {
 
     var defaultProfile: String { profiles[0] }
 
-    func names(for profile: String) -> [String] {
-        blocks.filter { $0.profiles.contains(profile) }.flatMap(\.names)
+    func keys(for profile: String) -> [String] {
+        blocks.filter { $0.profiles.contains(profile) }.flatMap(\.keys)
     }
 
     func profile(matching given: String) throws -> String {
@@ -61,9 +61,9 @@ struct Scope {
         return "@" + profile + " "
     }
 
-    var projectNames: [String]? {
+    var projectKeys: [String]? {
         guard let project, let profile else { return nil }
-        return project.names(for: profile)
+        return project.keys(for: profile)
     }
 }
 
@@ -136,7 +136,7 @@ private func rejectingDuplicates(_ blocks: [Block], in shown: String) throws {
     var seen: [String: Set<String>] = [:]
     for block in blocks {
         for profile in block.profiles {
-            for name in block.names {
+            for name in block.keys {
                 guard seen[profile, default: []].insert(name).inserted else {
                     throw StoreFailure.badProjectFile(shown, "\(name) is listed twice for @\(profile)")
                 }
@@ -150,10 +150,10 @@ func parseProject(at path: String, directory: String) throws -> Project {
     let shown = abbreviatingHome(path)
     var blocks: [Block] = []
     var profiles: [String]?
-    var names: [String] = []
+    var keys: [String] = []
     func closeBlock() {
-        if let open = profiles { blocks.append(Block(profiles: open, names: names)) }
-        names = []
+        if let open = profiles { blocks.append(Block(profiles: open, keys: keys)) }
+        keys = []
     }
     for rawLine in contents.split(separator: "\n", omittingEmptySubsequences: false) {
         let line = rawLine.trimmingCharacters(in: .whitespaces)
@@ -164,29 +164,29 @@ func parseProject(at path: String, directory: String) throws -> Project {
             continue
         }
         guard profiles != nil else {
-            throw StoreFailure.badProjectFile(shown, "\(line) comes before any @profile line; a project's names live in a named profile")
+            throw StoreFailure.badProjectFile(shown, "\(line) comes before any @profile line; a project's keys live in a named profile")
         }
-        guard isValidVariableName(line) else {
-            throw StoreFailure.badProjectFile(shown, "\(line) is not an environment variable name")
+        guard isValidKey(line) else {
+            throw StoreFailure.badProjectFile(shown, "\(line) is not a key (an environment variable name)")
         }
-        names.append(line)
+        keys.append(line)
     }
     closeBlock()
     guard !blocks.isEmpty else {
-        throw StoreFailure.badProjectFile(shown, "no @profile line; a project's names live in a named profile")
+        throw StoreFailure.badProjectFile(shown, "no @profile line; a project's keys live in a named profile")
     }
     try rejectingDuplicates(blocks, in: shown)
     return Project(directory: directory, blocks: blocks)
 }
 
-func storedNamesInScope(_ scope: Scope) throws -> [String] {
-    let stored = try secretStore.storedNames()
+func storedKeysInScope(_ scope: Scope) throws -> [String] {
+    let stored = try secretStore.storedKeys()
     guard let profile = scope.profile else { return stored.filter { !$0.contains("/") } }
     let prefix = profile + "/"
     return stored.filter { $0.hasPrefix(prefix) }.map { String($0.dropFirst(prefix.count)) }
 }
 
-func namesInScope(_ scope: Scope) throws -> [String] {
-    if let names = scope.projectNames { return names }
-    return try storedNamesInScope(scope)
+func keysInScope(_ scope: Scope) throws -> [String] {
+    if let keys = scope.projectKeys { return keys }
+    return try storedKeysInScope(scope)
 }

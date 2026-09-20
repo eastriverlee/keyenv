@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <img src="terminal.svg" alt="monkeys run refusing a missing value, then running the command, then preview" width="640">
+  <img src="terminal.svg" alt="monkeys run refusing a missing secret, then running the command, then preview" width="640">
 </p>
 
 ## LLMs read `.env`; not anymore.
@@ -33,8 +33,8 @@ Someone will call it a skill issue. It isn't. There has never been a safe way
 for the people on a project to share a secret and use it, so it went in a
 file. C had a memory problem too, and being careful didn't fix it. Rust did.
 
-`monkeys` keeps each secret in your keyring and hands it to one command at a
-time. Nothing prints a stored value, the command you hand it to included, so there
+`monkeys` keeps each secret in your vault and hands it to one command at a
+time. Nothing prints a stored secret, the command you hand it to included, so there
 is nothing to read.
 
 ## Quickstart
@@ -71,7 +71,7 @@ monkeys run OPENROUTER_API_KEY ./hello.sh
 
 The key is in that one process and nowhere else. It never reached your shell
 history, your startup file, or the line you just typed. `run` becomes the
-command once the values are set, so the exit status, the output and the signals
+command once the secrets are set, so the exit status, the output and the signals
 are the command's own.
 
 ## Install
@@ -107,7 +107,7 @@ cd monkeys
 make install
 ```
 
-On Linux, `monkeys` reaches the keyring through `secret-tool`: install
+On Linux, `monkeys` reaches the vault through `secret-tool`: install
 `libsecret-tools` on Debian and Ubuntu, `libsecret` on Fedora and Arch.
 
 ### For a coding agent

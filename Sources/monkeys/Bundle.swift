@@ -71,24 +71,24 @@ private func deserialized(_ plaintext: Data) throws -> ProfileBundle {
         if line.hasPrefix("@") {
             let profiles = line.dropFirst().split(separator: ",").map(String.init)
             guard !profiles.isEmpty, profiles.allSatisfy(isValidProfileName) else {
-                throw StoreFailure.bundleFailed("the bundle names no profile")
+                throw StoreFailure.bundleFailed("the bundle carries no profile")
             }
             blocks.append(BundleBlock(profiles: profiles, entries: []))
             continue
         }
         let parts = line.split(separator: "=", maxSplits: 1)
-        guard let current = blocks.popLast(), parts.count == 2, isValidVariableName(String(parts[0])) else {
-            throw StoreFailure.bundleFailed("a line in the bundle is not NAME=value")
+        guard let current = blocks.popLast(), parts.count == 2, isValidKey(String(parts[0])) else {
+            throw StoreFailure.bundleFailed("a line in the bundle is not KEY=secret")
         }
         let encoded = parts[1].split(separator: ",", omittingEmptySubsequences: false)
         let decoded = encoded.compactMap { Data(base64Encoded: String($0)) }
         guard decoded.count == encoded.count, decoded.count == current.profiles.count else {
-            throw StoreFailure.bundleFailed("a line in the bundle is not NAME=value")
+            throw StoreFailure.bundleFailed("a line in the bundle is not KEY=secret")
         }
         let entry = (String(parts[0]), decoded.map { String(decoding: $0, as: UTF8.self) })
         blocks.append(BundleBlock(profiles: current.profiles, entries: current.entries + [entry]))
     }
-    guard !blocks.isEmpty else { throw StoreFailure.bundleFailed("the bundle names no profile") }
+    guard !blocks.isEmpty else { throw StoreFailure.bundleFailed("the bundle carries no profile") }
     return ProfileBundle(blocks: blocks)
 }
 
@@ -124,6 +124,6 @@ func readBundle(from path: String) throws -> ProfileBundle {
 
 func projectFileContents(_ blocks: [Block]) -> String {
     blocks.map { block in
-        (["@" + block.profiles.joined(separator: ",")] + block.names).joined(separator: "\n")
+        (["@" + block.profiles.joined(separator: ",")] + block.keys).joined(separator: "\n")
     }.joined(separator: "\n") + "\n"
 }

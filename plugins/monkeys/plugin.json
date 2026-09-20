@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "monkeys",
   "version": "1.2.0",
-  "description": "A cross-platform .env alternative for the LLM era: secrets in your keyring, their names in your repo, spent one command at a time, never printed.",
+  "description": "A cross-platform .env alternative for the LLM era: secrets in your vault, their keys in your repo, spent one command at a time, never printed.",
   "author": {
     "name": "eastriverlee",
     "url": "https://github.com/eastriverlee"
@@ -10,5 +10,5 @@
   "homepage": "https://monk3ys.dev",
   "repository": "https://github.com/eastriverlee/monkeys",
   "license": "MIT",
-  "keywords": ["secrets", "keyring", "keychain", "environment-variables", "dotenv", "coding-agent"]
+  "keywords": ["secrets", "vault", "keychain", "environment-variables", "dotenv", "coding-agent"]
 }

@@ -18,7 +18,7 @@ private func wrapped(_ text: String, at width: Int = 78) -> String {
 private let maskingRule = wrapped("""
 Preview shows at most the first \(previewLeadingCharacters) and the last
 \(previewTrailingCharacters) characters, and only while at least
-\(previewMinimumHiddenCharacters) of them stay hidden. A value shorter than that
+\(previewMinimumHiddenCharacters) of them stay hidden. A secret shorter than that
 shows its length alone.
 """)
 
@@ -34,51 +34,52 @@ var styledAgentGuide: String {
 private let agentGuide = """
 monkeys for an automated caller
 
-A stored value must never enter an agent's context or transcript. Anything
-an agent reads stays in both, and a keyring cannot take it back. No command
-prints a stored value, so the only thing to get right is how one is spent.
+A stored secret must never enter an agent's context or transcript. Anything
+an agent reads stays in both, and a vault cannot take it back. No command
+prints a stored secret, so the only thing to get right is how one is spent.
 
-monkeys run puts the named values into one command's environment, and nowhere
-else:
+monkeys run puts the named secrets into one command's environment, and
+nowhere else:
 
   monkeys run OPENROUTER_API_KEY ./hello.sh
   monkeys run OPENROUTER_API_KEY,GITHUB_TOKEN ./deploy
 
-Nothing on that line holds the secret, so nothing an agent writes can spill
-it. The exit status and the signals are the command's own. Its output comes
-back through monkeys, and a stored value in it comes back as [redacted NAME],
-so echo $NAME says which value was there and never the value. --no-redact is
-for a human writing a value into a file on purpose; an agent does not add it.
+Nothing on that line holds a secret, so nothing an agent writes can spill
+one. The exit status and the signals are the command's own. Its output comes
+back through monkeys, and a stored secret in it comes back as [redacted KEY],
+so echo $KEY says which secret was there and never the secret. --no-redact is
+for a human writing a secret into a file on purpose; an agent does not add
+it.
 
-A project that has a .monkeys file has already named what it needs, and run
-there takes only the command:
+A project that has a .monkeys file has already listed the keys it needs, and
+run there takes only the command:
 
   monkeys run ./hello.sh
 
-The file's @ lines scope every name, and the first profile in the file is the
+The file's @ lines scope every key, and the first profile in the file is the
 one run uses unless @profile says otherwise, so set in that directory stores
 into the same profile the command reads from. The file is the list; read it
-before adding a name. Filling a profile from a shared .monkeys bundle is
+before adding a key. Filling a profile from a shared .monkeys bundle is
 monkeys unpack, which asks for a passphrase, so that too is a human's job.
 
-Name what the command actually reads. Naming is how a missing value shows up,
-and it keeps the rest of them out of a process that has no business with them.
---all spends everything, for when the names are not worth working out:
+Name the keys the command actually reads. Naming them is how a missing secret
+shows up, and it keeps the rest out of a process that has no business with
+them. --all spends everything, for when the keys are not worth working out:
 
   monkeys run --all ./hello.sh
 
-A name that is not stored stops the run before it starts, and says what to ask
-for:
+A key with no secret stored stops the run before it starts, and says what to
+ask for:
 
   monkeys: ANTHROPIC_API_KEY is not stored yet
   nothing ran. a human has to store it, then try again:
     monkeys set ANTHROPIC_API_KEY
 
 An agent passes that on. Storing a secret is a human's job: an agent that
-types one puts it in its own context before it reaches the keyring.
+types one puts it in its own context before it reaches the vault.
 
-To see what exists, read the names with monkeys list, and their shape with
-monkeys preview:
+To see what exists, read the keys with monkeys list, and their secrets' shape
+with monkeys preview:
 
   $ monkeys preview
   GITHUB_TOKEN        gh...f 40
@@ -86,12 +87,12 @@ monkeys preview:
 
 \(maskingRule)
 
-A length and a two-character prefix confirm that the right value arrived
+A length and a two-character prefix confirm that the right secret arrived
 without reading it.
 
-monkeys export writes keyring lookups for a startup file and holds no value,
+monkeys export writes vault lookups for a startup file and holds no secret,
 which is why it may print. A variable that already holds a secret is never
-printed. Each of these puts a value in front of whoever ran it:
+printed. Each of these puts a secret in front of whoever ran it:
 
   echo "$OPENROUTER_API_KEY"
   env

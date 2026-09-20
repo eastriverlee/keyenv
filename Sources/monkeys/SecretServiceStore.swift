@@ -68,30 +68,30 @@ struct SecretServiceStore: SecretStore {
             if !result.standardError.isEmpty {
                 throw StoreFailure.backendFailed("secret-tool lookup failed: \(result.standardError)")
             }
-            throw StoreFailure.nameNotStored(name)
+            throw StoreFailure.keyNotStored(name)
         }
         return result.standardOutput
     }
 
     func remove(forName name: String) throws {
-        guard (try? read(forName: name)) != nil else { throw StoreFailure.nameNotStored(name) }
+        guard (try? read(forName: name)) != nil else { throw StoreFailure.keyNotStored(name) }
         let result = try run(["clear"] + attributes(forName: name))
         guard result.exitCode == 0 else {
             throw StoreFailure.backendFailed("secret-tool clear failed: \(result.standardError)")
         }
     }
 
-    func storedNames() throws -> [String] {
+    func storedKeys() throws -> [String] {
         let result = try run(["search", "--all", "service", serviceName])
         let prefix = "attribute.account = "
-        let names = result.standardError.split(separator: "\n").compactMap { line -> String? in
+        let keys = result.standardError.split(separator: "\n").compactMap { line -> String? in
             guard line.hasPrefix(prefix) else { return nil }
             return String(line.dropFirst(prefix.count))
         }
-        if names.isEmpty, result.exitCode != 0, !result.standardError.isEmpty {
+        if keys.isEmpty, result.exitCode != 0, !result.standardError.isEmpty {
             throw StoreFailure.backendFailed("secret-tool search failed: \(result.standardError)")
         }
-        return Array(Set(names)).sorted()
+        return Array(Set(keys)).sorted()
     }
 }
 #endif

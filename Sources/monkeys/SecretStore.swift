@@ -3,15 +3,15 @@ import Foundation
 let serviceName = "monkeys"
 
 enum StoreFailure: Error {
-    case nameNotStored(String)
-    case invalidVariableName(String)
-    case emptyValue
+    case keyNotStored(String)
+    case invalidKey(String)
+    case emptySecret
     case badInvocation(String)
     case invalidProfileName(String)
     case badProjectFile(String, String)
     case profileNotDeclared(String, [String], String)
     case profileAmbiguous(String, [String])
-    case namesNotStored([String], String)
+    case keysNotStored([String], String)
     case namesAlreadyListed([String], String, String)
     case bundleFailed(String)
     case backendUnavailable(String)
@@ -21,12 +21,12 @@ enum StoreFailure: Error {
 extension StoreFailure: CustomStringConvertible {
     var description: String {
         switch self {
-        case .nameNotStored(let name):
+        case .keyNotStored(let name):
             return "\(name) is not stored"
-        case .invalidVariableName(let name):
-            return "\(name) is not a valid environment variable name"
-        case .emptyValue:
-            return "no value was given"
+        case .invalidKey(let name):
+            return "\(name) is not a valid key (an environment variable name)"
+        case .emptySecret:
+            return "no secret was given"
         case .badInvocation(let form):
             return "expected \(form)"
         case .invalidProfileName(let argument):
@@ -39,18 +39,18 @@ extension StoreFailure: CustomStringConvertible {
         case .profileAmbiguous(let name, let candidates):
             let listed = candidates.map { "@" + $0 }.joined(separator: ", ")
             return "@\(name) could be \(listed); say enough to tell them apart"
-        case .namesNotStored(let names, let profileArgument):
-            let subject = names.count == 1 ? "it" : "them"
-            let asks = names.map { "  monkeys set \(profileArgument)\($0)" }.joined(separator: "\n")
+        case .keysNotStored(let keys, let profileArgument):
+            let subject = keys.count == 1 ? "it" : "them"
+            let asks = keys.map { "  monkeys set \(profileArgument)\($0)" }.joined(separator: "\n")
             let place = profileArgument.isEmpty ? "" : " in \(profileArgument.trimmingCharacters(in: .whitespaces))"
             return """
-            \(names.joined(separator: ", ")) \(names.count == 1 ? "is" : "are") not stored yet\(place)
+            \(keys.joined(separator: ", ")) \(keys.count == 1 ? "is" : "are") not stored yet\(place)
             nothing ran. a human has to store \(subject), then try again:
             \(asks)
             """
-        case .namesAlreadyListed(let names, let profile, let path):
+        case .namesAlreadyListed(let keys, let profile, let path):
             return """
-            \(path) already lists \(names.joined(separator: ", ")) for @\(profile)
+            \(path) already lists \(keys.joined(separator: ", ")) for @\(profile)
             inside a project, run takes only the command: monkeys run <command>
             """
         case .bundleFailed(let reason):
@@ -67,7 +67,7 @@ protocol SecretStore: Sendable {
     func store(_ value: String, forName name: String) throws
     func read(forName name: String) throws -> String
     func remove(forName name: String) throws
-    func storedNames() throws -> [String]
+    func storedKeys() throws -> [String]
 }
 
 #if os(macOS)
@@ -78,7 +78,7 @@ let secretStore: SecretStore = SecretServiceStore()
 #error("monkeys has no secret store for this platform")
 #endif
 
-func isValidVariableName(_ name: String) -> Bool {
+func isValidKey(_ name: String) -> Bool {
     guard let first = name.first, first.isASCII else { return false }
     guard first.isLetter || first == "_" else { return false }
     return name.allSatisfy { ($0.isASCII && ($0.isLetter || $0.isNumber)) || $0 == "_" }

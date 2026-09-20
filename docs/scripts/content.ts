@@ -12,6 +12,8 @@ const description =
 const slugOf = (title: string) =>
 	title
 		.toLowerCase()
+		.replace(/^\./, 'dot-')
+		.replace(/\*/g, 'any')
 		.replace(/[^a-z0-9]+/g, '-')
 		.replace(/^-|-$/g, '');
 

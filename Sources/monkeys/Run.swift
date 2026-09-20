@@ -6,20 +6,20 @@ import Darwin
 import Glibc
 #endif
 
-let runInvocation = "monkeys run [--no-redact] [@profile] <NAME>[,<NAME>...] <command>, monkeys run [--no-redact] [@profile] --all <command>, or monkeys run [--no-redact] [@profile] <command> next to a \(projectFileName) file"
+let runInvocation = "monkeys run [--no-redact] [@profile] <KEY>[,<KEY>...] <command>, monkeys run [--no-redact] [@profile] --all <command>, or monkeys run [--no-redact] [@profile] <command> next to a \(projectFileName) file"
 let noRedactFlag = "--no-redact"
 
-private func namesToSpend(_ scope: Scope, _ arguments: [String]) throws -> (names: [String], command: [String]) {
+private func namesToSpend(_ scope: Scope, _ arguments: [String]) throws -> (keys: [String], command: [String]) {
     if arguments.first == "--all" {
-        return (try storedNamesInScope(scope), Array(arguments.dropFirst()))
+        return (try storedKeysInScope(scope), Array(arguments.dropFirst()))
     }
-    if let names = scope.projectNames {
-        try rejectListedNames(arguments.first, names, scope)
-        return (names, arguments)
+    if let keys = scope.projectKeys {
+        try rejectListedNames(arguments.first, keys, scope)
+        return (keys, arguments)
     }
     guard let list = arguments.first else { throw StoreFailure.badInvocation(runInvocation) }
-    let names = list.split(separator: ",", omittingEmptySubsequences: false).map(String.init)
-    return (names, Array(arguments.dropFirst()))
+    let keys = list.split(separator: ",", omittingEmptySubsequences: false).map(String.init)
+    return (keys, Array(arguments.dropFirst()))
 }
 
 private func rejectListedNames(_ first: String?, _ listed: [String], _ scope: Scope) throws {
@@ -43,20 +43,20 @@ private func withoutRedactFlag(_ arguments: [String]) -> (arguments: [String], i
 func runCommandWithSecrets(_ arguments: [String]) throws -> Never {
     let (cleaned, isRedacting) = withoutRedactFlag(arguments)
     let (scope, rest) = try resolveScope(cleaned)
-    let (names, command) = try namesToSpend(scope, rest)
+    let (keys, command) = try namesToSpend(scope, rest)
     guard !command.isEmpty else { throw StoreFailure.badInvocation(runInvocation) }
 
     var values: [SpentValue] = []
     var missing: [String] = []
-    for name in names {
-        guard isValidVariableName(name) else { throw StoreFailure.invalidVariableName(name) }
+    for name in keys {
+        guard isValidKey(name) else { throw StoreFailure.invalidKey(name) }
         do {
             values.append(SpentValue(name: name, value: try secretStore.read(forName: scope.storedName(name))))
-        } catch StoreFailure.nameNotStored {
+        } catch StoreFailure.keyNotStored {
             missing.append(name)
         }
     }
-    guard missing.isEmpty else { throw StoreFailure.namesNotStored(missing, scope.profileArgument) }
+    guard missing.isEmpty else { throw StoreFailure.keysNotStored(missing, scope.profileArgument) }
     if isRedacting { runRedacted(command, values) }
     runUnredacted(command, values)
 }

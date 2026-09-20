@@ -11,7 +11,7 @@
 
 	const repository = { owner: 'eastriverlee', repo: 'monkeys' };
 
-	const structuredData = `<script type="application/ld+json">${JSON.stringify({"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "monkeys", "url": "https://monk3ys.dev", "description": "A cross-platform .env alternative for the LLM era: secrets in your keyring, their names in your repo, spent one command at a time, never printed.", "applicationCategory": "DeveloperApplication", "operatingSystem": "macOS, Linux", "license": "https://github.com/eastriverlee/monkeys/blob/main/LICENSE", "downloadUrl": "https://github.com/eastriverlee/monkeys/releases", "sameAs": ["https://github.com/eastriverlee/monkeys"], "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "eastriverlee", "url": "https://github.com/eastriverlee"}, "copyrightHolder": {"@type": "Organization", "name": "13e7 corp."}})}<\/script>`;
+	const structuredData = `<script type="application/ld+json">${JSON.stringify({"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "monkeys", "url": "https://monk3ys.dev", "description": "A cross-platform .env alternative for the LLM era: secrets in your vault, their keys in your repo, spent one command at a time, never printed.", "applicationCategory": "DeveloperApplication", "operatingSystem": "macOS, Linux", "license": "https://github.com/eastriverlee/monkeys/blob/main/LICENSE", "downloadUrl": "https://github.com/eastriverlee/monkeys/releases", "sameAs": ["https://github.com/eastriverlee/monkeys"], "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "eastriverlee", "url": "https://github.com/eastriverlee"}, "copyrightHolder": {"@type": "Organization", "name": "13e7 corp."}})}<\/script>`;
 	const installTabs = [
 		{ label: 'curl', code: 'curl -fsSL https://monk3ys.dev/install | sh' },
 		{ label: 'Homebrew', code: 'brew install eastriverlee/tap/monkeys' },
@@ -21,7 +21,7 @@
 		}
 	];
 	const storeLine = 'monkeys set OPENROUTER_API_KEY';
-	const storeOutput = `Value:
+	const storeOutput = `Secret:
 stored OPENROUTER_API_KEY
 give it to a command with:
   monkeys run OPENROUTER_API_KEY <command>`;
@@ -77,20 +77,20 @@ SENTRY_DSN`;
 
 <svelte:head>
 	<title>monkeys: a cross-platform .env alternative for the LLM era</title>
-	<meta name="description" content="A cross-platform .env alternative for the LLM era. Secrets in your keyring, their names in your repo, spent one command at a time, never printed." />
+	<meta name="description" content="A cross-platform .env alternative for the LLM era. Secrets in your vault, their keys in your repo, spent one command at a time, never printed." />
 	<meta name="robots" content="index, follow" />
 	<link rel="canonical" href="https://monk3ys.dev/" />
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="monkeys" />
 	<meta property="og:title" content="monkeys: a cross-platform .env alternative for the LLM era" />
-	<meta property="og:description" content="A cross-platform .env alternative for the LLM era. Secrets in your keyring, their names in your repo, spent one command at a time, never printed." />
+	<meta property="og:description" content="A cross-platform .env alternative for the LLM era. Secrets in your vault, their keys in your repo, spent one command at a time, never printed." />
 	<meta property="og:url" content="https://monk3ys.dev/" />
 	<meta property="og:image" content="https://monk3ys.dev/og.png" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content="monkeys: a cross-platform .env alternative for the LLM era" />
-	<meta name="twitter:description" content="A cross-platform .env alternative for the LLM era. Secrets in your keyring, their names in your repo, spent one command at a time, never printed." />
+	<meta name="twitter:description" content="A cross-platform .env alternative for the LLM era. Secrets in your vault, their keys in your repo, spent one command at a time, never printed." />
 	<meta name="twitter:image" content="https://monk3ys.dev/og.png" />
 	<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 	<link rel="icon" href="/favicon.png" type="image/png" sizes="any" />
@@ -156,8 +156,8 @@ SENTRY_DSN`;
 			and being careful didn't fix it. Rust did.
 		</p>
 		<p class="max-w-prose">
-			<code>monkeys</code> keeps each secret in your keyring and hands it to one command at a
-			time. Nothing prints a stored value, the command you hand it to included, so there is
+			<code>monkeys</code> keeps each secret in your vault and hands it to one command at a
+			time. Nothing prints a stored secret, the command you hand it to included, so there is
 			nothing to read.
 		</p>
 	</section>
@@ -172,7 +172,7 @@ SENTRY_DSN`;
 		<CommandTabs tabs={installTabs} />
 		<p class="max-w-prose">
 			For a coding agent, install the skill as well. It is what makes the agent reach for
-			<code>monkeys</code> on its own instead of asking you to paste a key; a key it needs but
+			<code>monkeys</code> on its own instead of asking you to paste a secret; a key it needs but
 			you have not stored comes back as a message that says what to ask you for.
 		</p>
 		<CommandTabs tabs={agentTabs} />
@@ -185,14 +185,14 @@ SENTRY_DSN`;
 
 	<img
 		src="/terminal.svg"
-		alt="monkeys run refusing a missing value, then running the command, then preview"
+		alt="monkeys run refusing a missing secret, then running the command, then preview"
 		class="w-full rounded-xl"
 	/>
 
 	<section class="flex flex-col gap-4">
-		<h2 class="text-2xl font-bold tracking-tight">Store a key once</h2>
+		<h2 class="text-2xl font-bold tracking-tight">Store a secret once</h2>
 		<p class="max-w-prose">
-			Paste it at the prompt. It goes into the keychain on macOS and the Secret Service on Linux, and
+			Paste it at the prompt. It goes into your vault, the keychain on macOS and the Secret Service on Linux, and
 			nothing you type lands in your shell history.
 		</p>
 		<CodeFile code={storeLine} output={storeOutput} />
@@ -201,21 +201,21 @@ SENTRY_DSN`;
 	<section class="flex flex-col gap-4">
 		<h2 class="text-2xl font-bold tracking-tight">Spend it on one command</h2>
 		<p class="max-w-prose">
-			Name what the command reads, then the command, written the way you always write it.
-			<code>run</code> puts the value in that one process and becomes it.
+			Name the keys the command reads, then the command, written the way you always write it.
+			<code>run</code> puts the secret in that one process and becomes it.
 		</p>
 		<CodeFile code={spendLine} output="200" />
 		<p class="max-w-prose">
-			The key went into the request and the status came back. Nothing else did. The single quotes
-			matter: the shell <code>run</code> starts is the one that has the value, so it has to be the
+			The secret went into the request and the status came back. Nothing else did. The single quotes
+			matter: the shell <code>run</code> starts is the one that has the secret, so it has to be the
 			one that expands <code>$OPENROUTER_API_KEY</code>.
 		</p>
 	</section>
 
 	<section class="flex flex-col gap-4">
-		<h2 class="text-2xl font-bold tracking-tight">Let the project name what it needs</h2>
+		<h2 class="text-2xl font-bold tracking-tight">Let the project list the keys it needs</h2>
 		<p class="max-w-prose">
-			A <code>.monkeys</code> file next to the code lists the names, under a profile. Commit it. In
+			A <code>.monkeys</code> file next to the code lists the keys, under a profile. Commit it. In
 			that directory, <code>run</code> takes only the command, and the script reads the variable
 			the way any program does.
 		</p>
@@ -234,14 +234,14 @@ SENTRY_DSN`;
 		<CodeFile code={runInProject} output="200" />
 		<p class="max-w-prose">
 			A profile line can name several profiles, and a file can hold several blocks. A profile's
-			names are those of every block that lists it; the first profile in the file is the one
+			keys are those of every block that lists it; the first profile in the file is the one
 			<code>run</code> uses when none is given, and one the file does not declare is refused. A
 			prefix that fits only one declared profile is enough, the way a short git hash is.
 		</p>
 		<CodeFile name=".monkeys" lang="monkeys" code={profilesFile} />
 		<CodeFile code={runStaging} />
 		<p class="max-w-prose">
-			A value missing in one profile stops that profile alone, and only when it is used.
+			A secret missing in one profile stops that profile alone, and only when it is used.
 			<code>monkeys fill @foo --with @test.foo</code> fills the second profile with what the first
 			has and it lacks, and <code>doctor</code> reads the whole file:
 		</p>
@@ -252,13 +252,13 @@ SENTRY_DSN`;
 		<h2 class="text-2xl font-bold tracking-tight">Hand the profile to a teammate</h2>
 		<p class="max-w-prose">
 			<code>pack</code> asks for a passphrase and writes <code>test.foo.monkeys</code>: every profile the file declares, or the ones <code>--only @test.foo</code> names, with their
-			names and values, sealed. Send the file however you like, and the passphrase another way.
+			keys and secrets, sealed. Send the file however you like, and the passphrase another way.
 		</p>
 		<CodeFile code={packLine} />
 		<p class="max-w-prose">
-			On the other machine, <code>unpack</code> asks for the passphrase, stores the values, and
+			On the other machine, <code>unpack</code> asks for the passphrase, stores the secrets, and
 			writes <code>.monkeys</code> at the root of the checkout, wherever inside it you run it.
-			That is the only way a value leaves the keyring.
+			That is the only way a secret leaves the vault.
 		</p>
 		<CodeFile code={unpackLine} />
 	</section>

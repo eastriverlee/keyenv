@@ -41,7 +41,7 @@ struct KeychainStore: SecretStore {
 
         var item: CFTypeRef?
         let status = SecItemCopyMatching(lookup as CFDictionary, &item)
-        if status == errSecItemNotFound { throw StoreFailure.nameNotStored(name) }
+        if status == errSecItemNotFound { throw StoreFailure.keyNotStored(name) }
         guard status == errSecSuccess else { throw failure(status) }
         guard let data = item as? Data, let value = String(data: data, encoding: .utf8) else {
             throw failure(errSecDecode)
@@ -51,11 +51,11 @@ struct KeychainStore: SecretStore {
 
     func remove(forName name: String) throws {
         let status = SecItemDelete(query(forName: name) as CFDictionary)
-        if status == errSecItemNotFound { throw StoreFailure.nameNotStored(name) }
+        if status == errSecItemNotFound { throw StoreFailure.keyNotStored(name) }
         guard status == errSecSuccess else { throw failure(status) }
     }
 
-    func storedNames() throws -> [String] {
+    func storedKeys() throws -> [String] {
         let lookup: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,

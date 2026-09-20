@@ -8,7 +8,7 @@
     {
       "name": "monkeys",
       "source": "./plugins/monkeys",
-      "description": "A cross-platform .env alternative for the LLM era: secrets in your keyring, their names in your repo, spent one command at a time, never printed.",
+      "description": "A cross-platform .env alternative for the LLM era: secrets in your vault, their keys in your repo, spent one command at a time, never printed.",
       "version": "1.2.0",
       "license": "MIT"
     }

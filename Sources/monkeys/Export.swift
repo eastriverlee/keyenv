@@ -1,6 +1,6 @@
 import Foundation
 
-private func keyringLookup(_ storedName: String) -> String {
+private func vaultLookup(_ storedName: String) -> String {
     #if os(macOS)
     return "security find-generic-password -s \(serviceName) -a \(storedName) -w"
     #else
@@ -9,14 +9,14 @@ private func keyringLookup(_ storedName: String) -> String {
 }
 
 func startupLine(_ scope: Scope, _ name: String) -> String {
-    "export \(name)=\"$(\(keyringLookup(scope.storedName(name))))\""
+    "export \(name)=\"$(\(vaultLookup(scope.storedName(name))))\""
 }
 
 func runExport(_ arguments: [String]) throws {
     let (scope, rest) = try resolveScope(arguments)
-    let names = try validatedNames(scope, rest)
-    let stored = Set(try secretStore.storedNames())
-    let missing = names.filter { !stored.contains(scope.storedName($0)) }
-    guard missing.isEmpty else { throw StoreFailure.namesNotStored(missing, scope.profileArgument) }
-    for name in names { print(startupLine(scope, name)) }
+    let keys = try validatedKeys(scope, rest)
+    let stored = Set(try secretStore.storedKeys())
+    let missing = keys.filter { !stored.contains(scope.storedName($0)) }
+    guard missing.isEmpty else { throw StoreFailure.keysNotStored(missing, scope.profileArgument) }
+    for name in keys { print(startupLine(scope, name)) }
 }

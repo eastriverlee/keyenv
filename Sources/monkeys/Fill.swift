@@ -22,9 +22,9 @@ private func fillScopes(_ arguments: [String]) throws -> (source: Scope, target:
 
 func runFill(_ arguments: [String]) throws {
     let (source, target) = try fillScopes(arguments)
-    let stored = try secretStore.storedNames()
+    let stored = try secretStore.storedKeys()
     let present = Set(stored)
-    let considered = try target.projectNames ?? storedNamesInScope(source)
+    let considered = try target.projectKeys ?? storedKeysInScope(source)
     let lacking = considered.filter { !present.contains(target.storedName($0)) }
     let filled = lacking.filter { present.contains(source.storedName($0)) }
     let stillMissing = lacking.filter { !present.contains(source.storedName($0)) }
@@ -38,15 +38,15 @@ func runFill(_ arguments: [String]) throws {
     if filled.isEmpty {
         printToStandardError(messageStyle("nothing to fill", .dim) + " in \(label(target)) from \(label(source))")
     } else {
-        let names = filled.map { messageStyle($0, .bold) }.joined(separator: ", ")
-        printToStandardError(messageStyle("filled", .good) + " \(label(target)) from \(label(source)): " + names)
+        let keys = filled.map { messageStyle($0, .bold) }.joined(separator: ", ")
+        printToStandardError(messageStyle("filled", .good) + " \(label(target)) from \(label(source)): " + keys)
     }
     if kept > 0 {
         printToStandardError(messageStyle("kept", .dim) + " \(kept) \(label(target)) already had")
     }
     guard stillMissing.isEmpty else {
-        let names = stillMissing.map { messageStyle($0, .bold) }.joined(separator: ", ")
-        printToStandardError(messageStyle("still missing", .bad) + " in \(label(target)): " + names)
+        let keys = stillMissing.map { messageStyle($0, .bold) }.joined(separator: ", ")
+        printToStandardError(messageStyle("still missing", .bad) + " in \(label(target)): " + keys)
         exit(1)
     }
 }
