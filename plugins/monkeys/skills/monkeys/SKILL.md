@@ -75,7 +75,9 @@ again: `monkeys run @ TYPESAFE_API_KEY claude`.
 
 A shared `<name>.monsecrets` bundle fills a profile with `monkeys unpack`, which
 writes `.monkeys` at the git root, asks for a passphrase and deletes the bundle. A human runs it;
-do not run it yourself.
+do not run it yourself. The same goes for `monkeys kill`, which moves a
+project's `.env` files into monkeys: it asks a question per key and deletes
+the files.
 
 The command you start is what expands the variable, since that is where it
 exists. `$KEY` written into the `monkeys run` line is expanded by the shell

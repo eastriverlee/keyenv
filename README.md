@@ -74,6 +74,10 @@ history, your startup file, or the line you just typed. `run` becomes the
 command once the secrets are set, so the exit status, the output and the signals
 are the command's own.
 
+A project that already has `.env` files moves them in with `monkeys kill`,
+which asks, key by key, whether each one is a secret or a public value, and
+deletes the files once everything is stored.
+
 ## Install
 
 On macOS or Linux, from the latest release:
