@@ -32,7 +32,7 @@ body:
     attributes:
       label: Version and install path
       description: The release tag, and whether it came from Homebrew, the install script, or `make install`.
-      placeholder: v1.5.0, Homebrew
+      placeholder: v0.9.0, Homebrew
     validations:
       required: true
   - type: dropdown
