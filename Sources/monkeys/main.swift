@@ -581,6 +581,7 @@ do {
     case "pack": try runPack(rest)
     case "run": try runCommandWithSecrets(rest)
     case "unpack": try runUnpack(rest)
+    case "kill": try runKill(rest)
     case "export": try runExport(rest)
     case "doctor": try runDoctor(rest)
     case "fill": try runFill(rest)

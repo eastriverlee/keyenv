@@ -421,7 +421,8 @@ looked up in the vault, and a secret is never read from the file.
 
 `set --public` writes a value under a profile's block, creating the file the
 first time. `remove` deletes one. `unpack` writes the values a bundle
-carries, next to the `.monkeys` it writes. `run` puts every value of the
+carries, next to the `.monkeys` it writes, and `kill` writes the lines of a
+`.env` file you answered public for. `run` puts every value of the
 profile into the command's environment, and `preview` and `doctor` show them
 as they are, since they are public.
 
@@ -496,6 +497,7 @@ the fix is to delete it and change the passphrase you would have sent.
 | `monkeys run <command>` | the same, with the keys a `.monkeys` file lists |
 | `monkeys pack [path] [--open] [--only ...]` | the profiles as one encrypted `a.monsecrets` |
 | `monkeys unpack <name> [directory]` | store its secrets, write its `.monkeys` |
+| `monkeys kill` | move the `.env` files here into the vault, `.monkeys` and `.monvalues` |
 | `monkeys fill @a --with @b` | give `@a` the keys it lacks, from `@b` |
 | `monkeys list` | the whole vault, as blocks by profile |
 | `monkeys preview [KEY[,KEY...]]` | print each secret masked, with its length |
@@ -1032,6 +1034,95 @@ way, adding the values the file does not have and leaving the ones it has:
 > ```
 
 The passphrase is read from standard input when it is not a terminal.
+
+## kill
+
+```sh
+monkeys kill
+```
+
+Moves a project's dotenv files into monkeys and deletes them. It reads `.env`,
+`.env.local` and every `.env.<profile>` in the current directory, asks one
+question per key, secret or public, and writes the answers where they belong:
+a secret's key into `.monkeys` with the secret in the vault, a public line
+into `.monvalues` as it is.
+
+```sh
+monkeys kill
+```
+
+> ```
+> Namespace, +name (Enter for none): foo
+> Profile for .env [test]:
+> DATABASE_URL @test,@production  [s]ecret or [p]ublic? s
+> STRIPE_SECRET_KEY @test  [s]ecret or [p]ublic? s
+> PORT @test,@production  [s]ecret or [p]ublic? p
+>   public PORT=3000 for @test, into .monvalues
+>   public PORT=80 for @production, into .monvalues
+> SENTRY_DSN @production  [s]ecret or [p]ublic? s
+> wrote .monkeys: +foo @test,production @test @production, 3 keys
+> stored @test: DATABASE_URL, STRIPE_SECRET_KEY
+> stored @production: DATABASE_URL, SENTRY_DSN
+> public @test: PORT
+> public @production: PORT
+> removed .env, .env.production
+> a .gitignore line for them is dead now and can go; monkeys leaves that file alone
+> ```
+
+That run started from `.env` and `.env.production` and left this behind:
+
+```monkeys
++foo
+@test,production
+DATABASE_URL
+@test
+STRIPE_SECRET_KEY
+@production
+SENTRY_DSN
+```
+
+```monkeys
+@test
+PORT=3000
+@production
+PORT=80
+```
+
+The files map to profiles the way dotenv already names them: `.env` and
+`.env.local` go to the default profile, the first one in `.monkeys` when
+the file exists and otherwise the one asked for, and `.env.<name>` goes to
+`@<name>`. A key found in several files gets each file's value under that
+file's profile, and its line in `.monkeys` lists those profiles together.
+`.env.example` is left alone, since `.monkeys` is what it was standing in
+for.
+
+The secret answer is the default; Enter takes it. The value is shown only
+for a public answer, since that is the moment it becomes a line in a file
+that gets committed. A key the project already has, as a secret in the vault,
+a key in `.monkeys`, or a value in `.monvalues`, asks before it is replaced,
+and Enter keeps what is there; asked for the other kind, it is kept without
+asking and named in the summary, since turning one kind into the other is
+`remove` and then `set`.
+
+The grammar is the part of dotenv every library reads the same way: `KEY=value`,
+`export KEY=value`, a value in single or double quotes with the quotes
+stripped, `#` comment lines and blank lines. A value that spans lines, one that
+expands another variable with `${...}`, or an unquoted one followed by a `#`
+comment is refused with its file and line, and nothing is written until every
+file parses:
+
+> ```
+> monkeys: .env:2: DATABASE_URL expands another variable; monkeys keeps a value as it is; nothing was written
+> ```
+
+When no `.monkeys` exists yet, `kill` asks for a namespace once, Enter for
+none, and writes the file at the root of the git checkout, where `unpack`
+writes it. When one exists, its `+` line and its profiles stand, and the
+keys are added to it the way `unpack` adds them. The dotenv files are
+deleted only after every secret is stored and both files are written. The
+`.gitignore` lines that kept them out of git are left for you, and the last
+line says so. `kill` asks its questions on the terminal, so it refuses to run
+with its input piped.
 
 ## fill
 

@@ -29,6 +29,8 @@ let commandSummaries = [
                    summary: "one encrypted file of the profiles"),
     CommandSummary(verb: "unpack", arguments: "<name> [dir] [--keep]",
                    summary: "store its secrets, write its .monkeys"),
+    CommandSummary(verb: "kill", arguments: "",
+                   summary: "move the .env files here into monkeys"),
     CommandSummary(verb: "fill", arguments: "@a --with @b",
                    summary: "give @a the keys it lacks, from @b"),
     CommandSummary(verb: "list", arguments: "",
@@ -158,6 +160,13 @@ var usage: String {
       \(outputStyle("monkeys pack --only @test,production DATABASE_URL", .argument))
       \(outputStyle("monkeys pack shared --only @test @production SENTRY_DSN", .argument))
       \(outputStyle("monkeys unpack a", .argument))
+
+    A project that still has .env files moves them in with one command. kill
+    asks, key by key, whether each one is a secret for the vault or a public
+    value for .monvalues, writes both files, and deletes the .env files once
+    everything is stored:
+
+      \(outputStyle("monkeys kill", .argument))
 
     \(styledAgentGuide)
     """
