@@ -493,6 +493,8 @@ the fix is to delete it and change the passphrase you would have sent.
 | `monkeys set --public <KEY>` | write a plain value into `.monvalues` |
 | `monkeys set [@profile] [--all]` | prompt for each key the profile lacks |
 | `monkeys remove <KEY>` | delete one secret |
+| `monkeys remove @profile[,profile...]` | delete every secret of those profiles |
+| `monkeys remove +namespace` | the same for every profile under a namespace |
 | `monkeys rename @old @new` | move a profile to a new name, in the vault and the file |
 | `monkeys rename +old +new` | the same for every profile under a namespace |
 | `monkeys run <KEY[,KEY...]> <command>` | run a command with those secrets in its environment |
@@ -654,6 +656,8 @@ becomes a committed line by accident.
 
 ```sh
 monkeys remove [@profile] <KEY>
+monkeys remove @profile[,profile...]
+monkeys remove +namespace
 ```
 
 Deletes one secret from the vault. Inside a project the key is the project's;
@@ -681,6 +685,35 @@ monkeys remove API_URL
 A value the file sets for several profiles together is refused, the way
 `set --public` refuses it, and a key that is in both files is refused until
 it is in one.
+
+A profile on its own, with no key, removes every secret stored under it, and a
+comma list removes several. The names are all resolved before anything is
+deleted, so a typo in the second name leaves the first untouched:
+
+```sh
+monkeys remove @test,production
+```
+
+> ```
+> removed @test: DATABASE_URL, STRIPE_SECRET_KEY
+> removed @production: DATABASE_URL, SENTRY_DSN, STRIPE_SECRET_KEY
+> ```
+
+A namespace removes every profile under it, declared in a file or not:
+
+```sh
+monkeys remove +foo
+```
+
+> ```
+> removed @foo.production: DATABASE_URL, SENTRY_DSN, STRIPE_SECRET_KEY
+> removed @foo.test: DATABASE_URL, STRIPE_SECRET_KEY
+> ```
+
+Neither form touches `.monkeys` or `.monvalues`: a project still declares the
+profile, and `doctor` reports every key of it missing. A bare `@` is no profile
+and is refused, so the secrets with no profile go one key at a time.
+
 ## rename
 
 ```sh

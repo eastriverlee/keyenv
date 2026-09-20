@@ -20,6 +20,7 @@ enum StoreFailure: Error {
     case keyIsSecret(String, String)
     case valuesNeedProject
     case renameRefused(String)
+    case removeRefused(String)
     case badDotenvLine(String, String)
     case bundleFailed(String)
     case backendUnavailable(String)
@@ -78,6 +79,8 @@ extension StoreFailure: CustomStringConvertible {
         case .valuesNeedProject:
             return "a value has nowhere to go without a project: run this next to a \(projectFileName) file"
         case .renameRefused(let reason):
+            return reason
+        case .removeRefused(let reason):
             return reason
         case .badDotenvLine(let place, let problem):
             return "\(place): \(problem); nothing was written"

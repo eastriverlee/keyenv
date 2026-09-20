@@ -14,7 +14,7 @@ private func storedKeys(under profile: String) throws -> [String] {
     try storedKeysInScope(Scope(profile: profile, project: nil))
 }
 
-private func storedProfiles(under namespace: String, in stored: [String]) -> [String] {
+func storedProfiles(under namespace: String, in stored: [String]) -> [String] {
     let prefix = namespace + "."
     let profiles = stored.compactMap { name -> String? in
         guard let slash = name.firstIndex(of: "/") else { return nil }

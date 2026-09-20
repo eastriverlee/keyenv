@@ -134,6 +134,9 @@ func runSet(_ arguments: [String]) throws {
 }
 
 func runRemove(_ arguments: [String]) throws {
+    if arguments.count == 1, let only = arguments.first, only.hasPrefix("@") || only.hasPrefix("+") {
+        return try runRemoveProfiles(only)
+    }
     let (scope, rest) = try resolveScope(arguments)
     let name = try requireKey(rest)
     if let project = scope.project, let profile = scope.profile,
