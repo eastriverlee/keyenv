@@ -169,7 +169,7 @@ for (const section of readmeSections.filter(({ title }) => title === 'Quickstart
 		slug,
 		section.title,
 		isQuickstart ? asSteps(section.text) : section.text,
-		isQuickstart ? 'Install, store a secret and spend it on one command, in five steps.' : undefined
+		isQuickstart ? 'Store a secret, run with it and without it, then forget it, in four steps.' : undefined
 	);
 	order.push(slug);
 }
