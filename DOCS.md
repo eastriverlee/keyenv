@@ -1974,10 +1974,11 @@ has.
 
 ### Does monkeys work on Windows?
 
-Not on its own, since it speaks to the macOS keychain and the Secret Service
-and Windows runs neither. The Linux build runs under WSL, which needs a Secret
-Service in that session the way any Linux machine without a desktop does:
-`gnome-keyring` or KWallet, running and unlocked.
+Monkeys hate windows. There is no native build: it speaks to the macOS
+keychain and the Secret Service, and Windows runs neither. The Linux build
+runs under WSL, which needs a Secret Service in that session the way any Linux
+machine without a desktop does: `gnome-keyring` or KWallet, running and
+unlocked.
 
 ### How is this different from direnv?
 
