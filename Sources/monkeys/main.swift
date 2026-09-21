@@ -674,6 +674,7 @@ do {
     case "run": try runCommandWithSecrets(rest)
     case "unpack": try runUnpack(rest)
     case "eat": try runEat(rest)
+    case "poo": try runPoo(rest)
     case "export": try runExport(rest)
     case "doctor": try runDoctor(rest)
     case "fill": try runFill(rest)

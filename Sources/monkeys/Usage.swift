@@ -35,6 +35,8 @@ let commandSummaries = [
                    summary: "remember its secrets, write its .monkeys"),
     CommandSummary(verb: "eat", arguments: "[--public KEY[,KEY...]]",
                    summary: "move the .env files here into monkeys"),
+    CommandSummary(verb: "poo", arguments: "[@profile]",
+                   summary: "a .env of names, for tools that want one"),
     CommandSummary(verb: "fill", arguments: "@a --with @b",
                    summary: "give @a the keys it lacks, from @b"),
     CommandSummary(verb: "list", arguments: "",
@@ -182,6 +184,15 @@ var usage: String {
 
       \(outputStyle("monkeys eat", .argument))
       \(outputStyle("monkeys eat --public PORT,NODE_ENV", .argument))
+
+    Some tools read a .env file rather than the environment, and some only
+    want one to exist. poo writes one from the same list: the names on their
+    own, with no values beside them, and the public values as they stand. A
+    name with nothing after it sets nothing, so the secrets still arrive
+    through run and nothing in the file can shadow them:
+
+      \(outputStyle("monkeys poo", .argument))
+      \(outputStyle("monkeys poo @production", .argument))
 
     \(styledAgentGuide)
     """

@@ -114,6 +114,10 @@ to put a variable there.
   yourself: `monkeys remember --public PORT`.
 - A secret goes in as a bare key, and a human remembers it.
 
+When a tool insists on a `.env` file, `monkeys poo` writes one from that same
+list, names only and no secrets, and `monkeys run` still carries the values.
+Write the file that way or not at all.
+
 ## Eat a .env you find
 
 A project that still has `.env` files is one command away. Name the keys that

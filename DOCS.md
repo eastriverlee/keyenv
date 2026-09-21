@@ -1465,6 +1465,80 @@ first run would otherwise ask; a project that already has a `.monkeys` file
 takes both from it. Without `--public` there are questions to ask, so `eat`
 refuses to run with its input piped and says which flag to use.
 
+## poo
+
+Give a tool the `.env` file it insists on, without giving it a secret.
+
+```sh
+monkeys poo [@profile]
+```
+
+Writes a `.env` beside `.monkeys` carrying the same list: every secret's name on
+a line of its own, and every public value as it already stands. A name with
+nothing after it sets nothing, so the file satisfies whatever wanted one while
+the secrets keep arriving through `run`.
+
+```sh
+monkeys poo
+```
+
+> ```
+> wrote .env for @test: 2 names, 1 value
+> ```
+
+```
+# monkeys' poo. read https://monk3ys.dev/poo
+DATABASE_URL
+STRIPE_SECRET_KEY
+PORT=3000
+```
+
+The header names the profile when the project declares more than one, since
+that is the profile `run` has to be given to match.
+
+### Why a name carries no value
+
+A placeholder would be worse than nothing. The three things that read a `.env`
+treat a bare name and a `KEY=x` differently, and only the bare name is safe in
+all three:
+
+| what reads it | `DATABASE_URL` | `DATABASE_URL=x` |
+| --- | --- | --- |
+| dotenv, so Vite, SvelteKit, Next | ignored, the environment's value stands | ignored, the environment's value stands |
+| Docker Compose `env_file:` | taken from the host environment | `x` goes into the container |
+| `set -a; . .env` | the environment's value survives | overwritten with `x` |
+
+The bottom two rows are the reason. A placeholder reaches a container or a
+shell as a real value, and the failure moves from the start of the program,
+where it is obvious, to the first call that uses the key, where it is not.
+
+### @profile
+
+A profile names which list to write, the way it does everywhere else:
+
+```sh
+monkeys poo @production
+```
+
+> ```
+> wrote .env for @production: 3 names, 1 value
+> ```
+
+One file is written, never one per profile. Which profile a program runs under
+is `run`'s to decide, and a second place to decide it is a second place to get
+it wrong.
+
+### An existing .env
+
+A `.env` that poo did not write is left alone:
+
+> ```
+> monkeys: ~/code/shop/.env was not written by poo: monkeys eat it first, or move it aside
+> ```
+
+Its own output it overwrites without asking, since the file is derived and
+nothing in it was yours.
+
 ## fill
 
 Give a profile the secrets another profile already has.
