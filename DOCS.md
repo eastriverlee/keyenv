@@ -1165,7 +1165,7 @@ into every shell you open.
 Send a project's secrets to someone, as one encrypted file.
 
 ```sh
-monkeys pack [path] [--open] [--only [KEY[,KEY...]] [@profile[,profile...] [KEY[,KEY...]]]...]
+monkeys pack [path] [--ask] [--open] [--only [KEY[,KEY...]] [@profile[,profile...] [KEY[,KEY...]]]...]
 ```
 
 Writes a project's secrets as one encrypted file, the only way they leave the
@@ -1179,6 +1179,7 @@ monkeys pack
 > passphrase:
 > again:
 > wrote /tmp/a.monsecrets: +foo @test,production @production, 5 secrets
+> copied its passphrase to your clipboard; send that the other way
 > ```
 
 The file goes to `/tmp`, which is never inside a repository, and the
@@ -1214,6 +1215,39 @@ is to drag it somewhere.
 
 A pack with a secret still missing refuses, since a bundle that fills half a
 profile is a bug for whoever receives it.
+
+### The passphrase
+
+Everything else about the file is fixed, so the passphrase is the only part
+anyone decides, and the only part an attacker can work on. A stolen bundle is
+guessed at offline for as long as someone cares to, and scrypt's 128 MB a
+guess buys time only in proportion to how hard the passphrase is to guess.
+
+So `pack` does not ask for one. It draws 24 random characters and puts them on
+your clipboard, and they are never printed, never stored and never in your
+shell history. Paste that into whatever carries it to the other person, which
+is not the thing carrying the file.
+
+A clipboard manager keeps what it is given, sometimes for good. If you run
+one, take the passphrase out of its history once the bundle has arrived.
+
+`--ask` prompts for one you choose instead, and leaves the clipboard alone:
+
+```sh
+monkeys pack --ask
+```
+
+> ```
+> passphrase:
+> again:
+> wrote /tmp/a.monsecrets: +foo @test,production @production, 5 secrets
+> ```
+
+Choose that way and the file is only as good as the passphrase, so take one
+from a password manager rather than thinking one up. On a machine with no
+clipboard tool `pack` says so and asks, since a file whose passphrase nobody
+has is a file nobody can open. The passphrase is still read from standard
+input when it is not a terminal, so a script that pipes one keeps working.
 
 ### --only
 
@@ -1665,9 +1699,12 @@ monkeys pack --only @test
 > passphrase:
 > again:
 > wrote /tmp/a.monsecrets: +foo @test, 2 secrets
+> copied its passphrase to your clipboard; send that the other way
 > ```
 
-Send that file. On the other machine, anywhere inside their
+Send that file, and paste the passphrase into something else: a different
+messenger, a call, a password manager's share. Both down one channel is one
+leak away from being no encryption at all. On the other machine, anywhere inside their
 checkout:
 
 ```sh

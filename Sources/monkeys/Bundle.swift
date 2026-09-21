@@ -75,6 +75,22 @@ private func readPassphrase(confirming: Bool) throws -> String {
     return entered
 }
 
+private let passphraseAlphabet = Array("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+private let passphraseLength = 24
+
+/// Drawn uniformly, rejecting the bytes that would favour the front of the alphabet.
+func generatedPassphrase() -> String {
+    let alphabet = passphraseAlphabet
+    let limit = UInt8(256 - (256 % alphabet.count))
+    var drawn = ""
+    while drawn.count < passphraseLength {
+        let byte = UInt8.random(in: .min ... .max)
+        guard byte < limit else { continue }
+        drawn.append(alphabet[Int(byte) % alphabet.count])
+    }
+    return drawn
+}
+
 private func derivedKey(_ passphrase: String, salt: Data, cost: ScryptCost) throws -> SymmetricKey {
     try KDF.Scrypt.deriveKey(
         from: Data(passphrase.utf8), salt: salt, outputByteCount: 32,
@@ -172,8 +188,27 @@ private func deserialized(_ plaintext: Data) throws -> ProfileBundle {
     return ProfileBundle(namespace: namespace, blocks: blocks, values: try deserializedValues(valueLines, namespace: namespace))
 }
 
-func writeBundle(_ bundle: ProfileBundle, to path: String) throws {
-    let passphrase = try readPassphrase(confirming: true)
+/// Generated and put on the clipboard where there is one, since the passphrase is the
+/// only part of a bundle a person chooses, and the part they choose worst.
+enum PassphraseOrigin {
+    case chosen
+    case clipboard
+}
+
+private func passphraseForWriting(asking: Bool) throws -> (String, PassphraseOrigin) {
+    guard !asking, isTerminal(STDIN_FILENO) else { return (try readPassphrase(confirming: true), .chosen) }
+    guard hasClipboard() else {
+        printToStandardError(messageStyle("no clipboard here, so this one is yours to choose", .dim))
+        return (try readPassphrase(confirming: true), .chosen)
+    }
+    let drawn = generatedPassphrase()
+    try writeToClipboard(drawn)
+    return (drawn, .clipboard)
+}
+
+@discardableResult
+func writeBundle(_ bundle: ProfileBundle, to path: String, asking: Bool = false) throws -> PassphraseOrigin {
+    let (passphrase, origin) = try passphraseForWriting(asking: asking)
     let salt = randomSalt()
     let cost = ScryptCost.current
     let sealed = try ChaChaPoly.seal(serialized(bundle), using: try derivedKey(passphrase, salt: salt, cost: cost))
@@ -182,6 +217,7 @@ func writeBundle(_ bundle: ProfileBundle, to path: String) throws {
     guard FileManager.default.createFile(atPath: path, contents: Data(contents.utf8), attributes: [.posixPermissions: 0o600]) else {
         throw StoreFailure.bundleFailed("cannot write \(path)")
     }
+    return origin
 }
 
 func readBundle(from path: String) throws -> ProfileBundle {

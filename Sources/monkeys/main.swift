@@ -46,6 +46,38 @@ private let clipboardReaders: [[String]] = [
     ["xsel", "--clipboard", "--output"],
 ]
 
+private let clipboardWriters: [[String]] = [
+    ["pbcopy"],
+    ["wl-copy"],
+    ["xclip", "-selection", "clipboard"],
+    ["xsel", "--clipboard", "--input"],
+]
+
+func hasClipboard() -> Bool {
+    clipboardWriters.contains { executable(named: $0[0]) != nil }
+}
+
+func writeToClipboard(_ text: String) throws {
+    guard let writer = clipboardWriters.first(where: { executable(named: $0[0]) != nil }),
+          let tool = executable(named: writer[0]) else {
+        throw StoreFailure.bundleFailed("no clipboard tool found; install wl-clipboard, xclip or xsel")
+    }
+    let process = Process()
+    let input = Pipe()
+    process.executableURL = URL(fileURLWithPath: tool)
+    process.arguments = Array(writer.dropFirst())
+    process.standardInput = input
+    process.standardOutput = FileHandle.nullDevice
+    process.standardError = FileHandle.nullDevice
+    try process.run()
+    input.fileHandleForWriting.write(Data(text.utf8))
+    input.fileHandleForWriting.closeFile()
+    process.waitUntilExit()
+    guard process.terminationStatus == 0 else {
+        throw StoreFailure.bundleFailed("\(writer[0]) failed to take the passphrase")
+    }
+}
+
 private func executable(named name: String) -> String? {
     let directories = (ProcessInfo.processInfo.environment["PATH"] ?? "").split(separator: ":")
     return directories.lazy.map { $0 + "/" + name }.first { FileManager.default.isExecutableFile(atPath: $0) }
@@ -410,17 +442,21 @@ private func blockLines(_ profiles: [[String]], in namespace: String?) -> String
 
 func runPack(_ arguments: [String]) throws {
     let opens = arguments.contains("--open")
-    let (blocks, project, fileName) = try packedBlocks(arguments.filter { $0 != "--open" })
+    let asks = arguments.contains("--ask")
+    let (blocks, project, fileName) = try packedBlocks(arguments.filter { $0 != "--open" && $0 != "--ask" })
     guard !blocks.isEmpty else { throw StoreFailure.bundleFailed("nothing to pack: no keys are listed for that") }
     let filled = try blocks.map { try filledBlock($0, project: project) }
     let path = bundleDestination(fileName)
     let namespace = project?.namespace
     let values = packedValues(project, for: filled.flatMap(\.profiles))
-    try writeBundle(ProfileBundle(namespace: namespace, blocks: filled, values: values), to: path)
+    let origin = try writeBundle(ProfileBundle(namespace: namespace, blocks: filled, values: values), to: path, asking: asks)
     let count = filled.reduce(0) { $0 + $1.entries.count * $1.profiles.count }
     let valueCount = values.reduce(0) { $0 + $1.entries.count * $1.profiles.count }
     let valuesNote = valueCount == 0 ? "" : ", \(valueCount) value\(valueCount == 1 ? "" : "s")"
     printToStandardError(messageStyle("wrote", .good) + " " + messageStyle(abbreviatingHome(path), .bold) + ": \(blockLines(filled.map(\.profiles), in: namespace)), \(count) secret\(count == 1 ? "" : "s")\(valuesNote)")
+    if origin == .clipboard {
+        printToStandardError(messageStyle("copied", .good) + " its passphrase to your clipboard; send that the other way")
+    }
     if opens { revealInFileManager(path) }
 }
 

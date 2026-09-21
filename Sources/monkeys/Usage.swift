@@ -29,7 +29,7 @@ let commandSummaries = [
                    summary: "the same, with every remembered secret"),
     CommandSummary(verb: "run", arguments: "<command>",
                    summary: "the same, keys read from .monkeys"),
-    CommandSummary(verb: "pack", arguments: "[path] [--only ...]",
+    CommandSummary(verb: "pack", arguments: "[path] [--ask] [--only ...]",
                    summary: "one encrypted file of the profiles"),
     CommandSummary(verb: "unpack", arguments: "<name> [dir] [--keep]",
                    summary: "remember its secrets, write its .monkeys"),
@@ -160,7 +160,8 @@ var usage: String {
     outside any repository; a path before --only puts it elsewhere, into a
     directory you name or at a file you name, and --open reveals it in your
     file manager, ready to drag.
-    pack asks for a passphrase; unpack asks again, remembers the secrets,
+    pack draws a passphrase and puts it on your clipboard, or asks for one
+    with --ask; unpack asks for it, remembers the secrets,
     writes the keys into .monkeys at the root of the git checkout you are
     in, here when there is none, or in the directory you name, and deletes
     the bundle, since it has done its job; --keep leaves it:
