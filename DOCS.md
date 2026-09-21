@@ -510,29 +510,15 @@ profile](/docs/sharing-a-profile) walks through it. A bundle written before a
 
 A bundle has no reason to be in a repository, and `.monkeys` needs no ignore
 rule, since it is meant to be committed. If a bundle is committed by mistake
-anyway, what leaked is a sealed file: without the passphrase it is noise, and
-the fix is to delete it and change the passphrase you would have sent.
+anyway, what leaked is a sealed file, and the passphrase it was sealed with is
+the only thing standing in the way. That passphrase cannot be changed after
+the fact: the copy that leaked stays readable by whoever guesses the one it
+already carries, and scrypt only makes each guess cost about 128 MB.
 
-# How it works
-
-`monkeys` is one binary with no daemon, no configuration file and no storage of
-its own. A secret is a keychain item; a command is a child process; the rest is
-plumbing between the two.
-
-### Where a secret is kept
-
-On macOS each secret is a generic keychain item under the service `monkeys`,
-with the key as its account, so `foo.test/DATABASE_URL` is one item and
-`security find-generic-password -s monkeys -a foo.test/DATABASE_URL` finds it.
-Items are stored with `kSecAttrAccessibleAfterFirstUnlock`, which is why a
-command in a boot script can read one before anybody logs in.
-
-On Linux the same two attributes go to the Secret Service over D-Bus, through
-`secret-tool`, so the secret sits in whatever keyring the desktop already runs,
-GNOME Keyring or KWallet.
-
-Nothing of `monkeys`'s own is written anywhere. There is no database to back
-up, and the desktop's own tools list and delete what it stores.
+Take the file out of the repository, and out of its history if it was pushed.
+Then rotate the secrets it held, the way you would for any secret that has
+been somewhere it should not be. A new passphrase protects the next bundle,
+never the one that leaked.
 
 ### How a command gets one
 
