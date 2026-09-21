@@ -93,8 +93,9 @@ private func storedOrRefused(_ project: Project, _ profile: String, _ scope: Sco
 
 private func madeTemporaryDirectory() throws -> String {
     var template = Array("/tmp/monkeys-XXXXXX".utf8CString)
-    let made = template.withUnsafeMutableBufferPointer { buffer in
-        mkdtemp(buffer.baseAddress) != nil
+    let made = template.withUnsafeMutableBufferPointer { buffer -> Bool in
+        guard let start = buffer.baseAddress else { return false }
+        return mkdtemp(start) != nil
     }
     guard made else { throw StoreFailure.bundleFailed("/tmp would not take a directory to write into") }
     return String(cString: template)
