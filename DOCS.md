@@ -87,6 +87,20 @@ everyday problem.
 
 # Concepts
 
+Eight words, and they nest: a namespace holds profiles, a profile holds keys,
+and a key holds either a secret, which lives in the vault and is never
+printed, or a value, which was never worth hiding and sits in the file beside
+the name. A key is only a name, which is what makes the file safe to commit.
+
+Two files carry them, and only one is committed:
+
+| | holds | committed |
+| --- | --- | --- |
+| `.monkeys` | keys, and the values among them | yes |
+| `a.monsecrets` | profiles, keys and their secrets, encrypted | no |
+
+Where these sit and who can read them is [how it works](#how-it-works).
+
 ## Key
 
 A key is the name of an environment variable, the `KEY` of `KEY=secret`.
@@ -520,62 +534,72 @@ Then rotate the secrets it held, the way you would for any secret that has
 been somewhere it should not be. A new passphrase protects the next bundle,
 never the one that leaked.
 
-### How a command gets one
+# How it works
 
-`run` reads the secrets it needs, forks, and the child `execvp`s your command
-with those keys in its environment. Nothing reaches the command line, so the
-process table and your shell history hold the key names at most, and nothing is
-written to a file for the command to read.
+A name, a secret and a command sit in three different places. Which one a
+thing is in decides who can read it.
 
-The parent stays alive rather than replacing itself, because something has to
-watch what comes back. It forwards the command's exit status, and when the
-command dies from a signal it re-raises that same signal on itself, so a
-`Ctrl-C` behaves as it would without `monkeys` in front. On a terminal the
-child is given a pty, so a command that colours its output or asks a question
-still sees a terminal, and window resizes are passed through.
+| | holds | who can read it |
+| --- | --- | --- |
+| your repository | `.monkeys`: the key names, and the values that were never secret | anyone with the repository |
+| this machine | the vault: the secrets themselves | you, and whatever runs as you |
+| one command | both, in its environment | that command, while it runs |
 
-Values from `.monkeys` are put in the same environment straight from the file.
-The vault never sees them.
+### What each command moves
 
-### How redaction works
+| | from | to |
+| --- | --- | --- |
+| `remember` | a prompt | the vault, and the name into `.monkeys` |
+| `run` | the vault | one command's environment |
+| `export` | — | a lookup line for your shell |
+| `pack` · `unpack` | the vault | an encrypted file, and back |
+| `forget` · `drop` | the vault | gone |
 
-The parent scans the child's standard output and standard error as they stream,
-looking for the bytes of each secret it handed over, and replaces a match with
-`[redacted KEY]`. The scan is a Boyer-Moore-Horspool search per secret, so the
-cost does not grow with how much the command prints.
+Nothing moves a secret to your screen, which is why there is no `get`.
 
-Only what could still be the start of a secret is held back, never more, so
-output is not buffered waiting for a command to finish. On a terminal the held
-bytes are shown as `*` and taken back the moment they turn out to be ordinary,
-which keeps a prompt from looking stuck.
+### What run does
 
-A file the command opens itself never passes through `monkeys`, so a secret
-that must land in a file gets there by the command writing it.
+```mermaid
+sequenceDiagram
+    autonumber
+    participant You
+    participant monkeys
+    participant Vault
+    participant Command
+    You->>monkeys: monkeys run ./deploy
+    monkeys->>Vault: the keys .monkeys lists
+    Vault-->>monkeys: their secrets
+    monkeys->>Command: fork, exec, secrets in its environment
+    Command-->>monkeys: stdout and stderr
+    monkeys-->>You: the same, secrets swapped for [redacted KEY]
+```
 
-### What export writes
+Nothing reaches the command line, so your shell history and the process table
+see key names at most. The parent stays in front to read the output, and
+carries the command's exit status and signals back as its own.
 
-`export` prints a shell line that looks the secret up rather than a line that
-contains it. What you paste into your startup file is a `security
-find-generic-password` on macOS, a `secret-tool lookup` on Linux, run by your
-shell every time it starts. The startup file holds a question, not an answer.
+### What comes back
 
-### What a bundle is
+```sh
+monkeys run OPENROUTER_API_KEY sh -c 'echo "key=$OPENROUTER_API_KEY"'
+```
 
-`pack` writes one file: a header, then base64 of a 16-byte random salt followed
-by a ChaCha20-Poly1305 sealed box. The key comes from your passphrase through
-scrypt with N=2^17, r=8, p=1, which is about 128 MB of memory per attempt and
-is the point: a guess costs the attacker that memory too.
+> ```
+> key=[redacted OPENROUTER_API_KEY]
+> ```
 
-The cost lives in the header, so a file made today still opens after those
-numbers are raised, and `unpack` reads what the file says rather than what this
-version prefers.
+Only what could still be the start of a secret is held back, so output is not
+buffered. A file the command opens itself never passes through `monkeys`.
 
-### What none of it protects against
+### The vault, and what it is not
 
-Anything running as your user can read your vault, the same way it can read
-your shell startup files. `monkeys` moves secrets out of the repository and out
-of the files a tool stumbles on; it is not a sandbox. The
-[caveats](#caveats) say where that line falls.
+A secret is one keychain item on macOS, filed under the service `monkeys`, and
+one Secret Service item on Linux. `monkeys` keeps nothing of its own anywhere,
+so there is no database to back up or leak.
+
+Anything running as you can read that vault, the same way it can read your
+shell startup files. This takes secrets out of the repository, not out of
+reach; the [caveats](#caveats) say where that line falls.
 
 # Commands
 
@@ -1162,8 +1186,6 @@ monkeys pack
 ```
 
 > ```
-> passphrase:
-> again:
 > wrote /tmp/a.monsecrets: +foo @test,production @production, 5 secrets
 > copied its passphrase to your clipboard; send that the other way
 > ```
@@ -1682,8 +1704,6 @@ monkeys pack --only @test
 ```
 
 > ```
-> passphrase:
-> again:
 > wrote /tmp/a.monsecrets: +foo @test, 2 secrets
 > copied its passphrase to your clipboard; send that the other way
 > ```

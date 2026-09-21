@@ -79,6 +79,10 @@ function asMdx(markdown: string, shift: number) {
 	return lines
 		.join('\n')
 		.replace(/```tree\n([\s\S]*?)```/g, (_, block: string) => asFileTree(block))
+		.replace(
+			/```mermaid\n([\s\S]*?)```/g,
+			(_, chart: string) => `<Mermaid chart={\`${chart.trim().replace(/`/g, '\\`')}\`} />`
+		)
 		.replace(/<(https?:\/\/[^>\s]+)>/g, '[$1]($1)');
 }
 
@@ -90,6 +94,7 @@ const sidebarIcons: Record<string, string> = {
 	concepts: 'Shapes',
 	commands: 'SquareTerminal',
 	'sharing-a-profile': 'Share2',
+	'how-it-works': 'Workflow',
 	caveats: 'TriangleAlert',
 	skill: 'Bot'
 };
