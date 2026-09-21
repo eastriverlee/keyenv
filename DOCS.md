@@ -626,7 +626,7 @@ and a bundle cannot carry half of a profile.
 
 ## remember
 
-Put a secret into the vault, or a value into `.monkeys`.
+Add a secret to the vault, or a value to `.monkeys`.
 
 ```sh
 monkeys remember [@profile] <KEY> [--clipboard]
@@ -806,7 +806,7 @@ becomes a committed line by accident.
 
 ## forget
 
-Take a secret out of the vault: one key, a whole profile, or a namespace.
+Remove a secret from the vault.
 
 ```sh
 monkeys forget [@profile] <KEY>
@@ -880,7 +880,7 @@ and is refused, so the secrets with no profile go one key at a time.
 
 ## drop
 
-Stop a project from needing a key at all.
+Remove a key from `.monkeys` and forget its secret.
 
 ```sh
 monkeys drop [@profile] <KEY>
@@ -930,7 +930,7 @@ Outside a project, with no file to edit, `drop` is `forget`.
 
 ## rename
 
-Give a profile or a namespace another name, in the vault and the file.
+Rename a profile or a namespace, in the vault and in `.monkeys`.
 
 ```sh
 monkeys rename @old @new
@@ -986,7 +986,7 @@ the keys with no profile through `fill` or `remember`. No secret is printed.
 
 ## run
 
-Give a command the secrets it needs, and nothing else.
+Run a command with the secrets it needs, and nothing else.
 
 ```sh
 monkeys run [@profile] <KEY[,KEY...]> <command> [argument...]
@@ -1166,7 +1166,7 @@ into every shell you open.
 
 ## pack
 
-Send a project's secrets to someone, as one encrypted file.
+Seal a profile's secrets into one encrypted file.
 
 ```sh
 monkeys pack [name] [--path DIR] [--ask] [--open] [--only [KEY[,KEY...]] [@profile[,profile...] [KEY[,KEY...]]]...]
@@ -1300,7 +1300,7 @@ rare script that needs to.
 
 ## unpack
 
-Take a bundle someone sent you and put it into your own vault.
+Open an encrypted file into your own vault.
 
 ```sh
 monkeys unpack <name> [directory] [--keep]
@@ -1361,7 +1361,7 @@ The passphrase is read from standard input when it is not a terminal.
 
 ## eat
 
-Convert a project that still keeps its secrets in dotenv files.
+Move the `.env` files here into the vault and `.monkeys`.
 
 ```sh
 monkeys eat [+namespace] [@profile] [--public KEY[,KEY...]]
@@ -1650,7 +1650,7 @@ it wrong.
 
 ## fill
 
-Give a profile the secrets another profile already has.
+Give a profile the secrets another one already has.
 
 ```sh
 monkeys fill @profile --with @profile
@@ -1682,7 +1682,7 @@ is remembered once and copied.
 
 ## list
 
-See every key the vault holds, by profile.
+Show every key the vault holds, by profile.
 
 ```sh
 monkeys list
@@ -1716,7 +1716,7 @@ is empty.
 
 ## preview
 
-Check that a secret is the right one, without reading it.
+Show a secret masked, never in full.
 
 ```sh
 monkeys preview [@profile] [KEY[,KEY...]]
@@ -1778,7 +1778,7 @@ monkeys preview @production
 
 ## doctor
 
-See what a project still needs before anything runs.
+Show what a profile has and lacks.
 
 ```sh
 monkeys doctor [--short]
@@ -1829,7 +1829,7 @@ as the `remember` that would fix it.
 
 ## export
 
-Put a secret into every shell you open.
+Write a vault lookup for your shell's startup file.
 
 ```sh
 monkeys export [@profile] [KEY[,KEY...]]
