@@ -280,9 +280,10 @@ SENTRY_DSN`;
 	<section class="flex flex-col gap-4">
 		<h2 class="text-2xl font-bold tracking-tight">Hand the profile to a teammate</h2>
 		<p class="max-w-prose">
-			<code>pack</code> asks for a passphrase and writes <code>/tmp/a.monsecrets</code>, outside the
-			repository: every profile the file declares, or the ones <code>--only @test</code> names,
-			sealed. Send the file however you like, the passphrase another way.
+			<code>pack</code> writes <code>/tmp/a.monsecrets</code>, outside the repository: every profile
+			the file declares, or the ones <code>--only @test</code> names, sealed. It draws the
+			passphrase itself and puts it on your clipboard, never on your screen. Send the file
+			however you like, and the passphrase another way.
 		</p>
 		<CodeFile code={packLine} />
 		<p class="max-w-prose">
