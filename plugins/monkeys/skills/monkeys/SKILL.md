@@ -49,8 +49,8 @@ monkeys run OPENROUTER_API_KEY sh -c 'curl -H "Authorization: Bearer $OPENROUTER
 ```
 
 A file that has to end up with the secret in it takes the redirect inside the
-command for the same reason: the secret goes from the child straight into the
-file and never passes `monkeys`, which would redact it on the way out.
+command, for the same reason. The secret then goes from the child straight
+into the file, never passing `monkeys`, which would redact it on the way.
 
 ```sh
 monkeys run OPENROUTER_API_KEY sh -c 'envsubst < template > config'
@@ -79,9 +79,9 @@ monkeys run ./hello.sh
 monkeys run @production ./deploy
 ```
 
-A profile never falls back to the keys with no profile: a key missing in
-`@production` stays missing there even when a copy with no profile exists, so
-one project never quietly reads another's secret. Reaching those keys from
+A profile never falls back to the keys with no profile. A key missing in
+`@production` stays missing there even when a copy with no profile exists,
+so one project never quietly reads another's secret. Reaching those keys from
 inside a project is a bare `@`, with the key named again:
 
 ```sh
@@ -97,8 +97,8 @@ monkeys remember STRIPE_SECRET_KEY
 ```
 
 When the code stops reading one, `monkeys drop STRIPE_SECRET_KEY` forgets the
-secret and takes the key out of the file. `forget` on its own leaves the key
-listed, and every teammate's `run` keeps asking for it.
+secret and removes the key from the file. It asks a person before it does,
+so that one is theirs to run as well.
 
 The rest of the file's grammar, namespaces and several profiles among it, is
 in `monkeys help`. Reach for it when a file surprises you; the file is
@@ -170,6 +170,8 @@ before it reaches the vault. Say what is needed and stop.
   passphrase and deletes the bundle.
 - `monkeys fill @production --with @test` copies what is missing between
   profiles, which may put a test secret into production.
+- `monkeys forget` and `monkeys drop` delete the only copy of a secret there
+  is, so both ask first and neither can be answered from a pipe.
 
 ## Never
 

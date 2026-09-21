@@ -49,6 +49,7 @@ function Content({
   const Mdx = page.body;
   const title = `${page.searchTitle ?? page.title} · ${appName}`;
   const canonical = `${docsOrigin}${url}/`;
+  const subtitle = page.lead ?? page.description;
 
   return (
     <DocsPage toc={toc}>
@@ -66,9 +67,9 @@ function Content({
       <meta name="twitter:description" content={page.description} />
       <meta name="twitter:image" content={`${siteOrigin}/og.png`} />
       <DocsTitle>{page.title}</DocsTitle>
-      {page.lead ? <p className="-mt-4 text-lg text-fd-muted-foreground">{page.lead}</p> : null}
+      {subtitle ? <p className="-mt-4 text-lg text-fd-muted-foreground">{subtitle}</p> : null}
       <div
-        className={`flex flex-row gap-2 items-center border-b pb-6 ${page.lead ? 'mt-2' : '-mt-4'}`}
+        className={`flex flex-row gap-2 items-center border-b pb-6 ${subtitle ? 'mt-2' : '-mt-4'}`}
       >
         <MarkdownCopyButton markdownUrl={markdownUrl} />
         <ViewOptionsPopover

@@ -275,10 +275,18 @@ PORT=3000`;
 		<CodeFile code={runStaging} />
 		<p class="max-w-prose">
 			A secret missing in one profile stops that profile alone, and only when it is used.
-			<code>monkeys fill @production --with @test</code> fills the second profile with what the first
-			has and it lacks, and <code>doctor</code> reads the whole file:
+			<code>monkeys fill @production --with @test</code> gives the second profile what the first
+			has and it lacks. <code>doctor</code> reads the whole file:
 		</p>
 		<CodeFile code={doctorLine} output={doctorOutput} />
+		<p class="max-w-prose">
+			Frameworks read the environment, so <code>monkeys run bun run dev</code> is enough for
+			SvelteKit, Vite or Next. When a tool wants the file itself,
+			<code>poo</code> writes one carrying the same keys with nothing after them, which sets
+			nothing and shadows nothing.
+		</p>
+		<CodeFile code={pooLine} />
+		<CodeFile name=".env" lang="bash" code={pooResult} />
 	</section>
 
 	<section class="flex flex-col gap-4">
@@ -291,9 +299,9 @@ PORT=3000`;
 		</p>
 		<CodeFile code={packLine} />
 		<p class="max-w-prose">
-			On the other machine, <code>unpack</code> asks for the passphrase, remembers the secrets, writes
-			<code>.monkeys</code> at the root of the checkout, and deletes the bundle. That is the only
-			way a secret leaves the vault.
+			On the other machine, <code>unpack</code> asks for the passphrase and puts the secrets in
+			their vault. It writes <code>.monkeys</code> at the root of the checkout, then deletes the
+			bundle. That is the only way a secret leaves the vault.
 		</p>
 		<CodeFile code={unpackLine} />
 	</section>

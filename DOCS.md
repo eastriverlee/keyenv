@@ -9,10 +9,10 @@ them. Even that command cannot print one.
 Two reasons, and either would have been enough.
 
 1. **LLMs read `.env`.** `cat .env` is just too tempting, and once it's in
-   the transcript, it's there for good. `monkeys` takes that path away and
-   gives a shorter one: the secret goes from the vault into the process, a
-   missing one comes back as a message saying what to ask for, and the
-   output comes back redacted.
+   the transcript, it's there for good. `monkeys` takes that path away. The
+   secret goes from the vault straight into the process, a missing one comes
+   back as a message saying what to ask for, and whatever the command prints
+   comes back redacted.
 
 2. **`.env` was never good, even for people.** Sharing it means pasting the
    whole file into a chat. Test and production mean two more files and a
@@ -82,24 +82,10 @@ everyday problem.
 ## Where to go next
 
 [Quickstart](/docs/quickstart) remembers a secret and uses it,
-[Concepts](/docs/concepts/key) defines the words the reference uses, and
+[Concepts](/docs/concepts/key) defines every term the reference uses, and
 [Commands](/docs/commands) has one page per command.
 
 # Concepts
-
-Eight words, and they nest: a namespace holds profiles, a profile holds keys,
-and a key holds either a secret, which lives in the vault and is never
-printed, or a value, which was never worth hiding and sits in the file beside
-the name. A key is only a name, which is what makes the file safe to commit.
-
-Two files carry them, and only one is committed:
-
-| | holds | committed |
-| --- | --- | --- |
-| `.monkeys` | keys, and the values among them | yes |
-| `a.monsecrets` | profiles, keys and their secrets, encrypted | no |
-
-Where these sit and who can read them is [how it works](#how-it-works).
 
 ## Key
 
@@ -261,9 +247,9 @@ OPENROUTER_API_KEY
 
 The `@` line names the profile and the `+` line the namespace it sits in, so
 these three are remembered as `foo.test/DATABASE_URL` and so on. The keys are the
-project's and the secrets are yours: everyone who clones the repository gets
-the same profile and the same keys, and each of them fills their own vault,
-so a `.monkeys` file can be committed and a vault never has to be.
+project's and the secrets are yours. Everyone who clones the repository gets
+the same profile and the same keys, and each of them fills their own vault.
+That is why the file can be committed and a vault never has to be.
 
 ### The default profile
 
@@ -355,8 +341,8 @@ when a file would otherwise decide.
 A namespace is the part of a profile's name that belongs to the project.
 
 The `+` line of a `.monkeys` file sets it, and every `@` line in that file is
-read with it in front: in a file that starts with `+foo`, `@test` is the
-profile `foo.test`, and its secrets are remembered as `foo.test/DATABASE_URL`.
+read with it in front. In a file that starts with `+foo`, `@test` is the
+profile `foo.test`, and its secrets sit at `foo.test/DATABASE_URL`.
 
 ### What it is for
 
@@ -421,9 +407,9 @@ PORT=80
 | `PORT=80` | a key with its value set right here, kept in the file and never in the vault |
 | `# ...` | a comment |
 
-The first profile mentioned is the default. A key listed twice for one
-profile, as a key or as a value, a line before any `@` line, or a name that
-is not a key is refused with the line quoted.
+The first profile mentioned is the default. Three things are refused, with
+the line quoted: a key listed twice for one profile, a line that comes before
+any `@` line, and a name that is not a key.
 
 ### Values
 
@@ -483,8 +469,9 @@ monkeys bundle 1 scrypt 17 8 1
 <salt and sealed bytes, base64>
 ```
 
-The first line names the format and the scrypt cost the key was derived with,
-log2 N, r and p, so a bundle keeps opening after the default cost rises. The
+The first line names the format and the scrypt cost the key was derived
+with, log2 N, r and p. A bundle therefore keeps opening after the default
+cost rises. The
 second is the salt followed by the sealed bytes, in
 base64. Inside, the bundle keeps the
 shape of the `.monkeys` file, namespace line and blocks, so `unpack` can write
@@ -814,12 +801,12 @@ monkeys forget @profile[,profile...]
 monkeys forget +namespace
 ```
 
-Deletes one secret from the vault. Inside a project the key is the project's;
-`@` reaches one with no profile from there:
+Deletes one secret from the vault, after asking, because nothing else holds
+it. Inside a project the key is the project's; `@` reaches one with no profile
+from there:
 
 ```sh
-monkeys forget OPENROUTER_API_KEY
-monkeys forget @ ANTHROPIC_API_KEY
+monkeys forget STRIPE_SECRET_KEY
 ```
 
 > ```
@@ -845,7 +832,8 @@ monkeys forget API_URL
 > forgot API_URL from .monkeys for @test
 > ```
 
-A value the file sets for several profiles together is refused, the way
+That one is not asked about, since the line lives in a file git can give
+back. A value the file sets for several profiles together is refused, the way
 `remember --public` refuses it.
 
 A profile on its own, with no key, forgets every secret remembered under it, and a
@@ -911,6 +899,10 @@ monkeys drop DATABASE_URL
 > unlisted DATABASE_URL from .monkeys for @test
 > ```
 
+The question says which of the two will happen, and both are checked before
+either runs, so a key the file cannot unlist is refused with its secret still
+in the vault.
+
 A key the file holds as a value is deleted from the file, the same as
 `forget`, since for a value the line is the whole of it.
 
@@ -951,11 +943,10 @@ monkeys rename @staging @preview
 > ```
 
 Inside a project both names are the project's, and a prefix that fits only one
-declared profile is enough for the old one, `@stag`. From anywhere, by full
-name, `monkeys rename @foo.staging @foo.preview` moves the secrets and leaves
-every file alone, since none is in reach; a project that names the old profile
-then has `doctor` report it missing until its file is edited or the name is
-moved back.
+declared profile is enough for the old one, `@stag`. From anywhere, the full name works: `monkeys rename @foo.staging
+@foo.preview` moves the secrets and touches no file, since none is in reach.
+A project that still names the old profile then has `doctor` report it
+missing, until the file is edited or the name moved back.
 
 A namespace is renamed the same way, for every profile under it, declared in
 the file or not, and the `+` line of the project's file with it:
@@ -1118,7 +1109,7 @@ monkeys run OPENROUTER_API_KEY sh -c 'echo "key=$OPENROUTER_API_KEY"'
 
 That is the reflex this exists for. An agent that meets an empty variable will
 `echo` it, and now the echo says which secret was there and nothing else. The
-output is streamed as it arrives: a byte is held back only while it could
+output is streamed as it arrives. A byte is held back only while it could
 still be the start of a secret, and on a terminal that moment shows as `*`
 until the next byte settles it.
 
@@ -1323,7 +1314,7 @@ monkeys unpack a
 
 `<name>` is the bundle, with or without its `.monsecrets` suffix; a path works
 too. The bundle is deleted only once every secret is remembered and the file is
-written, since by then it has done its job and a copy left behind is one more
+written. By then it has done its job, and a copy left behind is one more
 thing to lose. `--keep` leaves it where it was, for a bundle you are handing
 on to someone else, and the run says nothing about removing it:
 
@@ -1341,9 +1332,9 @@ monkeys unpack a --keep
 The file goes at the root of the git checkout, the way `.gitignore` sits at
 the root, so `monkeys run` works from any directory in it. Outside a checkout
 it goes in the current directory, and a second argument names the directory
-outright. When a `.monkeys` file is already there, `unpack` adds a block at
-the end for the keys the file does not yet list, grouped the way the bundle
-groups them, and leaves the rest of the file alone. A file that names another
+outright. When a `.monkeys` file is already there, `unpack` leaves it alone except for
+one block at the end, carrying the keys the file does not yet list, grouped
+the way the bundle groups them. A file that names another
 project on its `+` line refuses the bundle, and the bundle stays.
 
 A bundle that carries values writes them into `.monkeys` as `KEY=value` lines
@@ -1368,10 +1359,9 @@ monkeys eat [+namespace] [@profile] [--public KEY[,KEY...]]
 ```
 
 Moves a project's dotenv files into monkeys and deletes them. It reads `.env`,
-`.env.local` and every `.env.<profile>` in the current directory, asks one
-question per key, secret or public, and writes the answers where they belong:
-a secret's key into `.monkeys` with the secret in the vault, a public line
-into `.monkeys` as it is.
+`.env.local` and every `.env.<profile>` in the current directory, and asks one
+question per key: secret or public. A secret's key goes into `.monkeys` and
+its secret into the vault. A public one goes into `.monkeys` as it stands.
 
 > ```
 > namespace, +name (Enter for none): foo
@@ -1415,10 +1405,10 @@ for.
 
 The secret answer is the default; Enter takes it. The value is shown only
 for a public answer, since that is the moment it becomes a line in a file
-that gets committed. A key the project already has, as a secret in the vault,
-a key or a value in `.monkeys`, asks before it is replaced,
-and Enter keeps what is there; asked for the other kind, it is kept without
-asking and named in the summary, since turning one kind into the other is
+that gets committed. A key the project already holds, in the vault or in `.monkeys`, asks before
+it is replaced, and Enter keeps what is there. Answered as the other kind, it
+is kept without asking and named in the summary, since turning one kind into
+the other is
 `forget` and then `remember`.
 
 The grammar is the part of dotenv every library reads the same way: `KEY=value`,
@@ -1442,9 +1432,8 @@ line says so.
 ### --public
 
 `--public` names the keys that are not secret, which answers every question
-before it is asked: those keys become `KEY=value` lines, every other key
-becomes a secret in the vault, and an existing entry is kept rather than
-replaced. Nothing is asked, so no terminal is needed and an agent can run it
+before it is asked. Those keys become `KEY=value` lines and every other key
+becomes a secret in the vault. An existing entry is kept, never replaced. Nothing is asked, so no terminal is needed and an agent can run it
 on a project it finds:
 
 ```sh
@@ -1471,15 +1460,15 @@ refuses to run with its input piped and says which flag to use.
 
 ## poo
 
-Give a tool the `.env` file it insists on, without giving it a secret.
+Write a `.env` that carries keys and no secrets.
 
 ```sh
 monkeys poo [@profile] [--path DIR] [--open]
 monkeys poo @profile --WITH_SECRETS [--EXPAND_DANGEROUSLY] [--path DIR] [--open]
 ```
 
-Writes a `.env` beside `.monkeys` carrying the same list: every secret's name on
-a line of its own, and every public value as it already stands. A name with
+Writes a `.env` carrying the same list `.monkeys` does: every secret's key on a
+line of its own, and every public value as it already stands. A key with
 nothing after it sets nothing, so the file satisfies whatever wanted one while
 the secrets keep arriving through `run`.
 
@@ -1492,7 +1481,7 @@ monkeys poo
 > ```
 
 ```
-# monkeys' poo. read https://monk3ys.dev/poo
+# monkeys' poo @test. read https://monk3ys.dev/poo
 DATABASE_URL
 STRIPE_SECRET_KEY
 PORT=3000
@@ -1502,10 +1491,10 @@ It lands in `/tmp` unless you say otherwise, so nothing appears in a project
 that did not ask for it. The header names the profile when the project declares
 more than one, since that is the profile `run` has to be given to match.
 
-### Why a name carries no value
+### Why a key carries no value
 
 A placeholder would be worse than nothing. The three things that read a `.env`
-treat a bare name and a `KEY=x` differently, and only the bare name is safe in
+treat a bare key and a `KEY=x` differently, and only the bare key is safe in
 all three:
 
 | what reads it | `DATABASE_URL` | `DATABASE_URL=x` |
@@ -1515,10 +1504,13 @@ all three:
 | `set -a; . .env` | the environment's value survives | overwritten with `x` |
 
 The bottom two rows are the reason. A placeholder reaches a container or a
-shell as a real value, and the failure moves from the start of the program,
-where it is obvious, to the first call that uses the key, where it is not.
+shell as a real value, so the program starts and fails later, at the first
+call that uses the key, where the cause is no longer obvious.
 
-### @profile
+> [!IMPORTANT]
+> If you maintain a framework, please make its loader read `.monkeys`, taking
+> each key's value from the operating system's vault. Have it replace `.env`,
+> or sit between `.env` and the process environment.
 
 ### --path
 
@@ -1812,8 +1804,8 @@ A value line counts as present and is shown with its value:
 
 ### --short
 
-`--short` says only what is wrong, one line per profile with a problem, and
-nothing at all when there is none, which is the form to hand a script or an
+`--short` says only what is wrong: one line per profile with a problem, and
+nothing at all when there is none. That is the form to hand a script or an
 agent:
 
 ```sh
@@ -1878,8 +1870,8 @@ quiet.
 
 ### What is a .monkeys file?
 
-A project's list of the environment variables it needs, kept next to the code
-and committed with it. It holds the names, never the secrets: `.env.example`
+A [`.monkeys`](#monkeys) file is a project's list of the environment variables
+it needs, kept next to the code and committed with it. It holds the keys, never the secrets: `.env.example`
 with the secrets left out, and the values that were never secret written in
 beside their keys.
 
@@ -1890,21 +1882,21 @@ dot. A project has one, at the root of the git checkout.
 
 ### Where does monkeys keep a secret?
 
-In the vault the operating system already runs: the keychain on macOS, the
+In the [vault](#vault) the operating system already runs: the keychain on macOS, the
 Secret Service on Linux, which is GNOME Keyring or KWallet. It keeps no file
 of its own, so there is no database to back up or leak, and the desktop's own
 tools list and delete what it stores.
 
 ### Can a coding agent read my secrets?
 
-No command prints a stored secret, and `monkeys run` replaces one with
+No command prints a stored secret, and [`monkeys run`](#run) replaces one with
 `[redacted KEY]` when the command it started prints it back. An agent can give
 a command the secrets it needs without the secret entering the conversation,
 which is what the [skill](#skill) teaches it to do.
 
 ### How do I move a project off .env?
 
-`monkeys eat` reads the `.env` files it finds, puts the secrets in your vault,
+[`monkeys eat`](#eat) reads the `.env` files it finds, puts the secrets in your vault,
 writes the keys into `.monkeys`, and deletes the files it read. Name the keys
 that were never secret with `--public` and it writes those as values instead
 of asking about each one.
@@ -1969,27 +1961,30 @@ monkeys poo --path .
 
 ### How do I give a teammate the secrets?
 
-`monkeys pack` writes every profile as one encrypted file and puts its
-passphrase on your clipboard. They run `monkeys unpack`, which asks for the
+[`monkeys pack`](#pack) writes every profile as one encrypted file and puts its
+passphrase on your clipboard. They run [`monkeys unpack`](#unpack), which asks for the
 passphrase, puts the secrets in their own vault, writes the project's
 `.monkeys`, and deletes the file.
 
 ### What happens if I lose the machine?
 
-The secrets are gone with the vault, since nothing else holds them. Remember
+The secrets are gone with the [vault](#vault), since nothing else holds them. Remember
 them again from wherever they came from, or unpack a bundle a teammate still
 has.
 
 ### Does monkeys work on Windows?
 
-No. macOS and Linux, because those are the two desktop vaults it speaks to.
+Not on its own, since it speaks to the macOS keychain and the Secret Service
+and Windows runs neither. The Linux build runs under WSL, which needs a Secret
+Service in that session the way any Linux machine without a desktop does:
+`gnome-keyring` or KWallet, running and unlocked.
 
 ### How is this different from direnv?
 
 `direnv` loads a file into your shell when you enter a directory, so the
 secrets live in a file and then in every process that shell starts. `monkeys`
 keeps them in the vault and hands them to one command, and the file it commits
-holds names only.
+holds keys only.
 
 ### How is this different from 1Password CLI, Doppler or Infisical?
 
@@ -2025,7 +2020,7 @@ that is intent, and intent is a question for whoever runs the agent.
 
 The same holds for people. A secret shared with a teammate stops being a paste
 into a chat and becomes `pack` and `unpack`, sealed in transit and landing in
-that person's vault. And the bookkeeping a project keeps about its secrets, a
-`.env` nobody commits, a `.env.example` that drifts from it, a `.gitignore` line
-to keep the two apart, collapses into one committed `.monkeys` file that says
-what is needed and holds nothing.
+that person's vault. And a project's bookkeeping collapses into one file. A `.env` nobody commits,
+a `.env.example` that drifts from it, a `.gitignore` line keeping the two apart:
+all of it becomes one committed `.monkeys` that says what is needed and holds
+nothing.

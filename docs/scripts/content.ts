@@ -10,7 +10,11 @@ const siteStatic = join(repository, 'site', 'static');
 const description =
 	'.env you can hand to an LLM, or git add: secrets in your vault, keys in your repo, used one command at a time, never printed.';
 
+/** A title whose own slug would read badly as a path. */
+const slugFor: Record<string, string> = { 'Q&A': 'questions' };
+
 const slugOf = (title: string) =>
+	slugFor[title] ??
 	title
 		.toLowerCase()
 		.replace(/^\./, 'dot-')
@@ -25,14 +29,33 @@ const cleanTitle = (heading: string) => heading.replace(/^#+ /, '').replace(/`/g
 const groupDescriptions: Record<string, string> = {
 	'how-it-works':
 		'Where monkeys keeps a secret, how a command is handed one, how anything printed back is redacted, and what a .monsecrets bundle is made of.',
-	questions:
-		'What a .monkeys file is, where secrets are kept, whether an agent can read them, how to move off .env, and how monkeys differs from direnv and the hosted secret managers.',
+	questions: 'What people ask before moving a project onto it.',
+	caveats: 'Where the boundary is, and what redaction does not catch.',
+	plugin: 'What the plugin adds to the binary, and how to install it in each client.',
+	install: 'Getting the binary onto macOS or Linux.',
+	'commands/index': 'Every command on one page, and the @profile each one takes.',
+	'concepts/index': 'What each concept means.',
+};
+
+/** What the two columns of a group's index table are called. */
+const indexHeadings: Record<string, [string, string]> = {
+	commands: ['command', 'what it does'],
+	concepts: ['concept', 'what it means'],
 };
 
 const searchTitles: Record<string, string> = {
 	'concepts/dot-monkeys': '.monkeys file',
 	'concepts/any-monsecrets': '.monsecrets file',
+	questions: 'FAQ',
 };
+
+/** The anchor GitHub gives a heading, so one link works in the file and on the site. */
+const githubAnchor = (title: string) =>
+	title
+		.toLowerCase()
+		.replace(/[^a-z0-9 _-]/g, '')
+		.trim()
+		.replace(/ +/g, '-');
 
 /** A ```tree fence becomes a fumadocs file tree; on GitHub it stays a code block. */
 function asFileTree(block: string) {
@@ -67,6 +90,23 @@ function asFileTree(block: string) {
 	return `<Files>\n${body}</Files>`;
 }
 
+/** A GitHub alert becomes a fumadocs callout; on GitHub it stays an alert. */
+function asCallout(kind: string, block: string) {
+	const types: Record<string, string> = {
+		NOTE: 'info',
+		TIP: 'idea',
+		IMPORTANT: 'info',
+		WARNING: 'warn',
+		CAUTION: 'error',
+	};
+	const body = block
+		.split('\n')
+		.map((line) => line.replace(/^> ?/, ''))
+		.join('\n')
+		.trim();
+	return `<Callout type="${types[kind]}" title="${kind}">\n${body}\n</Callout>\n`;
+}
+
 function asMdx(markdown: string, shift: number) {
 	let inFence = false;
 	const lines = markdown.split('\n').map((line) => {
@@ -86,6 +126,10 @@ function asMdx(markdown: string, shift: number) {
 			/```mermaid\n([\s\S]*?)```/g,
 			(_, chart: string) => `<Mermaid chart={\`${chart.trim().replace(/`/g, '\\`')}\`} />`
 		)
+		.replace(
+			/^> \[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\n((?:>.*\n?)*)/gm,
+			(_, kind: string, block: string) => asCallout(kind, block)
+		)
 		.replace(/<(https?:\/\/[^>\s]+)>/g, '[$1]($1)');
 }
 
@@ -96,7 +140,6 @@ const sidebarIcons: Record<string, string> = {
 	plugin: 'Puzzle',
 	concepts: 'Shapes',
 	commands: 'SquareTerminal',
-	'sharing-a-profile': 'Share2',
 	'how-it-works': 'Workflow',
 	questions: 'MessageCircleQuestion',
 	caveats: 'TriangleAlert',
@@ -199,6 +242,7 @@ function firstParagraph(markdown: string) {
 }
 
 const written: string[] = [];
+const titles = new Map<string, string>();
 
 type PageOptions = { description?: string; shift?: number; lead?: boolean };
 
@@ -228,6 +272,7 @@ function writePage(path: string, title: string, text: string, { description, shi
 			'\n'
 	);
 	written.push(path);
+	titles.set(path, title);
 }
 
 /**
@@ -235,7 +280,12 @@ function writePage(path: string, title: string, text: string, { description, shi
  * is its own page, so the same anchor has to become that page's path.
  */
 function linkAcrossPages() {
-	const pageOf = new Map(written.map((path) => [path.split('/').pop()!, path]));
+	const pageOf = new Map<string, string>();
+	for (const path of written) {
+		pageOf.set(path.split('/').pop()!, path);
+		const anchor = githubAnchor(titles.get(path) ?? '');
+		if (anchor && !pageOf.has(anchor)) pageOf.set(anchor, path);
+	}
 	for (const path of written) {
 		const file = join(content, `${path}.mdx`);
 		const before = readFileSync(file, 'utf8');
@@ -362,7 +412,7 @@ function writeGroup(slug: string, title: string, text: string, level: number) {
 	const { intro, chunks: pages } = splitOn(text, level);
 	const shift = level - 1;
 	mkdirSync(join(content, slug), { recursive: true });
-	if (intro.trim()) writePage(join(slug, 'index'), title, intro, { shift });
+	writeIndex(slug, title, intro, pages, shift);
 	for (const page of pages)
 		writePage(join(slug, slugOf(page.title)), page.title, page.text, { shift, lead: true });
 	writeFileSync(
@@ -388,7 +438,7 @@ for (const section of readmeSections.filter(({ title }) => ['Install', 'Quicksta
 			asSteps(section.text),
 			{ description: 'Remember a secret, run with it and without it, then forget it, in four steps.' }
 		);
-	else writePage(slug, section.title, section.text);
+	else writePage(slug, section.title, section.text, { description: groupDescriptions[slug] });
 	(slug === 'plugin' ? agent : gettingStarted).push(slug);
 	sources[slug] = 'README.md';
 }

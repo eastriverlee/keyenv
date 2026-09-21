@@ -160,7 +160,9 @@ and the message says what to do, which is what an agent passes on.
 
 Inside a git checkout the first step also started a `.monkeys` and listed
 `SUPER_SECRET` in it, since that file is how a project says which keys it
-needs. `monkeys drop SUPER_SECRET` takes the key back out of it.
+needs. `monkeys drop SUPER_SECRET` takes the key back out of it, and
+`monkeys poo` writes a `.env` of those keys with nothing after them, for a
+tool that wants the file to exist.
 
 ## Plugin
 
