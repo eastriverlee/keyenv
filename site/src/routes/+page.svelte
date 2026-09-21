@@ -80,6 +80,10 @@ SENTRY_DSN`;
 	const runStaging = 'monkeys run @production ./deploy';
 	const packLine = 'monkeys pack';
 	const unpackLine = 'monkeys unpack ~/Downloads/a.monsecrets';
+	const pooLine = 'monkeys poo --path .';
+	const pooResult = `# monkeys' poo. read https://monk3ys.dev/poo
+OPENROUTER_API_KEY
+PORT=3000`;
 
 	const stars = browser
 		? fetch(`https://api.github.com/repos/${repository.owner}/${repository.repo}`)
@@ -191,9 +195,9 @@ SENTRY_DSN`;
 	<section class="flex flex-col gap-4">
 		<h2 class="text-2xl font-bold tracking-tight">Plugin</h2>
 		<p class="max-w-prose">
-			The plugin adds the skill. It makes an agent reach for <code>monkeys</code> instead of asking
-			you to paste a secret, and a key you have not remembered comes back as a message saying what to
-			ask for.
+			The plugin adds the skill, which makes an agent reach for <code>monkeys</code> instead of
+			asking you to paste a secret. A key you have not remembered comes back as a message saying
+			what to ask for.
 		</p>
 		<CommandTabs tabs={agentTabs} />
 		<p class="text-muted-foreground max-w-prose text-sm">

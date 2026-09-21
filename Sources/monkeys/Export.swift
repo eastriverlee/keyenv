@@ -1,6 +1,6 @@
 import Foundation
 
-private func vaultLookup(_ storedName: String) -> String {
+func vaultLookup(_ storedName: String) -> String {
     #if os(macOS)
     return "security find-generic-password -s \(serviceName) -a \(storedName) -w"
     #else

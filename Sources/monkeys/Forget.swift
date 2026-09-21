@@ -6,7 +6,7 @@ private func reportForgotten(_ keys: [String], from shown: String) {
     printToStandardError(messageStyle("forgot", .good) + " \(shown): " + listed)
 }
 
-private func removeEverything(under profile: String, shown: String) throws {
+private func removeEverything(under profile: String, shown: String, asked: Bool = false) throws {
     let keys = try storedKeysInScope(Scope(profile: profile, project: nil))
     guard !keys.isEmpty else { throw StoreFailure.forgetRefused("nothing is remembered under \(shown)") }
     var removed: [String] = []
@@ -28,7 +28,7 @@ private func removeNamespace(_ argument: String) throws {
     let profiles = storedProfiles(under: namespace, in: try secretStore.storedKeys())
     guard !profiles.isEmpty else { throw StoreFailure.forgetRefused("nothing is remembered under +\(namespace)") }
     for profile in profiles {
-        try removeEverything(under: profile, shown: "@" + profile)
+        try removeEverything(under: profile, shown: "@" + profile, asked: true)
     }
 }
 

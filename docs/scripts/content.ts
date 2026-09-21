@@ -21,6 +21,7 @@ const slugOf = (title: string) =>
 const cleanTitle = (heading: string) => heading.replace(/^#+ /, '').replace(/`/g, '');
 
 /** What someone types into a search engine, where a page's own name is shorter than that. */
+/** Every page opens on one line saying what it is; these are the ones no body supplies. */
 const groupDescriptions: Record<string, string> = {
 	'how-it-works':
 		'Where monkeys keeps a secret, how a command is handed one, how anything printed back is redacted, and what a .monsecrets bundle is made of.',
@@ -320,6 +321,41 @@ function asSteps(text: string) {
 	const { intro, chunks } = splitOn(text, 3);
 	const steps = chunks.map((step) => `<Step>\n\n### ${step.title}\n${step.text}\n\n</Step>`).join('\n\n');
 	return `${intro}\n<Steps>\n\n${steps}\n\n</Steps>\n`;
+}
+
+/**
+ * A group with no words of its own opens on what its pages define, taken from the
+ * line each page already opens with, so the summary cannot drift from the page.
+ */
+/** A group opens with what its own pages say they are, so the list cannot drift. */
+function writeIndex(
+	slug: string,
+	title: string,
+	intro: string,
+	pages: { title: string; text: string }[],
+	shift: number
+) {
+	const rows = pages.map((page) => {
+		const body = asMdx(page.text, shift).trim();
+		const lead = body.slice(0, body.indexOf('\n\n')).replace(/\n/g, ' ');
+		return `| [${page.title}](/docs/${slug}/${slugOf(page.title)}) | ${lead} |`;
+	});
+	const [left, right] = indexHeadings[slug] ?? ['', ''];
+	const table = [`| ${left} | ${right} |`, '| --- | --- |', ...rows].join('\n');
+	const rest = intro.trim() ? `\n\n${asMdx(intro, shift).trim()}` : '';
+	writeFileSync(
+		join(content, slug, 'index.mdx'),
+		frontmatter({
+			title,
+			description: groupDescriptions[`${slug}/index`],
+			icon: sidebarIcons[`${slug}/index`]
+		}) +
+			table +
+			rest +
+			'\n'
+	);
+	written.push(join(slug, 'index'));
+	titles.set(join(slug, 'index'), title);
 }
 
 function writeGroup(slug: string, title: string, text: string, level: number) {

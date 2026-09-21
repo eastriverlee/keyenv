@@ -121,3 +121,11 @@ func removeKey(_ key: String, profile: String, in project: Project) throws -> Bo
     try writeLines(lines, to: project.path)
     return true
 }
+
+/** Whether the file would give the key up, asked before anything is forgotten. */
+func canRemoveKey(_ key: String, profile: String, in project: Project) throws -> Bool {
+    let lines = try fileLines(at: project.path)
+    guard let location = locateKey(key, for: profile, in: lines, of: project) else { return false }
+    try rejectingSharedBlock(location, key, profile, project)
+    return true
+}

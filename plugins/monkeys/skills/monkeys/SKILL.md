@@ -115,8 +115,11 @@ to put a variable there.
 - A secret goes in as a bare key, and a human remembers it.
 
 When a tool insists on a `.env` file, `monkeys poo` writes one from that same
-list, names only and no secrets, and `monkeys run` still carries the values.
-Write the file that way or not at all.
+list, keys only and no secrets, and `monkeys run` still carries the values.
+`monkeys poo @profile --WITH_SECRETS` writes each key as a vault lookup for a
+shell to resolve, which is also safe to read. Both land in /tmp; add
+`--path .` to put one in the project, which asks first. Write the .env one of
+those two ways or not at all.
 
 ## Eat a .env you find
 
@@ -172,6 +175,8 @@ before it reaches the vault. Say what is needed and stop.
 
 - `echo "$SOME_KEY"`, `env`, `printenv`
 - writing a secret out yourself, into a file, a log, a commit or a bug report
+- `monkeys poo --EXPAND_DANGEROUSLY`, which puts the secrets themselves in a
+  file; it refuses anything but a terminal, so this is a human's to run
 
 Where a config file wants the secret, write whatever reference its format
 offers, such as `${OPENROUTER_API_KEY}`, and let the program expand it.

@@ -30,6 +30,24 @@ func askYesOrNo(_ question: String) -> Bool {
     return answer == "y" || answer == "yes"
 }
 
+/** The vault has no undo, so anything that empties it asks a person first. */
+func confirmedForget(_ what: String) throws {
+    guard isTerminal(STDIN_FILENO), isTerminal(STDERR_FILENO) else {
+        throw StoreFailure.forgetRefused("nothing forgotten. this asks first, so it needs a terminal")
+    }
+    guard askYesOrNo("\(what). go ahead?") else {
+        throw StoreFailure.forgetRefused("nothing forgotten")
+    }
+}
+
+func askForWord(_ question: String, _ word: String) -> Bool {
+    guard isTerminal(STDIN_FILENO), isTerminal(STDERR_FILENO) else { return false }
+    FileHandle.standardError.write(
+        Data((question + " " + messageStyle("[" + word + "/N]", .bold) + " ").utf8))
+    guard let answer = readLine(strippingNewline: true) else { return false }
+    return answer.trimmingCharacters(in: .whitespaces) == word
+}
+
 func readSecretFromInput() -> String {
     if !isTerminal(STDIN_FILENO) {
         let piped = FileHandle.standardInput.readDataToEndOfFile()
@@ -291,7 +309,7 @@ private func publicValues(_ scope: Scope, given: [String]?) throws -> [ValueEntr
     return entries.filter { given.contains($0.key) }
 }
 
-private let packForm = "monkeys pack [path] [--open] [--only [KEY[,KEY...]] [@profile[,profile...] [KEY[,KEY...]]]...]"
+private let packForm = "monkeys pack [name] [--path DIR] [--open] [--only [KEY[,KEY...]] [@profile[,profile...] [KEY[,KEY...]]]...]"
 
 private let profileNeeded = "a bundle carries a profile: run this in a project with a \(projectFileName) file, or name one with --only @profile"
 
@@ -443,10 +461,15 @@ private func blockLines(_ profiles: [[String]], in namespace: String?) -> String
 func runPack(_ arguments: [String]) throws {
     let opens = arguments.contains("--open")
     let asks = arguments.contains("--ask")
-    let (blocks, project, fileName) = try packedBlocks(arguments.filter { $0 != "--open" && $0 != "--ask" })
+    let (directory, remaining) = try takeDirectoryFlag("--path", arguments)
+    let (blocks, project, fileName) = try packedBlocks(remaining.filter { $0 != "--open" && $0 != "--ask" })
     guard !blocks.isEmpty else { throw StoreFailure.bundleFailed("nothing to pack: no keys are listed for that") }
     let filled = try blocks.map { try filledBlock($0, project: project) }
-    let path = bundleDestination(fileName)
+    let path = try bundleDestination(fileName, in: directory)
+    try confirmedOutOfHarm(
+        path,
+        "a bundle into " + messageStyle(abbreviatingHome(path), .bold)
+            + ", where a commit can take it. go ahead?")
     let namespace = project?.namespace
     let values = packedValues(project, for: filled.flatMap(\.profiles))
     let origin = try writeBundle(ProfileBundle(namespace: namespace, blocks: filled, values: values), to: path, asking: asks)
@@ -488,15 +511,48 @@ func revealInFileManager(_ path: String) {
     process.waitUntilExit()
 }
 
-func bundleDestination(_ argument: String?) -> String {
-    guard let argument else {
-        return "/tmp/a" + bundleSuffix
+func insideCheckout(_ path: String) -> Bool {
+    let holder = URL(fileURLWithPath: path).deletingLastPathComponent()
+        .resolvingSymlinksInPath().standardizedFileURL.path
+    return gitRoot(above: holder) != nil
+}
+
+func confirmedOutOfHarm(_ path: String, _ question: String, understanding: Bool = false) throws {
+    guard insideCheckout(path) else { return }
+    let allowed = understanding ? askForWord(question, "UNDERSTOOD") : askYesOrNo(question)
+    guard allowed else {
+        throw StoreFailure.bundleFailed(
+            "nothing written. without --path it lands in /tmp, which is where this belongs")
     }
+}
+
+let pathFlag = "--path"
+
+func takeDirectoryFlag(_ name: String, _ arguments: [String]) throws -> (directory: String?, rest: [String]) {
+    guard let index = arguments.firstIndex(of: name) else { return (nil, arguments) }
+    guard index + 1 < arguments.count else {
+        throw StoreFailure.bundleFailed("\(name) wants a directory after it: \(name) .")
+    }
+    let directory = arguments[index + 1]
     var isDirectory: ObjCBool = false
-    if FileManager.default.fileExists(atPath: argument, isDirectory: &isDirectory), isDirectory.boolValue {
-        return URL(fileURLWithPath: argument).appendingPathComponent("a" + bundleSuffix).path
+    guard FileManager.default.fileExists(atPath: directory, isDirectory: &isDirectory),
+          isDirectory.boolValue else {
+        throw StoreFailure.bundleFailed("\(abbreviatingHome(directory)) is not a directory")
     }
-    return bundlePath(argument)
+    var rest = arguments
+    rest.removeSubrange(index...(index + 1))
+    return (directory, rest)
+}
+
+func bundleDestination(_ name: String?, in directory: String?) throws -> String {
+    let folder = directory ?? "/tmp"
+    guard let name else {
+        return URL(fileURLWithPath: folder).appendingPathComponent("a" + bundleSuffix).path
+    }
+    guard !name.contains("/") else {
+        throw StoreFailure.bundleFailed("a bundle's name carries no directory; \(pathFlag) chooses where it lands")
+    }
+    return URL(fileURLWithPath: folder).appendingPathComponent(bundlePath(name)).path
 }
 
 func gitRoot(above directory: String) -> String? {

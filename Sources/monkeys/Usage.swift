@@ -12,9 +12,9 @@ let commandSummaries = [
     CommandSummary(verb: "remember", arguments: "[@profile] [--all]",
                    summary: "prompt for each key the profile lacks"),
     CommandSummary(verb: "forget", arguments: "<KEY>",
-                   summary: "delete one remembered secret"),
+                   summary: "remove one remembered secret"),
     CommandSummary(verb: "forget", arguments: "@profile[,profile...]",
-                   summary: "delete every secret of those profiles"),
+                   summary: "remove every secret of those profiles"),
     CommandSummary(verb: "forget", arguments: "+namespace",
                    summary: "the same for every profile under it"),
     CommandSummary(verb: "drop", arguments: "<KEY>",
@@ -29,14 +29,16 @@ let commandSummaries = [
                    summary: "the same, with every remembered secret"),
     CommandSummary(verb: "run", arguments: "<command>",
                    summary: "the same, keys read from .monkeys"),
-    CommandSummary(verb: "pack", arguments: "[path] [--ask] [--only ...]",
+    CommandSummary(verb: "pack", arguments: "[name] [--path DIR] [--only ...]",
                    summary: "one encrypted file of the profiles"),
     CommandSummary(verb: "unpack", arguments: "<name> [dir] [--keep]",
                    summary: "remember its secrets, write its .monkeys"),
     CommandSummary(verb: "eat", arguments: "[--public KEY[,KEY...]]",
                    summary: "move the .env files here into monkeys"),
-    CommandSummary(verb: "poo", arguments: "[@profile]",
-                   summary: "a .env of names, for tools that want one"),
+    CommandSummary(verb: "poo", arguments: "[@profile] [--path DIR]",
+                   summary: "a .env of keys, for tools that want one"),
+    CommandSummary(verb: "poo", arguments: "@profile --WITH_SECRETS",
+                   summary: "the same, each key a vault lookup"),
     CommandSummary(verb: "fill", arguments: "@a --with @b",
                    summary: "give @a the keys it lacks, from @b"),
     CommandSummary(verb: "list", arguments: "",
@@ -98,12 +100,15 @@ var usage: String {
 
     remember writes that file as it goes. A key it does not list is added
     under the profile, and in a checkout with no file at all the first
-    remember makes one, named after the directory. forget takes the secret
+    remember makes one, named after the directory. forget removes the secret
     and leaves the key listed, which doctor then reports as missing; drop
     takes the key with it, and the project stops asking for it:
 
       \(outputStyle("monkeys forget STRIPE_SECRET_KEY", .argument))        the key stays in \(projectFileName)
       \(outputStyle("monkeys drop STRIPE_SECRET_KEY", .argument))          both go
+
+    Both ask first, since the vault is the only place that secret exists, and
+    the question needs a terminal.
 
     A value that is not secret, PORT=3000 and the like, is a KEY=value line in
     the same file, under the same @ block. run puts it in the environment
@@ -186,13 +191,25 @@ var usage: String {
       \(outputStyle("monkeys eat --public PORT,NODE_ENV", .argument))
 
     Some tools read a .env file rather than the environment, and some only
-    want one to exist. poo writes one from the same list: the names on their
+    want one to exist. poo writes one from the same list: the keys on their
     own, with no values beside them, and the public values as they stand. A
-    name with nothing after it sets nothing, so the secrets still arrive
+    key with nothing after it sets nothing, so the secrets still arrive
     through run and nothing in the file can shadow them:
 
       \(outputStyle("monkeys poo", .argument))
       \(outputStyle("monkeys poo @production", .argument))
+
+    A tool that wants the values in the file takes them as vault lookups, the
+    same shape export writes, so nothing of the secret is on disk. A shell
+    that sources the file runs them; a reader that only parses, like dotenv
+    or Compose, gets the text of the lookup instead, and only then is there
+    reason to write the secrets out. Every one of them lands under /tmp unless
+    --path names a directory, and inside a git checkout poo asks before it
+    writes. The last one wants a terminal, since pasting is a person's errand:
+
+      \(outputStyle("monkeys poo @production --WITH_SECRETS", .argument))
+      \(outputStyle("monkeys poo @production --WITH_SECRETS --EXPAND_DANGEROUSLY", .argument))
+      \(outputStyle("monkeys poo @production --WITH_SECRETS --EXPAND_DANGEROUSLY --open", .argument))
 
     \(styledAgentGuide)
     """

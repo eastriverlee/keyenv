@@ -142,9 +142,9 @@ prints.
 
 ### Where it goes
 
-A secret enters the vault through `set`, typed at a prompt, piped in or read
-from the clipboard, and leaves it in exactly one way: into the environment of
-a command that `run` starts. What that command prints comes back through
+A secret enters the vault through `remember`, typed at a prompt, piped in or
+pasted from the clipboard. It leaves one way only: into the environment of a
+command that `run` starts. What that command prints comes back through
 `monkeys`, which replaces the secret with `[redacted KEY]` on the way.
 
 ### Replacing one
@@ -489,9 +489,9 @@ second is the salt followed by the sealed bytes, in
 base64. Inside, the bundle keeps the
 shape of the `.monkeys` file, namespace line and blocks, so `unpack` can write
 the file back and remember each secret under its profile. The `KEY=value` lines of the
-packed profiles follow, after a line that says `values`, so `unpack` writes
-them back as lines; a bundle without that line was written before values
-existed and opens too.
+packed profiles follow, after a line that says `values`, and `unpack` writes
+them back as lines. A bundle without that line was written before values
+existed, and opens too.
 
 ### Security
 
@@ -516,8 +516,8 @@ work is done, so a crafted file cannot make `unpack` run for hours.
 
 The file is safe to send over whatever you already use, and the passphrase
 goes another way. `unpack` deletes the bundle once it has done its job; `pack`
-writes it to `/tmp`, outside any repository. [Sharing a
-profile](/docs/sharing-a-profile) walks through it. A bundle written before a
+writes it to `/tmp`, outside any repository. [pack](#pack) and
+[unpack](#unpack) are the two halves. A bundle written before a
 `rename` still carries the old name, and unpacks to it.
 
 ### If one is committed
@@ -603,26 +603,8 @@ reach; the [caveats](#caveats) say where that line falls.
 
 # Commands
 
-| command | what it does |
-| --- | --- |
-| `monkeys remember <KEY> [--clipboard]` | read a secret and remember it |
-| `monkeys remember --public <KEY>` | write a plain value into `.monkeys` |
-| `monkeys remember [@profile] [--all]` | prompt for each key the profile lacks |
-| `monkeys forget <KEY>` | delete one secret |
-| `monkeys forget @profile[,profile...]` | delete every secret of those profiles |
-| `monkeys forget +namespace` | the same for every profile under a namespace |
-| `monkeys rename @old @new` | move a profile to a new name, in the vault and the file |
-| `monkeys rename +old +new` | the same for every profile under a namespace |
-| `monkeys run <KEY[,KEY...]> <command>` | run a command with those secrets in its environment |
-| `monkeys run <command>` | the same, with the keys a `.monkeys` file lists |
-| `monkeys pack [path] [--open] [--only ...]` | the profiles as one encrypted `a.monsecrets` |
-| `monkeys unpack <name> [directory]` | remember its secrets, write its `.monkeys` |
-| `monkeys eat [--public KEY[,KEY...]]` | move the `.env` files here into the vault and `.monkeys` |
-| `monkeys fill @a --with @b` | give `@a` the keys it lacks, from `@b` |
-| `monkeys list` | the whole vault, as blocks by profile |
-| `monkeys preview [KEY[,KEY...]]` | print each secret masked, with its length |
-| `monkeys doctor [--short]` | what each profile has and lacks |
-| `monkeys export [KEY[,KEY...]]` | vault lookup lines, to paste into a startup file |
+`forget` and `drop` ask before the vault loses anything, since nothing else
+holds a secret, so both want a terminal.
 
 Every command takes a leading `@profile`, one the file declares;
 `@namespace.profile` reaches a profile from anywhere, and a bare `@` means no
@@ -1175,7 +1157,7 @@ into every shell you open.
 Send a project's secrets to someone, as one encrypted file.
 
 ```sh
-monkeys pack [path] [--ask] [--open] [--only [KEY[,KEY...]] [@profile[,profile...] [KEY[,KEY...]]]...]
+monkeys pack [name] [--path DIR] [--ask] [--open] [--only [KEY[,KEY...]] [@profile[,profile...] [KEY[,KEY...]]]...]
 ```
 
 Writes a project's secrets as one encrypted file, the only way they leave the
@@ -1190,13 +1172,17 @@ monkeys pack
 > copied its passphrase to your clipboard; send that the other way
 > ```
 
-The file goes to `/tmp`, which is never inside a repository, and the
-message shows the path. A path before `--only` puts it elsewhere: a directory gets `a.monsecrets` inside it, and a file path is used as
-given, with `.monkeys` added when missing.
+Send the file however you like, and paste the passphrase into something else:
+a different messenger, a call, a password manager's share. Both down one
+channel is one leak away from being no encryption at all.
+
+The file goes to `/tmp`, which is never inside a repository, and the message
+shows the path. `--path` names a directory to write into, and the name before
+`--only` names the file inside it. A name carries no directory of its own:
 
 ```sh
-monkeys pack ~/Desktop
-monkeys pack ~/Desktop/for-sam
+monkeys pack --path ~/Desktop
+monkeys pack for-sam --path ~/Desktop
 ```
 
 > ```
@@ -1259,8 +1245,8 @@ input when it is not a terminal, so a script that pipes one keeps working.
 
 ### --only
 
-`--only` says which profiles and keys, and reads the way the file is written:
-a `@profile` opens a block, `@a,b` opens one for several profiles at once, and
+`--only` says which profiles and keys, and reads the way the file is written.
+A `@profile` opens a block, `@a,b` opens one for several profiles at once, and
 the keys after it belong to every profile in that block. A block with no keys
 after it goes whole; keys before any `@` come from the default profile, the
 first the file mentions. That is how a teammate gets test and never
@@ -1418,10 +1404,9 @@ asking and named in the summary, since turning one kind into the other is
 
 The grammar is the part of dotenv every library reads the same way: `KEY=value`,
 `export KEY=value`, a value in single or double quotes with the quotes
-stripped, `#` comment lines and blank lines. A value that spans lines, one that
-expands another variable with `${...}`, or an unquoted one followed by a `#`
-comment is refused with its file and line, and nothing is written until every
-file parses:
+stripped, `#` comment lines and blank lines. Three kinds of value are refused, with their file and line: one that spans
+lines, one that expands another variable with `${...}`, and an unquoted one
+followed by a `#` comment. Nothing is written until every file parses:
 
 > ```
 > monkeys: .env:2: DATABASE_URL expands another variable; monkeys keeps a value as it is; nothing was written
@@ -1470,7 +1455,8 @@ refuses to run with its input piped and says which flag to use.
 Give a tool the `.env` file it insists on, without giving it a secret.
 
 ```sh
-monkeys poo [@profile]
+monkeys poo [@profile] [--path DIR] [--open]
+monkeys poo @profile --WITH_SECRETS [--EXPAND_DANGEROUSLY] [--path DIR] [--open]
 ```
 
 Writes a `.env` beside `.monkeys` carrying the same list: every secret's name on
@@ -1483,7 +1469,7 @@ monkeys poo
 ```
 
 > ```
-> wrote .env for @test: 2 names, 1 value
+> wrote /tmp/monkeys-jn4u9q/.env for @test: 2 keys, 1 value
 > ```
 
 ```
@@ -1493,8 +1479,9 @@ STRIPE_SECRET_KEY
 PORT=3000
 ```
 
-The header names the profile when the project declares more than one, since
-that is the profile `run` has to be given to match.
+It lands in `/tmp` unless you say otherwise, so nothing appears in a project
+that did not ask for it. The header names the profile when the project declares
+more than one, since that is the profile `run` has to be given to match.
 
 ### Why a name carries no value
 
@@ -1514,21 +1501,22 @@ where it is obvious, to the first call that uses the key, where it is not.
 
 ### @profile
 
-A profile names which list to write, the way it does everywhere else:
+### --path
+
+`--path` names the directory to write into, and the file inside it is always
+`.env`:
 
 ```sh
-monkeys poo @production
+monkeys poo --path .
 ```
 
 > ```
 > wrote .env for @production: 3 names, 1 value
 > ```
 
-One file is written, never one per profile. Which profile a program runs under
-is `run`'s to decide, and a second place to decide it is a second place to get
-it wrong.
-
-### An existing .env
+Anywhere inside a git checkout it asks first, because that is where a commit
+can find the file. Answer anything but `y` and nothing is written. `--open`
+shows whatever it wrote in the file manager, wherever that was.
 
 A `.env` that poo did not write is left alone:
 
@@ -1536,8 +1524,109 @@ A `.env` that poo did not write is left alone:
 > monkeys: ~/code/shop/.env was not written by poo: monkeys eat it first, or move it aside
 > ```
 
-Its own output it overwrites without asking, since the file is derived and
-nothing in it was yours.
+### --WITH_SECRETS
+
+A tool that wants the values, not only the keys, takes them as vault lookups:
+
+```sh
+monkeys poo @production --WITH_SECRETS
+```
+
+> ```
+> wrote /tmp/monkeys-QA6tuw/.env for @production: 3 lookups, 1 value
+> ```
+
+```
+# monkeys' poo @production, vault lookups. read https://monk3ys.dev/poo
+DATABASE_URL="$(security find-generic-password -s monkeys -a shop.production/DATABASE_URL -w)"
+STRIPE_SECRET_KEY="$(security find-generic-password -s monkeys -a shop.production/STRIPE_SECRET_KEY -w)"
+SENTRY_DSN="$(security find-generic-password -s monkeys -a shop.production/SENTRY_DSN -w)"
+PORT=8080
+```
+
+That is the line `export` writes, so nothing of the secret is on disk and the
+file is as safe to keep as the keys were. The profile has to be named: the
+lookup carries one profile's stored name, and the wrong one resolves to the
+wrong secret rather than to nothing.
+
+What resolves it is a shell:
+
+```sh
+set -a; . ./.env; set +a
+```
+
+> ```
+> DATABASE_URL=postgres://user:pa$$w0rd@host/shop
+> ```
+
+---
+
+### --EXPAND_DANGEROUSLY
+
+> [!WARNING]
+> This is the one command that writes secrets, in the open, to a file. Nothing
+> else in `monkeys` does. Reach for it only when the tool cannot run a lookup,
+> and delete what it wrote when you are done.
+
+A reader that parses the file without running anything gets the text of the
+lookup instead of the secret. Vite, SvelteKit, Next and Compose all read a
+`.env` this way:
+
+> ```
+> vite got: "$(security find-generic-password -s monkeys -a shop.production/DATABASE_URL -w)"
+> ```
+
+Only then is there reason to put the secrets themselves in a file, which is
+what this flag does. It runs the lookups and writes what they return:
+
+```sh
+monkeys poo @production --WITH_SECRETS --EXPAND_DANGEROUSLY
+```
+
+> ```
+> wrote /tmp/monkeys-01mjsu/.env for @production: 3 secrets, 1 value
+> the secrets are in the open in that file; delete it when the deploy is done
+> ```
+
+```
+# monkeys' poo @production, secrets in the open. delete this file. read https://monk3ys.dev/poo
+DATABASE_URL="postgres://user:pa\$\$w0rd@host/shop"
+STRIPE_SECRET_KEY="sk-demo-live"
+SENTRY_DSN="https://key@sentry.example.com/1"
+PORT=8080
+```
+
+It is a fallback for the place that takes no vault and no command, such as a
+deploy dashboard that wants the variables pasted in. That is a person's errand,
+so the flag wants a terminal and refuses a pipe:
+
+> ```
+> monkeys: --EXPAND_DANGEROUSLY leaves secrets in a file for a person to paste, so it needs a terminal
+> ```
+
+`--path` still works, and inside a git checkout the question is no longer one
+letter:
+
+> ```
+> plain secrets into ~/code/shop/.env, where a commit can take them. not recommended. [UNDERSTOOD/N] UNDERSTOOD
+> ```
+
+A `$` inside a secret is written `\$`, which both a shell and dotenv read back
+as one character, so a password like `pa$$w0rd` arrives whole. A secret holding
+a quote or a backslash is refused instead, since no dotenv line carries those
+back unchanged.
+
+### @profile
+
+A profile names which list to write, the way it does everywhere else:
+
+```sh
+monkeys poo @production
+```
+
+One file is written, never one per profile. Which profile a program runs under
+is `run`'s to decide, and a second place to decide it is a second place to get
+it wrong.
 
 ## fill
 
@@ -1765,45 +1854,7 @@ The keychain treats `security` as its own program, so the first shell that
 runs the line asks once whether to allow it. Answer Always Allow and it stays
 quiet.
 
-# Sharing a profile
-
-A project's secrets travel as one encrypted file: `pack` on one machine,
-`unpack` on the other. The file is safe to send over whatever you already
-use; the passphrase goes another way.
-
-On the machine that has the secrets, inside the checkout:
-
-```sh
-monkeys pack --only @test
-```
-
-> ```
-> wrote /tmp/a.monsecrets: +foo @test, 2 secrets
-> copied its passphrase to your clipboard; send that the other way
-> ```
-
-Send that file, and paste the passphrase into something else: a different
-messenger, a call, a password manager's share. Both down one channel is one
-leak away from being no encryption at all. On the other machine, anywhere inside their
-checkout:
-
-```sh
-monkeys unpack ~/Downloads/a.monsecrets
-```
-
-> ```
-> passphrase:
-> wrote .monkeys: +foo @test, 2 keys
-> remembered foo.test/DATABASE_URL, foo.test/STRIPE_SECRET_KEY
-> removed /Users/them/Downloads/a.monsecrets
-> ```
-
-Their vault now holds the secrets under the same profile, and `monkeys run
-./hello.sh` works for them the way it works for you. When they cloned the
-repository, the `.monkeys` file was already there, and `unpack` leaves it as
-it was, adding only keys it does not list.
-
-# Questions
+# Q&A
 
 ### What is a .monkeys file?
 
@@ -1837,6 +1888,64 @@ which is what the [skill](#skill) teaches it to do.
 writes the keys into `.monkeys`, and deletes the files it read. Name the keys
 that were never secret with `--public` and it writes those as values instead
 of asking about each one.
+
+### Does this work with...?
+
+Yes. Anything that reads `process.env` gets what `run` hands it, and a `.env`
+file is only one way to fill that environment, never a channel of its own.
+Every loader that reads one reads the environment as well.
+
+```sh
+monkeys run bun run dev
+monkeys run npm run build
+```
+
+The environment wins over the file, so a `.env` left behind cannot shadow what
+`run` handed over. Prefix rules are untouched: only the names a framework
+exports, `VITE_` or `PUBLIC_` or `NEXT_PUBLIC_`, reach the browser, wherever
+the value came from.
+
+For a tool that reads no environment at all, `poo` writes the `.env` it wants.
+
+### How do I use this with Docker?
+
+A container inherits nothing from the host, so name the variable and Docker
+takes it from the environment [`run`](#run) made. A `-e` with no `=value` after it
+means exactly that.
+
+```sh
+monkeys run OPENROUTER_API_KEY docker run -e OPENROUTER_API_KEY myimage
+monkeys run docker compose up
+```
+
+In `compose.yaml` a bare name under `environment:` does the same:
+
+```yaml
+services:
+  api:
+    environment:
+      - OPENROUTER_API_KEY
+      - STRIPE_SECRET_KEY
+```
+
+Output that comes back through the container is still redacted, since
+`monkeys` is in front of the `docker` command. A build takes a BuildKit secret
+instead, which never lands in a layer:
+
+```sh
+monkeys run OPENROUTER_API_KEY \
+  docker build --secret id=openrouter,env=OPENROUTER_API_KEY .
+```
+
+### What if a tool insists on a .env file?
+
+[`monkeys poo`](#poo) writes one carrying the same keys `.monkeys` lists, with nothing
+after them, so the file satisfies whatever wanted it while `run` keeps handing
+over the values. It lands in `/tmp` unless `--path` says otherwise.
+
+```sh
+monkeys poo --path .
+```
 
 ### How do I give a teammate the secrets?
 
