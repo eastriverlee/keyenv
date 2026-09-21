@@ -9,6 +9,7 @@ private func reportForgotten(_ keys: [String], from shown: String) {
 private func removeEverything(under profile: String, shown: String, asked: Bool = false) throws {
     let keys = try storedKeysInScope(Scope(profile: profile, project: nil))
     guard !keys.isEmpty else { throw StoreFailure.forgetRefused("nothing is remembered under \(shown)") }
+    if !asked { try confirmedForget("forget \(counted(keys.count)) under \(shown), which nothing else holds") }
     var removed: [String] = []
     for key in keys {
         do {
@@ -22,11 +23,20 @@ private func removeEverything(under profile: String, shown: String, asked: Bool 
     reportForgotten(removed, from: shown)
 }
 
+private func counted(_ keys: Int) -> String {
+    keys == 1 ? "1 secret" : "\(keys) secrets"
+}
+
 private func removeNamespace(_ argument: String) throws {
     let namespace = String(argument.dropFirst())
     guard isValidProfileName(namespace) else { throw StoreFailure.invalidProfileName(argument) }
     let profiles = storedProfiles(under: namespace, in: try secretStore.storedKeys())
     guard !profiles.isEmpty else { throw StoreFailure.forgetRefused("nothing is remembered under +\(namespace)") }
+    let total = try profiles.reduce(0) { running, profile in
+        running + (try storedKeysInScope(Scope(profile: profile, project: nil)).count)
+    }
+    try confirmedForget(
+        "forget \(counted(total)) across \(profiles.count) profiles under +\(namespace), which nothing else holds")
     for profile in profiles {
         try removeEverything(under: profile, shown: "@" + profile, asked: true)
     }
@@ -43,8 +53,13 @@ func runForgetProfiles(_ argument: String) throws {
         guard isValidProfileName(name) else { throw StoreFailure.invalidProfileName("@" + name) }
         return try scope(for: .named(name))
     }
-    for scope in resolved {
-        guard let profile = scope.profile else { continue }
-        try removeEverything(under: profile, shown: "@" + shortened(profile, in: project?.namespace))
+    let profiles = resolved.compactMap(\.profile)
+    let total = try profiles.reduce(0) { running, profile in
+        running + (try storedKeysInScope(Scope(profile: profile, project: nil)).count)
+    }
+    let shownNames = profiles.map { "@" + shortened($0, in: project?.namespace) }.joined(separator: ", ")
+    try confirmedForget("forget \(counted(total)) under \(shownNames), which nothing else holds")
+    for profile in profiles {
+        try removeEverything(under: profile, shown: "@" + shortened(profile, in: project?.namespace), asked: true)
     }
 }

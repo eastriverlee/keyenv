@@ -223,6 +223,7 @@ func runForget(_ arguments: [String]) throws {
         printToStandardError(messageStyle("forgot", .good) + " " + messageStyle(name, .bold) + " from \(projectFileName) for @\(project.shortName(profile))")
         return
     }
+    try confirmedForget("forget \(scope.storedName(name)), which nothing else holds")
     try secretStore.remove(forName: scope.storedName(name))
     printToStandardError(messageStyle("forgot", .good) + " " + messageStyle(scope.storedName(name), .bold))
     guard isSetInThisEnvironment(name) else { return }
@@ -242,6 +243,12 @@ func runDrop(_ arguments: [String]) throws {
     }
     if project.value(of: name, for: profile) != nil { return try runForget(arguments) }
     let listed = project.keys(for: profile).contains(name)
+    if listed { _ = try canRemoveKey(name, profile: profile, in: project) }
+    let held = (try? storedKeysInScope(scope))?.contains(name) ?? true
+    try confirmedForget(
+        held
+            ? "forget \(scope.storedName(name)), which nothing else holds, and unlist it from \(projectFileName)"
+            : "unlist \(name) from \(projectFileName), which the vault has nothing under")
     var forgotten = true
     do {
         try secretStore.remove(forName: scope.storedName(name))

@@ -822,6 +822,14 @@ monkeys forget OPENROUTER_API_KEY
 monkeys forget @ ANTHROPIC_API_KEY
 ```
 
+> ```
+> forget foo.test/STRIPE_SECRET_KEY, which nothing else holds. go ahead? [y/N] y
+> forgot foo.test/STRIPE_SECRET_KEY
+> ```
+
+The question needs a terminal, so a script or an agent is refused rather than
+answered for.
+
 The `.monkeys` file is not touched: a project still lists the key, and
 `doctor` reports it missing until someone remembers it again. To take the key
 out of the file as well, see [drop](#drop).
@@ -849,6 +857,7 @@ monkeys forget @test,production
 ```
 
 > ```
+> forget 5 secrets under @test, @production, which nothing else holds. go ahead? [y/N] y
 > forgot @test: DATABASE_URL, STRIPE_SECRET_KEY
 > forgot @production: DATABASE_URL, SENTRY_DSN, STRIPE_SECRET_KEY
 > ```
@@ -860,6 +869,7 @@ monkeys forget +foo
 ```
 
 > ```
+> forget 5 secrets across 2 profiles under +foo, which nothing else holds. go ahead? [y/N] y
 > forgot @foo.production: DATABASE_URL, SENTRY_DSN, STRIPE_SECRET_KEY
 > forgot @foo.test: DATABASE_URL, STRIPE_SECRET_KEY
 > ```
@@ -884,6 +894,7 @@ monkeys drop STRIPE_SECRET_KEY
 ```
 
 > ```
+> forget foo.test/STRIPE_SECRET_KEY, which nothing else holds, and unlist it from .monkeys. go ahead? [y/N] y
 > forgot foo.test/STRIPE_SECRET_KEY
 > unlisted STRIPE_SECRET_KEY from .monkeys for @test
 > ```
@@ -896,6 +907,7 @@ monkeys drop DATABASE_URL
 ```
 
 > ```
+> unlist DATABASE_URL from .monkeys, which the vault has nothing under. go ahead? [y/N] y
 > unlisted DATABASE_URL from .monkeys for @test
 > ```
 
@@ -1184,6 +1196,13 @@ shows the path. `--path` names a directory to write into, and the name before
 monkeys pack --path ~/Desktop
 monkeys pack for-sam --path ~/Desktop
 ```
+
+Inside a git checkout it asks first, since a bundle a commit can reach is a
+bundle that can be published:
+
+> ```
+> a bundle into ~/code/shop/a.monsecrets, where a commit can take it. go ahead? [y/N] y
+> ```
 
 > ```
 > wrote ~/Desktop/a.monsecrets: +foo @test,production @production, 5 secrets
@@ -1511,7 +1530,8 @@ monkeys poo --path .
 ```
 
 > ```
-> wrote .env for @production: 3 names, 1 value
+> a .env into ~/code/shop/.env, where a commit can take it. go ahead? [y/N] y
+> wrote ~/code/shop/.env for @test: 2 keys, 1 value
 > ```
 
 Anywhere inside a git checkout it asks first, because that is where a commit
