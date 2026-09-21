@@ -24,6 +24,8 @@ const cleanTitle = (heading: string) => heading.replace(/^#+ /, '').replace(/`/g
 const groupDescriptions: Record<string, string> = {
 	'how-it-works':
 		'Where monkeys keeps a secret, how a command is handed one, how anything printed back is redacted, and what a .monsecrets bundle is made of.',
+	questions:
+		'What a .monkeys file is, where secrets are kept, whether an agent can read them, how to move off .env, and how monkeys differs from direnv and the hosted secret managers.',
 };
 
 const searchTitles: Record<string, string> = {
@@ -95,6 +97,7 @@ const sidebarIcons: Record<string, string> = {
 	commands: 'SquareTerminal',
 	'sharing-a-profile': 'Share2',
 	'how-it-works': 'Workflow',
+	questions: 'MessageCircleQuestion',
 	caveats: 'TriangleAlert',
 	skill: 'Bot'
 };
@@ -244,11 +247,35 @@ function linkAcrossPages() {
 	}
 }
 
+/** Named as well as covered by the wildcard, since a crawler that reads its own name is told plainly. */
+const answerEngines = [
+	'GPTBot',
+	'OAI-SearchBot',
+	'ChatGPT-User',
+	'ClaudeBot',
+	'Claude-User',
+	'Claude-SearchBot',
+	'PerplexityBot',
+	'Perplexity-User',
+	'Google-Extended',
+	'Applebot-Extended',
+	'meta-externalagent',
+	'CCBot',
+	'Bytespider',
+	'cohere-ai',
+];
+
+const robots = (origin: string) =>
+	['User-agent: *', 'Allow: /', '']
+		.concat(answerEngines.flatMap((name) => [`User-agent: ${name}`, 'Allow: /', '']))
+		.concat([`Sitemap: ${origin}/sitemap.xml`, ''])
+		.join('\n');
+
 function writeSitemap() {
 	const urls = written.map((path) => `${docsOrigin}${docsRoute}${path === 'index' ? '' : '/' + path.replace(/\/index$/, '')}/`);
 	const entries = urls.map((url) => `  <url><loc>${url}</loc></url>`).join('\n');
 	writeFileSync(join(assets, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>\n`);
-	writeFileSync(join(assets, 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${docsOrigin}/sitemap.xml\n`);
+	writeFileSync(join(assets, 'robots.txt'), robots(docsOrigin));
 }
 
 function splitOn(markdown: string, level: number) {

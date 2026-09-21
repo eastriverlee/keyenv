@@ -1729,6 +1729,78 @@ Their vault now holds the secrets under the same profile, and `monkeys run
 repository, the `.monkeys` file was already there, and `unpack` leaves it as
 it was, adding only keys it does not list.
 
+# Questions
+
+### What is a .monkeys file?
+
+A project's list of the environment variables it needs, kept next to the code
+and committed with it. It holds the names, never the secrets: `.env.example`
+with the secrets left out, and the values that were never secret written in
+beside their keys.
+
+### Is .monkeys a file extension?
+
+No. The whole name is `.monkeys`, the way `.env` is: nothing comes before the
+dot. A project has one, at the root of the git checkout.
+
+### Where does monkeys keep a secret?
+
+In the vault the operating system already runs: the keychain on macOS, the
+Secret Service on Linux, which is GNOME Keyring or KWallet. It keeps no file
+of its own, so there is no database to back up or leak, and the desktop's own
+tools list and delete what it stores.
+
+### Can a coding agent read my secrets?
+
+No command prints a stored secret, and `monkeys run` replaces one with
+`[redacted KEY]` when the command it started prints it back. An agent can give
+a command the secrets it needs without the secret entering the conversation,
+which is what the [skill](#skill) teaches it to do.
+
+### How do I move a project off .env?
+
+`monkeys eat` reads the `.env` files it finds, puts the secrets in your vault,
+writes the keys into `.monkeys`, and deletes the files it read. Name the keys
+that were never secret with `--public` and it writes those as values instead
+of asking about each one.
+
+### How do I give a teammate the secrets?
+
+`monkeys pack` writes every profile as one encrypted file and puts its
+passphrase on your clipboard. They run `monkeys unpack`, which asks for the
+passphrase, puts the secrets in their own vault, writes the project's
+`.monkeys`, and deletes the file.
+
+### What happens if I lose the machine?
+
+The secrets are gone with the vault, since nothing else holds them. Remember
+them again from wherever they came from, or unpack a bundle a teammate still
+has.
+
+### Does monkeys work on Windows?
+
+No. macOS and Linux, because those are the two desktop vaults it speaks to.
+
+### How is this different from direnv?
+
+`direnv` loads a file into your shell when you enter a directory, so the
+secrets live in a file and then in every process that shell starts. `monkeys`
+keeps them in the vault and hands them to one command, and the file it commits
+holds names only.
+
+### How is this different from 1Password CLI, Doppler or Infisical?
+
+Those are services: an account, a server, a subscription, and a company that
+can see what you store. `monkeys` is one binary that uses the vault already on
+the machine, with nothing to sign into and nothing to host. What it gives up
+is what a service is for, such as audit logs and taking access away from
+someone centrally.
+
+### Is monkeys free?
+
+MIT, with no account and no server. The [source](https://github.com/eastriverlee/monkeys)
+is the whole of it.
+
 # Caveats
 
 ### What redaction can and cannot do
