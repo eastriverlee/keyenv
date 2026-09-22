@@ -1,6 +1,6 @@
 import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { docsOrigin, docsRoute } from '../app/lib/shared';
+import { docsOrigin, docsRoute, siteOrigin } from '../app/lib/shared';
 
 const repository = join(import.meta.dirname, '..', '..');
 const content = join(import.meta.dirname, '..', 'content', 'docs');
@@ -12,17 +12,24 @@ const installURL =
 const skillURL =
 	'https://raw.githubusercontent.com/eastriverlee/monkeys/main/plugins/monkeys/skills/monkeys/SKILL.md';
 
-function redirectsFor(target: string): string[] {
-	if (target === 'site') {
-		return [
-			`/install ${installURL} 302`,
-			`/skill ${skillURL} 302`,
-			`/poo ${docsOrigin}${docsRoute}/commands/poo/ 302`,
-			`${docsRoute}/* ${docsOrigin}${docsRoute}/:splat 301`,
-		];
-	}
-	if (target === 'docs') return [`/ ${docsRoute} 302`, `/install ${installURL} 302`];
+type DeployTarget = 'site' | 'docs';
+
+function deployTarget(): DeployTarget {
+	const target = process.env.DEPLOY_TARGET ?? 'docs';
+	if (target === 'site' || target === 'docs') return target;
 	throw new Error(`DEPLOY_TARGET is ${target}, and it has to be site or docs`);
+}
+
+const target = deployTarget();
+
+function redirects(): string[] {
+	if (target === 'docs') return [`/ ${docsRoute} 302`, `/install ${installURL} 302`];
+	return [
+		`/install ${installURL} 302`,
+		`/skill ${skillURL} 302`,
+		`/poo ${docsOrigin}${docsRoute}/commands/poo/ 302`,
+		`${docsRoute}/* ${docsOrigin}${docsRoute}/:splat 301`,
+	];
 }
 
 const description =
@@ -340,11 +347,15 @@ const robots = (origin: string) =>
 		.concat([`Sitemap: ${origin}/sitemap.xml`, ''])
 		.join('\n');
 
+function sitemapURLs(): string[] {
+	if (target === 'site') return [`${siteOrigin}/`];
+	return written.map((path) => `${docsOrigin}${docsRoute}${path === 'index' ? '' : '/' + path.replace(/\/index$/, '')}/`);
+}
+
 function writeSitemap() {
-	const urls = written.map((path) => `${docsOrigin}${docsRoute}${path === 'index' ? '' : '/' + path.replace(/\/index$/, '')}/`);
-	const entries = urls.map((url) => `  <url><loc>${url}</loc></url>`).join('\n');
+	const entries = sitemapURLs().map((url) => `  <url><loc>${url}</loc></url>`).join('\n');
 	writeFileSync(join(assets, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>\n`);
-	writeFileSync(join(assets, 'robots.txt'), robots(docsOrigin));
+	writeFileSync(join(assets, 'robots.txt'), robots(target === 'site' ? siteOrigin : docsOrigin));
 }
 
 function splitOn(markdown: string, level: number) {
@@ -509,9 +520,9 @@ if (missing.length) throw new Error(`not in the sidebar: ${missing.join(', ')}`)
 writeFileSync(join(content, 'sources.json'), JSON.stringify(sources, null, 2) + '\n');
 writeSitemap();
 
-for (const name of ['favicon.svg', 'favicon.png']) cpSync(join(siteStatic, name), join(assets, name));
+for (const name of ['favicon.svg', 'favicon.png', 'og.png']) cpSync(join(siteStatic, name), join(assets, name));
 for (const name of ['monkeys.svg', 'terminal.svg']) cpSync(join(repository, name), join(assets, name));
-writeFileSync(join(assets, '_redirects'), redirectsFor(process.env.DEPLOY_TARGET ?? 'docs').join('\n') + '\n');
+writeFileSync(join(assets, '_redirects'), redirects().join('\n') + '\n');
 cpSync(join(siteStatic, 'fonts'), join(assets, 'fonts'), { recursive: true });
 
 console.log(`wrote ${[...gettingStarted, ...agent, ...lookup, ...rest].join(', ')}`);
