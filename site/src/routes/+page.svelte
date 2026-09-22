@@ -183,6 +183,43 @@ PORT=3000`;
 	</section>
 
 	<section class="flex flex-col gap-4">
+		<h2 class="text-2xl font-bold tracking-tight">Nothing to read</h2>
+		<p class="max-w-prose">
+			The secret is not in the repository to begin with. Four files become one, and it is the one
+			you commit:
+		</p>
+		<div class="grid gap-3 sm:grid-cols-2">
+			<div class="flex flex-col gap-2">
+				<p class="text-muted-foreground text-sm">with <code>.env</code></p>
+				<TreeView.Root class="rounded-lg border p-2">
+					<TreeView.Folder name="foo" open>
+						<TreeView.File name=".env" />
+						<TreeView.File name=".env.example" />
+						<TreeView.File name=".gitignore" />
+						<TreeView.File name="hello.sh" />
+					</TreeView.Folder>
+				</TreeView.Root>
+			</div>
+			<div class="flex flex-col gap-2">
+				<p class="text-muted-foreground text-sm">with <code>monkeys</code></p>
+				<TreeView.Root class="rounded-lg border p-2">
+					<TreeView.Folder name="foo" open>
+						<TreeView.File name=".monkeys" />
+						<TreeView.File name="hello.sh" />
+					</TreeView.Folder>
+				</TreeView.Root>
+			</div>
+		</div>
+		<CodeFile name=".monkeys" lang="monkeys" code={projectFile} />
+		<p class="max-w-prose">
+			That file holds the names of the keys the project needs, never their values, which is what a
+			<code>.env.example</code> was for. The secrets sit in your operating system's vault and reach
+			one command at a time. Open the file and there is no line with a secret on it, so an agent
+			that reads everything reads nothing.
+		</p>
+	</section>
+
+	<section class="flex flex-col gap-4">
 		<h2 class="text-2xl font-bold tracking-tight">Install</h2>
 		<p class="max-w-prose">
 			One binary, no runtime. The script picks the build for your machine, checks the published
@@ -198,6 +235,11 @@ PORT=3000`;
 			The plugin adds the skill, which makes an agent reach for <code>monkeys</code> instead of
 			asking you to paste a secret. A key you have not remembered comes back as a message saying
 			what to ask for.
+		</p>
+		<p class="max-w-prose">
+			The skill is an interface, not a guard. What keeps a secret out of a transcript is that the
+			repository never held it; the skill only means an agent knows where to ask for it instead of
+			asking you.
 		</p>
 		<CommandTabs tabs={agentTabs} />
 		<p class="text-muted-foreground max-w-prose text-sm">
