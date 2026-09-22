@@ -16,6 +16,8 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 COPIES = [
     ROOT / "plugins" / "monkeys" / "skills" / "monkeys" / "SKILL.md",
     ROOT / "site" / "src" / "routes" / "+page.svelte",
+    ROOT / "docs" / "app" / "routes" / "home.tsx",
+    ROOT / "docs" / "app" / "lib" / "landing-samples.ts",
     ROOT / "README.md",
     ROOT / "DOCS.md",
 ]
@@ -33,8 +35,9 @@ def code_spans(path):
     if path.suffix == ".md":
         return "\n".join(match.group(0) for match in CODE_IN_MARKDOWN.finditer(text))
     spans = [match.group(0) for match in CODE_IN_MARKUP.finditer(text)]
-    for script in SCRIPT_BLOCK.finditer(text):
-        for literal in STRING_LITERAL.finditer(script.group(1)):
+    scripts = [text] if path.suffix == ".ts" else [script.group(1) for script in SCRIPT_BLOCK.finditer(text)]
+    for script in scripts:
+        for literal in STRING_LITERAL.finditer(script):
             spans.extend(line for line in literal.group(0).strip("'`\"").splitlines() if INVOCATION_LINE.match(line))
     return "\n".join(spans)
 

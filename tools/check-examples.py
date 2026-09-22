@@ -17,12 +17,14 @@ BINARY = str(pathlib.Path(given).resolve()) if "/" in given else given
 repository = pathlib.Path(__file__).resolve().parent.parent
 FENCE = re.compile(r"^```monkeys[^\n]*\n(.*?)^```", re.MULTILINE | re.DOTALL)
 LANDING_FILE = re.compile(r"const \w*[Ff]ile = `([^`]*)`")
+SAMPLE_FILE = re.compile(r"lang: 'monkeys',\s*code: `([^`]*)`")
 
 sources = [
     repository / "README.md",
     repository / "DOCS.md",
     repository / "plugins/monkeys/skills/monkeys/SKILL.md",
     repository / "site/src/routes/+page.svelte",
+    repository / "docs/app/lib/landing-samples.ts",
 ]
 
 
@@ -31,6 +33,8 @@ def examples(source: pathlib.Path):
     blocks = FENCE.findall(text)
     if source.suffix == ".svelte":
         blocks += LANDING_FILE.findall(text)
+    if source.suffix == ".ts":
+        blocks += SAMPLE_FILE.findall(text)
     for block in blocks:
         body = block.replace("\\n", "\n").strip("\n")
         if body.strip():
