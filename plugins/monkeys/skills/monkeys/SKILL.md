@@ -165,7 +165,8 @@ before it reaches the vault. Say what is needed and stop.
 - `monkeys remember` remembers a secret, and `monkeys remember --public PORT` remembers a
   value that is not secret, which you may run yourself.
 - `monkeys pack` writes every secret of a profile into one file and takes over
-  the clipboard to hand out its passphrase. Sharing is a decision, not a step.
+  the clipboard to hand out its passphrase. Sharing is a decision, not a step,
+  and a bundle that would carry `@personal` asks in a word before it goes.
 - `monkeys unpack` fills a profile from a shared bundle. It asks for a
   passphrase and deletes the bundle.
 - `monkeys fill @production --with @test` copies what is missing between

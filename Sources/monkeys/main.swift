@@ -465,12 +465,33 @@ private func blockLines(_ profiles: [[String]], in namespace: String?) -> String
     return header + profiles.map { "@" + $0.map { shortened($0, in: namespace) }.joined(separator: ",") }.joined(separator: " ")
 }
 
+private let personalProfile = "personal"
+
+private func packWithoutPersonal(_ project: Project?) -> String {
+    guard let project else { return "" }
+    let others = project.profiles.map(project.shortName).filter { $0 != personalProfile }
+    guard !others.isEmpty else { return "" }
+    return " to pack the rest: monkeys pack --only @" + others.joined(separator: ",")
+}
+
+/** @personal is one person's own copy of a key, so a bundle never takes it by itself. */
+private func confirmedPersonalSharing(_ profiles: [String], _ project: Project?) throws {
+    let shown = profiles.map { project?.shortName($0) ?? $0 }
+    guard shown.contains(personalProfile) else { return }
+    let question = messageStyle("@personal is yours, not the team's", .bad)
+        + ", and a bundle hands it to whoever opens it."
+    guard askForWord(question, "UNDERSTOOD") else {
+        throw StoreFailure.bundleFailed("nothing written." + packWithoutPersonal(project))
+    }
+}
+
 func runPack(_ arguments: [String]) throws {
     let opens = arguments.contains("--open")
     let asks = arguments.contains("--ask")
     let (directory, remaining) = try takeDirectoryFlag("--path", arguments)
     let (blocks, project, fileName) = try packedBlocks(remaining.filter { $0 != "--open" && $0 != "--ask" })
     guard !blocks.isEmpty else { throw StoreFailure.bundleFailed("nothing to pack: no keys are listed for that") }
+    try confirmedPersonalSharing(blocks.flatMap(\.profiles), project)
     let filled = try blocks.map { try filledBlock($0, project: project) }
     let path = try bundleDestination(fileName, in: directory)
     try confirmedOutOfHarm(

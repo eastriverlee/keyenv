@@ -1220,6 +1220,24 @@ is to drag it somewhere.
 A pack with a secret still missing refuses, since a bundle that fills half a
 profile is a bug for whoever receives it.
 
+A bundle that would carry `@personal` asks first, whichever way that profile
+got in. The name is the convention for a key each person holds their own copy
+of, so handing one over is a decision rather than a step, and the question
+takes the word instead of a letter:
+
+> ```
+> @personal is yours, not the team's, and a bundle hands it to whoever opens it. [UNDERSTOOD/N] UNDERSTOOD
+> ```
+
+Anything else answers no, and so does a pack with nobody to answer: the
+question needs a terminal, which is what keeps a script from bundling one
+person's keys by itself. The refusal names the profiles the file has besides
+it:
+
+> ```
+> monkeys: nothing written. to pack the rest: monkeys pack --only @test,production
+> ```
+
 ### The passphrase
 
 Everything else about the file is fixed, so the passphrase is the only part
