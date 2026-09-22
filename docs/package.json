@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "bun scripts/content.ts && react-router build",
+    "build": "bun scripts/content.ts && bun scripts/og.ts && react-router build",
     "dev": "react-router dev",
     "start": "serve ./build/client --config ../../serve.json",
     "types:check": "react-router typegen && tsc --noEmit",
@@ -26,6 +26,7 @@
   "devDependencies": {
     "@react-router/dev": "^8.4.0",
     "@tailwindcss/vite": "^4.3.3",
+    "@takumi-rs/core": "^2.14.0",
     "@types/mdx": "^2.0.14",
     "@types/node": "^26.6.1",
     "@types/react": "^19.3.0",

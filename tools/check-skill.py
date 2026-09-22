@@ -15,7 +15,6 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 COPIES = [
     ROOT / "plugins" / "monkeys" / "skills" / "monkeys" / "SKILL.md",
-    ROOT / "site" / "src" / "routes" / "+page.svelte",
     ROOT / "docs" / "app" / "routes" / "home.tsx",
     ROOT / "docs" / "app" / "lib" / "landing-samples.ts",
     ROOT / "README.md",
@@ -23,7 +22,6 @@ COPIES = [
 ]
 MENTION = re.compile(r"(?:^[ \t]*|\$ |[`(;|&] ?)monkeys (\w[\w-]*)", re.M)
 CODE_IN_MARKUP = re.compile(r"<code[^>]*>.*?</code>", re.S)
-SCRIPT_BLOCK = re.compile(r"<script[^>]*>(.*?)</script>", re.S)
 STRING_LITERAL = re.compile(r"'[^']*'|`[^`]*`|\"[^\"]*\"", re.S)
 INVOCATION_LINE = re.compile(r"^\s*(?:\$ )?monkeys ")
 CODE_IN_MARKDOWN = re.compile(r"```(?:sh|bash|shellsession)\b.*?```|`[^`\n]*`", re.S)
@@ -35,9 +33,8 @@ def code_spans(path):
     if path.suffix == ".md":
         return "\n".join(match.group(0) for match in CODE_IN_MARKDOWN.finditer(text))
     spans = [match.group(0) for match in CODE_IN_MARKUP.finditer(text)]
-    scripts = [text] if path.suffix == ".ts" else [script.group(1) for script in SCRIPT_BLOCK.finditer(text)]
-    for script in scripts:
-        for literal in STRING_LITERAL.finditer(script):
+    if path.suffix == ".ts":
+        for literal in STRING_LITERAL.finditer(text):
             spans.extend(line for line in literal.group(0).strip("'`\"").splitlines() if INVOCATION_LINE.match(line))
     return "\n".join(spans)
 

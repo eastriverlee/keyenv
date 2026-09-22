@@ -2,7 +2,8 @@ import { Renderer } from '@takumi-rs/core';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const statics = join(import.meta.dirname, '..', 'static');
+const statics = join(import.meta.dirname, '..', 'public');
+const repository = join(import.meta.dirname, '..', '..');
 const orange = '#e94100';
 const ink = '#17181c';
 
@@ -42,7 +43,7 @@ const card = {
 			children: [
 				{
 					type: 'image',
-					src: readFileSync(join(statics, 'monkeys.svg')),
+					src: readFileSync(join(repository, 'monkeys.svg')),
 					style: { width: 520, height: 520 }
 				}
 			]

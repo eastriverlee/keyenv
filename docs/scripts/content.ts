@@ -5,7 +5,6 @@ import { docsOrigin, docsRoute, siteOrigin } from '../app/lib/shared';
 const repository = join(import.meta.dirname, '..', '..');
 const content = join(import.meta.dirname, '..', 'content', 'docs');
 const assets = join(import.meta.dirname, '..', 'public');
-const siteStatic = join(repository, 'site', 'static');
 
 const installURL =
 	'https://raw.githubusercontent.com/eastriverlee/monkeys/main/plugins/monkeys/skills/monkeys/scripts/install.sh';
@@ -520,9 +519,7 @@ if (missing.length) throw new Error(`not in the sidebar: ${missing.join(', ')}`)
 writeFileSync(join(content, 'sources.json'), JSON.stringify(sources, null, 2) + '\n');
 writeSitemap();
 
-for (const name of ['favicon.svg', 'favicon.png', 'og.png']) cpSync(join(siteStatic, name), join(assets, name));
 for (const name of ['monkeys.svg', 'terminal.svg']) cpSync(join(repository, name), join(assets, name));
 writeFileSync(join(assets, '_redirects'), redirects().join('\n') + '\n');
-cpSync(join(siteStatic, 'fonts'), join(assets, 'fonts'), { recursive: true });
 
 console.log(`wrote ${[...gettingStarted, ...agent, ...lookup, ...rest].join(', ')}`);

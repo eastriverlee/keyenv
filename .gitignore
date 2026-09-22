@@ -4,6 +4,4 @@ DerivedData/
 .DS_Store
 __pycache__/
 .release-out/
-site/static/monkeys.svg
-site/static/terminal.svg
 .wrangler/
