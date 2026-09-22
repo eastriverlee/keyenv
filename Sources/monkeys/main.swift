@@ -619,9 +619,7 @@ func reconcileProjectFile(namespace: String?, _ blocks: [Block], in directory: S
         printToStandardError("\(shown) already lists these keys")
         return
     }
-    let current = try String(contentsOfFile: path, encoding: .utf8)
-    let separator = current.hasSuffix("\n") ? "" : "\n"
-    try (current + separator + blockText(additions, in: namespace)).write(toFile: path, atomically: true, encoding: .utf8)
+    try writeBlocks(additions, in: existing)
     printToStandardError(messageStyle("added", .good) + " " + messageStyle(blockLines(additions.map(\.profiles), in: nil), .bold) + " with \(counted(additions)) to \(shown)")
 }
 

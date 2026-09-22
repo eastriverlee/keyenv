@@ -99,16 +99,29 @@ private func locateKey(_ key: String, for profile: String, in lines: [String], o
     return nil
 }
 
+private func withKeys(_ lines: [String], _ profiles: [String], _ keys: [String], _ namespace: String?)
+    -> [String]
+{
+    var lines = lines
+    let header = profileLine(profiles, in: namespace)
+    guard let block = lines.lastIndex(of: header) else { return lines + [header] + keys }
+    var end = block + 1
+    while end < lines.count, !lines[end].trimmingCharacters(in: .whitespaces).hasPrefix("@") { end += 1 }
+    while end > block + 1, lines[end - 1].trimmingCharacters(in: .whitespaces).isEmpty { end -= 1 }
+    lines.insert(contentsOf: keys, at: end)
+    return lines
+}
+
 func writeKey(_ key: String, profile: String, in project: Project) throws {
-    var lines = try fileLines(at: project.path)
+    let lines = try fileLines(at: project.path)
     guard locateKey(key, for: profile, in: lines, of: project) == nil else { return }
-    if let block = lines.lastIndex(of: profileLine([profile], in: project.namespace)) {
-        var end = block + 1
-        while end < lines.count, !lines[end].trimmingCharacters(in: .whitespaces).hasPrefix("@") { end += 1 }
-        while end > block + 1, lines[end - 1].trimmingCharacters(in: .whitespaces).isEmpty { end -= 1 }
-        lines.insert(key, at: end)
-    } else {
-        lines += [profileLine([profile], in: project.namespace), key]
+    try writeLines(withKeys(lines, [profile], [key], project.namespace), to: project.path)
+}
+
+func writeBlocks(_ blocks: [Block], in project: Project) throws {
+    var lines = try fileLines(at: project.path)
+    for block in blocks {
+        lines = withKeys(lines, block.profiles, block.keys, project.namespace)
     }
     try writeLines(lines, to: project.path)
 }
