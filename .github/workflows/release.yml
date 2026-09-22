@@ -58,8 +58,10 @@ jobs:
         run: sha256sum *.tar.gz | tee checksums.txt
       - name: Write the notes
         run: python3 tools/release-notes.py "${GITHUB_REF_NAME}" | tee notes.md
+      - name: Check the notes
+        run: python3 tools/check-release-notes.py
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-        run: gh release create "${GITHUB_REF_NAME}" --notes-file notes.md *.tar.gz checksums.txt
+        run: gh release create "${GITHUB_REF_NAME}" --title "${GITHUB_REF_NAME}" --notes-file notes.md *.tar.gz checksums.txt

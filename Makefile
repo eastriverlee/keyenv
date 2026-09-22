@@ -11,6 +11,7 @@ check: build
 	python3 tools/check-skill.py .build/release/monkeys
 	python3 tools/check-examples.py .build/release/monkeys
 	python3 tools/check-plugin.py
+	python3 tools/check-release-notes.py
 	claude plugin validate .
 
 picture: install

@@ -11,6 +11,10 @@ instead of pull requests to categorise.
 Either way the install lines and the changelog link are appended here, so every
 release ends the same way.
 
+A release body is rendered with hard line breaks, so a paragraph wrapped in the
+repository arrives with a break inside every sentence. The notes stay wrapped as
+files and are unwrapped on the way out.
+
     python3 tools/release-notes.py v1.4.1 > notes.md
 """
 
@@ -94,6 +98,29 @@ def changelog(tag, previous):
     return f"**Full Changelog**: {REPOSITORY}/compare/{previous}...{tag}"
 
 
+NUMBERED = re.compile(r"^\d+\. ")
+
+
+def opens_a_line(line):
+    stripped = line.strip()
+    return not stripped or stripped.startswith(("```", ">", "#", "-", "*", "|")) or bool(NUMBERED.match(stripped))
+
+
+def unwrapped(text):
+    lines = []
+    fenced = False
+    for line in text.splitlines():
+        held = lines and lines[-1].strip() and not lines[-1].strip().startswith(("```", ">"))
+        if held and not fenced and not opens_a_line(line):
+            lines[-1] += " " + line.strip()
+        else:
+            lines.append(line)
+        if line.strip().startswith("```"):
+            fenced = not fenced
+    return "\n".join(lines)
+
+
 tag = sys.argv[1]
 previous = previous_tag(tag)
-print("\n\n".join(part for part in [body(tag, previous), install(), changelog(tag, previous)] if part))
+parts = [body(tag, previous), install(), changelog(tag, previous)]
+print(unwrapped("\n\n".join(part for part in parts if part)))
