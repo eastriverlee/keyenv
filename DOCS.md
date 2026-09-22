@@ -289,6 +289,41 @@ A secret missing in one profile stops only that profile, and only when it is
 used: `production` can be half filled while `test` runs. `doctor` shows the
 whole picture.
 
+### The usual names
+
+A name is yours to choose, and `monkeys` never checks one against a list.
+These four are what projects tend to mean, and a name the reader already
+knows needs no explanation:
+
+```monkeys
++foo
+@test,staging,production
+DATABASE_URL
+@production
+SENTRY_DSN
+@personal
+OPENROUTER_API_KEY
+```
+
+`test` holds the keys that can leak without anyone being woken, `production`
+the real ones, and `staging` a deployment that is not production, for the
+projects that have one.
+
+`test` goes at the top, and goes there even when it arrives after the others,
+unless whoever asked for it says where it belongs. The first profile is the
+one a command takes when none is given, so the default is the harmless one
+and production is something you say.
+
+`personal` is a key each person holds their own copy of rather than one the
+team shares, a seat on an API they pay for themselves. It belongs in the file
+because the project needs it, so `doctor` names it in a fresh checkout, and
+`pack` asks before a bundle carries it away. A key that is yours in every
+project rather than in this one has no profile at all.
+
+Write the names in full, not `prod` or `dev`. A prefix is enough to type, so
+`@p` already reaches `@production`, and the file stays readable for whoever
+did not write it.
+
 ### Choosing a profile
 
 Any command takes a leading `@profile`, which picks another declared one. A
@@ -303,8 +338,7 @@ monkeys run @prod ./deploy           # production, by its prefix
 A profile the file does not declare is refused with the declared ones listed,
 and a prefix that fits several is refused with those, so a typo never becomes
 a new profile. A profile name is words of letters, digits, `_` and `-`,
-joined by `.`; `test`, `staging` and `production` are the usual three, and the
-namespace supplies the part before the dot.
+joined by `.`, and the namespace supplies the part before the dot.
 
 ### No profile
 

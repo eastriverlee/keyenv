@@ -100,6 +100,12 @@ When the code stops reading one, `monkeys drop STRIPE_SECRET_KEY` forgets the
 secret and removes the key from the file. It asks a person before it does,
 so that one is theirs to run as well.
 
+Adding a profile is the one edit `remember` cannot make for you, since no
+command writes an `@` line. A new `@test` goes at the top, because the first
+profile is the one `run` takes when none is given and the default should be
+the harmless one; anything else goes after the profiles already there. Where
+the person says it goes wins.
+
 The rest of the file's grammar, namespaces and several profiles among it, is
 in `monkeys help`. Reach for it when a file surprises you; the file is
 usually written already, and reading it is enough.

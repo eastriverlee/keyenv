@@ -122,6 +122,11 @@ var usage: String {
       \(outputStyle("monkeys run @production ./deploy", .argument))
       \(outputStyle("monkeys doctor", .argument))                     which profile lacks what
 
+    Name them as you like. test, staging, production and personal are what
+    projects usually mean. test goes at the top, even when it is added last,
+    so the default is the harmless one; personal is a key each person holds
+    their own copy of, so pack asks before a bundle carries it away.
+
     A profile that shares most of its secrets with another is filled from it.
     fill moves only the keys the target lacks, never a secret it already
     holds, and says which keys moved:
