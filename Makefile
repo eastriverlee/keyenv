@@ -20,4 +20,10 @@ picture: install
 clean:
 	swift package clean
 
-.PHONY: build install check picture clean
+deploy:
+	cd docs && DEPLOY_TARGET=site bun run build
+	cd docs && monkeys run wrangler pages deploy build/client --project-name monkeys --branch main
+	cd docs && bun run build
+	cd docs && monkeys run wrangler pages deploy build/client --project-name monkeys-docs --branch main
+
+.PHONY: build install check picture clean deploy
