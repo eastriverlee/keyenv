@@ -10,3 +10,6 @@
 /public/favicon.*
 /public/sitemap.xml
 /public/robots.txt
+/public/monkeys.svg
+/public/terminal.svg
+/public/_redirects

@@ -7,6 +7,24 @@ const content = join(import.meta.dirname, '..', 'content', 'docs');
 const assets = join(import.meta.dirname, '..', 'public');
 const siteStatic = join(repository, 'site', 'static');
 
+const installURL =
+	'https://raw.githubusercontent.com/eastriverlee/monkeys/main/plugins/monkeys/skills/monkeys/scripts/install.sh';
+const skillURL =
+	'https://raw.githubusercontent.com/eastriverlee/monkeys/main/plugins/monkeys/skills/monkeys/SKILL.md';
+
+function redirectsFor(target: string): string[] {
+	if (target === 'site') {
+		return [
+			`/install ${installURL} 302`,
+			`/skill ${skillURL} 302`,
+			`/poo ${docsOrigin}${docsRoute}/commands/poo/ 302`,
+			`${docsRoute}/* ${docsOrigin}${docsRoute}/:splat 301`,
+		];
+	}
+	if (target === 'docs') return [`/ ${docsRoute} 302`, `/install ${installURL} 302`];
+	throw new Error(`DEPLOY_TARGET is ${target}, and it has to be site or docs`);
+}
+
 const description =
 	'.env you can hand to an LLM, or git add: secrets in your vault, keys in your repo, used one command at a time, never printed.';
 
@@ -492,6 +510,8 @@ writeFileSync(join(content, 'sources.json'), JSON.stringify(sources, null, 2) + 
 writeSitemap();
 
 for (const name of ['favicon.svg', 'favicon.png']) cpSync(join(siteStatic, name), join(assets, name));
+for (const name of ['monkeys.svg', 'terminal.svg']) cpSync(join(repository, name), join(assets, name));
+writeFileSync(join(assets, '_redirects'), redirectsFor(process.env.DEPLOY_TARGET ?? 'docs').join('\n') + '\n');
 cpSync(join(siteStatic, 'fonts'), join(assets, 'fonts'), { recursive: true });
 
 console.log(`wrote ${[...gettingStarted, ...agent, ...lookup, ...rest].join(', ')}`);
