@@ -60,7 +60,7 @@ func writeValue(_ value: String, forKey key: String, profile: String, in project
 }
 
 func writeValue(_ value: String, forKey key: String, profile: String, block profiles: [String], in project: Project) throws {
-    var lines = try fileLines(at: project.path)
+    var lines = try fileLines(at: try project.writablePath())
     let line = key + "=" + value
     if let location = locate(key, for: profile, in: lines, of: project) {
         try rejectingSharedBlock(location, key, profile, project)
@@ -73,15 +73,15 @@ func writeValue(_ value: String, forKey key: String, profile: String, block prof
     } else {
         lines += [profileLine(profiles, in: project.namespace), line]
     }
-    try writeLines(lines, to: project.path)
+    try writeLines(lines, to: try project.writablePath())
 }
 
 func removeValue(forKey key: String, profile: String, in project: Project) throws -> Bool {
-    var lines = try fileLines(at: project.path)
+    var lines = try fileLines(at: try project.writablePath())
     guard let location = locate(key, for: profile, in: lines, of: project) else { return false }
     try rejectingSharedBlock(location, key, profile, project)
     lines.remove(at: location.index)
-    try writeLines(lines, to: project.path)
+    try writeLines(lines, to: try project.writablePath())
     return true
 }
 
@@ -113,31 +113,32 @@ private func withKeys(_ lines: [String], _ profiles: [String], _ keys: [String],
 }
 
 func writeKey(_ key: String, profile: String, in project: Project) throws {
-    let lines = try fileLines(at: project.path)
+    if project.keys(for: profile).contains(key) { return }
+    let lines = try fileLines(at: try project.writablePath())
     guard locateKey(key, for: profile, in: lines, of: project) == nil else { return }
-    try writeLines(withKeys(lines, [profile], [key], project.namespace), to: project.path)
+    try writeLines(withKeys(lines, [profile], [key], project.namespace), to: try project.writablePath())
 }
 
 func writeBlocks(_ blocks: [Block], in project: Project) throws {
-    var lines = try fileLines(at: project.path)
+    var lines = try fileLines(at: try project.writablePath())
     for block in blocks {
         lines = withKeys(lines, block.profiles, block.keys, project.namespace)
     }
-    try writeLines(lines, to: project.path)
+    try writeLines(lines, to: try project.writablePath())
 }
 
 func removeKey(_ key: String, profile: String, in project: Project) throws -> Bool {
-    var lines = try fileLines(at: project.path)
+    var lines = try fileLines(at: try project.writablePath())
     guard let location = locateKey(key, for: profile, in: lines, of: project) else { return false }
     try rejectingSharedBlock(location, key, profile, project)
     lines.remove(at: location.index)
-    try writeLines(lines, to: project.path)
+    try writeLines(lines, to: try project.writablePath())
     return true
 }
 
 /** Whether the file would give the key up, asked before anything is forgotten. */
 func canRemoveKey(_ key: String, profile: String, in project: Project) throws -> Bool {
-    let lines = try fileLines(at: project.path)
+    let lines = try fileLines(at: try project.writablePath())
     guard let location = locateKey(key, for: profile, in: lines, of: project) else { return false }
     try rejectingSharedBlock(location, key, profile, project)
     return true

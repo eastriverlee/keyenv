@@ -33,8 +33,14 @@ struct Project {
     let directory: String
     let namespace: String?
     let blocks: [Block]
+    var borrowedFrom: String? = nil
 
     var path: String { directory + "/" + projectFileName }
+
+    func writablePath() throws -> String {
+        guard let reference = borrowedFrom else { return path }
+        throw StoreFailure.projectFileBorrowed(reference)
+    }
 
     var profiles: [String] {
         var seen: [String] = []
@@ -153,7 +159,38 @@ func locateProject() throws -> Project? {
             return try parseProject(at: path, directory: directory)
         }
     }
+    return try borrowedProject()
+}
+
+private func borrowedProject() throws -> Project? {
+    guard let root = checkoutRoot() else { return nil }
+    for reference in defaultBranchReferences(in: root) {
+        guard let contents = gitOutput(["show", reference + ":" + projectFileName], in: root) else { continue }
+        var project = try parseProject(contents: contents, shown: reference + ":" + projectFileName, directory: root)
+        project.borrowedFrom = reference
+        return project
+    }
     return nil
+}
+
+private func defaultBranchReferences(in root: String) -> [String] {
+    let remoteDefault = gitOutput(["rev-parse", "--abbrev-ref", "origin/HEAD"], in: root)?
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+    return [remoteDefault, "main", "master"].compactMap { $0 }.filter { !$0.isEmpty }
+}
+
+private func gitOutput(_ arguments: [String], in directory: String) -> String? {
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+    process.arguments = ["git", "-C", directory] + arguments
+    let output = Pipe()
+    process.standardOutput = output
+    process.standardError = FileHandle.nullDevice
+    guard (try? process.run()) != nil else { return nil }
+    let data = output.fileHandleForReading.readDataToEndOfFile()
+    process.waitUntilExit()
+    guard process.terminationStatus == 0 else { return nil }
+    return String(data: data, encoding: .utf8)
 }
 
 func checkoutRoot() -> String? {
@@ -212,7 +249,10 @@ private func rejectingDuplicates(_ blocks: [Block], in shown: String, namespace:
 
 func parseProject(at path: String, directory: String) throws -> Project {
     let contents = try String(contentsOfFile: path, encoding: .utf8)
-    let shown = abbreviatingHome(path)
+    return try parseProject(contents: contents, shown: abbreviatingHome(path), directory: directory)
+}
+
+func parseProject(contents: String, shown: String, directory: String) throws -> Project {
     var namespace: String?
     var blocks: [Block] = []
     var profiles: [String]?

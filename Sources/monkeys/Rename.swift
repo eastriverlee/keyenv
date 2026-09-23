@@ -63,16 +63,16 @@ private func rewriteProfileLines(in project: Project, replacing old: String, wit
         let profiles = line.dropFirst().split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
         return "@" + profiles.map { $0 == oldShort ? newShort : $0 }.joined(separator: ",")
     }
-    let rewritten = try rewrittenLines(at: project.path, renamingProfiles)
-    try rewritten.write(toFile: project.path, atomically: true, encoding: .utf8)
+    let rewritten = try rewrittenLines(at: try project.writablePath(), renamingProfiles)
+    try rewritten.write(toFile: try project.writablePath(), atomically: true, encoding: .utf8)
     printToStandardError(messageStyle("rewrote", .good) + " " + messageStyle(shownPath(of: project), .bold) + ": @\(oldShort) is now @\(newShort)")
 }
 
 private func rewriteNamespaceLine(in project: Project, with new: String) throws {
-    let rewritten = try rewrittenLines(at: project.path) { line in
+    let rewritten = try rewrittenLines(at: try project.writablePath()) { line in
         line.hasPrefix("+") ? "+" + new : line
     }
-    try rewritten.write(toFile: project.path, atomically: true, encoding: .utf8)
+    try rewritten.write(toFile: try project.writablePath(), atomically: true, encoding: .utf8)
     printToStandardError(messageStyle("rewrote", .good) + " " + messageStyle(shownPath(of: project), .bold) + ": +\(project.namespace ?? "") is now +\(new)")
 }
 
@@ -104,6 +104,7 @@ private func renameProfile(_ oldArgument: String, _ newArgument: String) throws 
         throw StoreFailure.renameRefused("\(shownProfile(new, in: project)) already holds \(taken.joined(separator: ", ")); a rename never merges two profiles. To merge, fill \(shownProfile(new, in: project)) --with \(shownProfile(old, in: project)), then forget what \(shownProfile(old, in: project)) still holds")
     }
     if isDeclared, let project {
+        _ = try project.writablePath()
         guard fileCanName(new, in: project) else {
             throw StoreFailure.renameRefused("\(shownPath(of: project)) names profiles under +\(project.namespace ?? ""), so \(shownProfile(new, in: project)) cannot go in it; rename the namespace with monkeys rename +\(project.namespace ?? "") +other, or fill the other project's profile")
         }
@@ -136,6 +137,7 @@ private func renameNamespace(_ oldArgument: String, _ newArgument: String) throw
         let listed = taken.map { "@" + $0 }.joined(separator: ", ")
         throw StoreFailure.renameRefused("+\(new) already has \(listed); a rename never merges two namespaces. To merge, fill each profile of +\(new) --with the one of +\(old), then forget what +\(old) still holds")
     }
+    if isDeclared, let project { _ = try project.writablePath() }
     for profile in profiles {
         let renamed = new + profile.dropFirst(old.count)
         try moveKeys(try storedKeys(under: profile), from: profile, to: renamed, project: nil)

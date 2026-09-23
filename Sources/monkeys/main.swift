@@ -172,6 +172,12 @@ private func makingProjectFile(_ chosen: ProfileArgument) throws -> Scope? {
     return try scope(for: chosen)
 }
 
+private func requireListable(_ key: String, in scope: Scope) throws {
+    guard let project = scope.project, let profile = scope.profile else { return }
+    guard project.profiles.contains(profile), !project.keys(for: profile).contains(key) else { return }
+    _ = try project.writablePath()
+}
+
 func listKey(_ key: String, in scope: Scope) throws {
     guard let project = scope.project, let profile = scope.profile else { return }
     guard project.profiles.contains(profile), !project.keys(for: profile).contains(key) else { return }
@@ -202,6 +208,7 @@ func runSet(_ arguments: [String]) throws {
     if let project = scope.project, let profile = scope.profile, project.value(of: name, for: profile) != nil {
         throw StoreFailure.keyIsValue(name, project.shortName(profile))
     }
+    try requireListable(name, in: scope)
     let value = readsClipboard ? try readSecretFromClipboard() : readSecretFromInput()
     guard !value.isEmpty else { throw StoreFailure.emptySecret }
     if scope.project == nil, let made = try makingProjectFile(chosen) { scope = made }

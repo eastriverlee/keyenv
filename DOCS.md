@@ -477,8 +477,16 @@ a duplicate and is refused.
 
 From the current directory upward, nearest first, stopping at the root of the
 git checkout, so a file above the checkout is never read. Outside a checkout
-only the current directory counts. Where no file is found the commands take
-keys on the line, as they do anywhere else.
+only the current directory counts.
+
+A checkout with no file of its own, such as a worktree on a branch cut before
+the file was committed, reads the one on the default branch: `origin/HEAD`,
+then `main`, then `master`. That file is only read. A command that would
+change it says so and changes nothing, the vault included, because the change
+belongs on the branch that has the file.
+
+Where no file is found either way the commands take keys on the line, as they
+do anywhere else.
 
 ### What it replaces
 

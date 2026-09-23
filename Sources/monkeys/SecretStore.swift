@@ -9,6 +9,7 @@ enum StoreFailure: Error {
     case badInvocation(String)
     case invalidProfileName(String)
     case badProjectFile(String, String)
+    case projectFileBorrowed(String)
     case profileNotDeclared(String, [String], String)
     case profileAmbiguous(String, [String])
     case keysNotStored([String], String)
@@ -40,6 +41,8 @@ extension StoreFailure: CustomStringConvertible {
             return "\(argument) is not a profile: letters, digits, _ - after the @, with a dot between parts"
         case .badProjectFile(let path, let problem):
             return "\(path): \(problem)"
+        case .projectFileBorrowed(let reference):
+            return "this checkout has no \(projectFileName), so its keys are read from \(reference); change the file there"
         case .profileNotDeclared(let name, let declared, let path):
             let listed = declared.map { "@" + $0 }.joined(separator: ", ")
             return "@\(name) is not declared in \(path), which declares \(listed)"
