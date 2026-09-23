@@ -14,6 +14,29 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build a universal binary
         run: swift build --configuration release --arch arm64 --arch x86_64
+      - name: Sign
+        env:
+          CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+        run: |
+          if [ -z "$CERTIFICATE" ]; then
+            echo "MACOS_CERTIFICATE is not set: run tools/setup-macos-signing" >&2
+            exit 1
+          fi
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          password=$(uuidgen)
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 900 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          printf '%s' "$CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/identity.p12"
+          security import "$RUNNER_TEMP/identity.p12" -k "$keychain" -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -k "$password" "$keychain" > /dev/null
+          rm -f "$RUNNER_TEMP/identity.p12"
+          codesign --force --timestamp --options runtime --identifier dev.monk3ys.monkeys \
+            --sign "$IDENTITY" .build/apple/Products/Release/monkeys
+          codesign --verify --strict --verbose=2 .build/apple/Products/Release/monkeys
       - name: Package
         run: tar czf monkeys-macos-universal.tar.gz -C .build/apple/Products/Release monkeys
       - uses: actions/upload-artifact@v4
