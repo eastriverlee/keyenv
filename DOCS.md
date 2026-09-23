@@ -214,10 +214,17 @@ secret-tool lookup service monkeys account foo.test/OPENROUTER_API_KEY
 
 ### What the keychain asks
 
-Nothing. An item carries no per-application restriction, so a release build, a
-build of your own and `security` itself all read it without a prompt. That is
-what lets `export` work at all: the line it writes into a startup file is a
-`security` lookup, run by your shell rather than by `monkeys`.
+A keychain item remembers the program that stored it, and asks before any
+other program reads it, once per item. Always Allow adds that program to the
+item, and the keychain stays quiet for it from then on.
+
+What counts as the same program is its signature. The release builds are
+signed with one Developer ID, so an upgrade is the same program and asks
+nothing. A build from source is signed ad-hoc, whose identity is the binary's
+own hash, so each rebuild asks again for every item it reads. `make install`
+signs with a Developer ID when your keychain holds one.
+
+`security` is a program of its own, so the line `export` writes asks once too.
 
 The boundary is the user account. Whatever runs as you can read what you can
 read, here as in the startup files themselves. What the vault gives is that
